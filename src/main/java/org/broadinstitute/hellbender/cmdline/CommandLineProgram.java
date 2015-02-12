@@ -104,7 +104,7 @@ public abstract class CommandLineProgram {
 
     public Object instanceMain(final String[] argv) {
         if (!parseArgs(argv)) {
-            throw new UserException.CommandLineParseException(Arrays.toString(argv));
+            return 0;
         }
 
         // Provide one temp directory if the caller didn't
