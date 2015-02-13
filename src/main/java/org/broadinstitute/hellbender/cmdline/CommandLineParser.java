@@ -238,52 +238,53 @@ public class CommandLineParser {
             parser.nonOptions();
         }
 
-            OptionSet parsedArguments = null;
-            try {
-                parsedArguments = parser.parse(args);
-            } catch (final joptsimple.OptionException e) {
-                throw new UserException.CommandLineException(e.getMessage());
-            }
-            //Check for the special arguments file flag
-            //if it's seen, read arguments from that file and recursively call parseArguments()
-            if (parsedArguments.has(SpecialArgumentsCollection.ARGUMENTS_FILE_FULLNAME)) {
-                List<String> argfiles = parsedArguments.valuesOf(SpecialArgumentsCollection.ARGUMENTS_FILE_FULLNAME).stream()
-                        .map(f -> (String) f)
-                        .collect(Collectors.toList());
+        OptionSet parsedArguments = null;
+        try {
+            parsedArguments = parser.parse(args);
+        } catch (final joptsimple.OptionException e) {
+            throw new UserException.CommandLineException(e.getMessage());
+        }
+        //Check for the special arguments file flag
+        //if it's seen, read arguments from that file and recursively call parseArguments()
+        if (parsedArguments.has(SpecialArgumentsCollection.ARGUMENTS_FILE_FULLNAME)) {
+            List<String> argfiles = parsedArguments.valuesOf(SpecialArgumentsCollection.ARGUMENTS_FILE_FULLNAME).stream()
+                    .map(f -> (String) f)
+                    .collect(Collectors.toList());
 
-                List<String> newargs = argfiles.stream()
-                        .distinct()
-                        .filter(file -> !argumentsFilesLoadedAlready.contains(file))
-                        .flatMap(file -> loadArgumentsFile(file).stream())
-                        .collect(Collectors.toList());
-                argumentsFilesLoadedAlready.addAll(argfiles);
+            List<String> newargs = argfiles.stream()
+                    .distinct()
+                    .filter(file -> !argumentsFilesLoadedAlready.contains(file))
+                    .flatMap(file -> loadArgumentsFile(file).stream())
+                    .collect(Collectors.toList());
+            argumentsFilesLoadedAlready.addAll(argfiles);
 
-                if (!newargs.isEmpty()) {
-                    newargs.addAll(Arrays.asList(args));
-                    return parseArguments(messageStream, newargs.toArray(new String[newargs.size()]));
-                }
+            if (!newargs.isEmpty()) {
+                newargs.addAll(Arrays.asList(args));
+                return parseArguments(messageStream, newargs.toArray(new String[newargs.size()]));
             }
+        }
 
-            //check if special short circuiting arguments are set
-            if (parsedArguments.has(SpecialArgumentsCollection.HELP_FULLNAME)) {
-                usage(messageStream, true);
-                return false;
-            } else if (parsedArguments.has(SpecialArgumentsCollection.VERSION_FULLNAME)) {
-                messageStream.println(getVersion());
-                return false;
-            }
+        //check if special short circuiting arguments are set
+        if (parsedArguments.has(SpecialArgumentsCollection.HELP_FULLNAME)) {
+            usage(messageStream, true);
+            return false;
+        } else if (parsedArguments.has(SpecialArgumentsCollection.VERSION_FULLNAME)) {
+            messageStream.println(getVersion());
+            return false;
+        }
 
-            for (OptionSpec<?> optSpec : parsedArguments.asMap().keySet()) {
-                if (parsedArguments.has(optSpec)) {
-                    ArgumentDefinition argDef = argumentMap.get(optSpec.options().get(0));
-                    setArgument(argDef, (List<String>) optSpec.values(parsedArguments));
-                }
+        for (OptionSpec<?> optSpec : parsedArguments.asMap().keySet()) {
+            if (parsedArguments.has(optSpec)) {
+                ArgumentDefinition argDef = argumentMap.get(optSpec.options().get(0));
+                setArgument(argDef, (List<String>) optSpec.values(parsedArguments));
             }
-            for (Object arg : parsedArguments.nonOptionArguments()) {
-                setPositionalArgument((String) arg);
-            }
+        }
 
-            assertArgumentsAreValid();
+        for (Object arg : parsedArguments.nonOptionArguments()) {
+            setPositionalArgument((String) arg);
+        }
+
+        assertArgumentsAreValid();
 
         return true;
     }
@@ -389,6 +390,9 @@ public class CommandLineParser {
             if (argumentDefinition.isCollection) {
                 @SuppressWarnings("rawtypes")
                 final Collection c = (Collection) argumentDefinition.getFieldValue();
+                if(!argumentDefinition.hasBeenSet){
+                    c.clear();
+                }
                 if (value == null) {
                     //user specified this arg=null which is interpreted as empty list
                     c.clear();
