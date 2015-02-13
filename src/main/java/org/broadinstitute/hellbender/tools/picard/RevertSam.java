@@ -46,14 +46,19 @@ public class RevertSam extends PicardCommandLineProgram {
     public boolean REMOVE_ALIGNMENT_INFORMATION = true;
 
     @Argument(doc = "When removing alignment information, the set of optional tags to remove.")
-    public List<String> ATTRIBUTE_TO_CLEAR = new ArrayList<>(Arrays.asList(  //NOTE: Arrays.asList is immutable but we need a mutable
-            SAMTag.NM.name(),                                                //list so we do this wrapping dance here.
+    public List<String> ATTRIBUTE_TO_CLEAR = new ArrayList<>();
+
+    @Argument(doc="")
+    public Boolean DONT_CLEAR_DEFAULT_ATTRIBUTES = false;
+
+    private final List<String> defaultAttributesToClear = Arrays.asList(
+            SAMTag.NM.name(),
             SAMTag.UQ.name(),
             SAMTag.PG.name(),
             SAMTag.MD.name(),
             SAMTag.MQ.name(),
             SAMTag.SA.name(),  // Supplementary alignment metadata
-            SAMTag.MC.name())); // Mate Cigar
+            SAMTag.MC.name()); // Mate Cigar
 
     @Argument(doc = "WARNING: This option is potentially destructive. If enabled will discard reads in order to produce " +
             "a consistent output BAM. Reads discarded include (but are not limited to) paired reads with missing " +
@@ -97,6 +102,10 @@ public class RevertSam extends PicardCommandLineProgram {
         final boolean sanitizing = SANITIZE;
         final SamReader in = SamReaderFactory.makeDefault().referenceSequence(REFERENCE_SEQUENCE).validationStringency(VALIDATION_STRINGENCY).open(INPUT);
         final SAMFileHeader inHeader = in.getFileHeader();
+
+        if(DONT_CLEAR_DEFAULT_ATTRIBUTES ){
+
+        }
 
         // If we are going to override SAMPLE_ALIAS or LIBRARY_NAME, make sure all the read
         // groups have the same values.
