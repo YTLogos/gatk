@@ -30,9 +30,17 @@ task downloadGsaLibFile(type: Download) {
 }
 
 task installRPackages(type: Exec){
-  executable 'Rscript'
-  args 'scripts/install_R_packages.R'
-  ignoreExitValue true
+    executable 'Rscript'
+    args 'scripts/install_R_packages.R'
+    ignoreExitValue true
+}
+
+gradle.taskGraph.afterTask { Task task, TaskState state ->
+    if (task.name == 'installRPackages' && state.failure) {
+        logger.error "\n\n***************************************************************" +
+                "\nInstalling R Packages failed.  Please make sure R is installed." +
+                "\n***************************************************************"
+    }
 }
 
 repositories {
