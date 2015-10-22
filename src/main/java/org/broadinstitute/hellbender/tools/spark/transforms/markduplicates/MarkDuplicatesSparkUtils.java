@@ -1,18 +1,27 @@
 package org.broadinstitute.hellbender.tools.spark.transforms.markduplicates;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimaps;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.metrics.MetricsFile;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.utils.read.ReadCoordinateComparator;
-import org.broadinstitute.hellbender.utils.read.markduplicates.*;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
+import org.broadinstitute.hellbender.utils.read.ReadCoordinateComparator;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
+import org.broadinstitute.hellbender.utils.read.markduplicates.DuplicationMetrics;
+import org.broadinstitute.hellbender.utils.read.markduplicates.LibraryIdGenerator;
+import org.broadinstitute.hellbender.utils.read.markduplicates.MarkDuplicatesUtils;
+import org.broadinstitute.hellbender.utils.read.markduplicates.OpticalDuplicateFinder;
+import org.broadinstitute.hellbender.utils.read.markduplicates.PairedEnds;
+import org.broadinstitute.hellbender.utils.read.markduplicates.ReadsKey;
 import scala.Tuple2;
 
-import java.io.File;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
@@ -233,13 +242,13 @@ public class MarkDuplicatesSparkUtils {
                 });
     }
 
-    public static void writeMetricsToFile(final JavaPairRDD<String, DuplicationMetrics> metrics, final File dest) {
+    public static void writeMetricsToStream(final JavaPairRDD<String, DuplicationMetrics> metrics, final OutputStream outputStream) {
         final MetricsFile<DuplicationMetrics, Double> file = new MetricsFile<>();
-        Map<String, DuplicationMetrics> stringDuplicationMetricsMap = metrics.collectAsMap();
         for (final Map.Entry<String, DuplicationMetrics> entry : metrics.collectAsMap().entrySet()) {
             file.addMetric(entry.getValue());
         }
-        file.write(dest);
+
+        file.write(new PrintWriter(outputStream));
     }
 
     /**
