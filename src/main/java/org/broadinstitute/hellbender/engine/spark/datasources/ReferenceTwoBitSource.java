@@ -1,6 +1,5 @@
 package org.broadinstitute.hellbender.engine.spark.datasources;
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.common.io.ByteStreams;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.SAMSequenceRecord;
@@ -8,6 +7,7 @@ import org.bdgenomics.adam.models.ReferenceRegion;
 import org.bdgenomics.adam.util.TwoBitFile;
 import org.bdgenomics.adam.util.TwoBitRecord;
 import org.bdgenomics.utils.io.ByteAccess;
+import org.broadinstitute.hellbender.engine.AuthHolder;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceSource;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
@@ -33,18 +33,18 @@ public class ReferenceTwoBitSource implements ReferenceSource, Serializable {
     private String referenceURL;
     private TwoBitFile twoBitFile;
 
-    public ReferenceTwoBitSource(PipelineOptions popts, String referenceURL) throws IOException {
+    public ReferenceTwoBitSource(AuthHolder authHolder, String referenceURL) throws IOException {
         this.referenceURL = referenceURL;
         if (!isTwoBit(this.referenceURL)) {
             throw new IllegalArgumentException("ReferenceTwoBitSource can only take .2bit files");
         }
-        byte[] bytes = ByteStreams.toByteArray(BucketUtils.openFile(this.referenceURL, popts));
+        byte[] bytes = ByteStreams.toByteArray(BucketUtils.openFile(this.referenceURL, authHolder));
         ByteAccess byteAccess = new DirectFullByteArrayByteAccess(bytes);
         this.twoBitFile = new TwoBitFile(byteAccess);
     }
 
     @Override
-    public ReferenceBases getReferenceBases(PipelineOptions pipelineOptions, SimpleInterval interval) throws IOException {
+    public ReferenceBases getReferenceBases(AuthHolder authHolder, SimpleInterval interval) throws IOException {
         String bases = twoBitFile.extract(simpleIntervalToReferenceRegion(interval));
         return new ReferenceBases(bases.getBytes(), interval);
     }

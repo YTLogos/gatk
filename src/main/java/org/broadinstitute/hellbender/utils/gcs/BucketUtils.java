@@ -66,16 +66,16 @@ public final class BucketUtils {
      * If the file ends with .gz will attempt to wrap it in an appropriate unzipping stream
      *
      * @param path the GCS, HDFS or local path to read from. If GCS, it must start with "gs://", or "hdfs://" for HDFS.
-     * @param popts the pipeline's options, with authentication information.
+     * @param authHolder the pipeline's options, with authentication information.
      * @return an InputStream that reads from the specified file.
      */
-    public static InputStream openFile(String path, PipelineOptions popts) {
+    public static InputStream openFile(String path, AuthHolder authHolder) {
         try {
             Utils.nonNull(path);
             InputStream inputStream;
             if (BucketUtils.isCloudStorageUrl(path)) {
-                Utils.nonNull(popts, "Cannot load from a GCS path without authentication.");
-                inputStream = Channels.newInputStream(new GcsUtil.GcsUtilFactory().create(popts).open(GcsPath.fromUri(path)));
+                Utils.nonNull(authHolder, "Cannot load from a GCS path without authentication.");
+                inputStream = Channels.newInputStream(new GcsUtil.GcsUtilFactory().create(authHolder.asPipelineOptionsDeprecated()).open(GcsPath.fromUri(path)));
             } else if (isHadoopUrl(path)) {
                 Path file = new org.apache.hadoop.fs.Path(path);
                 FileSystem fs = file.getFileSystem(new Configuration());
@@ -146,14 +146,14 @@ public final class BucketUtils {
      * Copies a file. Can be used to copy e.g. from GCS to local.
      *
      * @param sourcePath the path to read from. If GCS, it must start with "gs://", or "hdfs://" for HDFS.
-     * @param popts the pipeline's options, with authentication information.
+     * @param authHolder the pipeline's options, with authentication information.
      * @param destPath the path to copy to. If GCS, it must start with "gs://", or "hdfs://" for HDFS.
      * @throws IOException
      */
-    public static void copyFile(String sourcePath, PipelineOptions popts, String destPath) throws IOException {
+    public static void copyFile(String sourcePath, AuthHolder authHolder, String destPath) throws IOException {
         try (
-            InputStream in = openFile(sourcePath, popts);
-            OutputStream fout = createFile(destPath, popts)) {
+            InputStream in = openFile(sourcePath, authHolder);
+            OutputStream fout = createFile(destPath, authHolder)) {
             ByteStreams.copy(in, fout);
         }
     }
@@ -245,12 +245,12 @@ public final class BucketUtils {
      * Returns true if we can read the first byte of the file.
      *
      * @param path The folder where you want the file to be (local, GCS or HDFS).
-     * @param popts the pipeline's options, with authentication information.
+     * @param authHolder the pipeline's options, with authentication information.
      */
-    public static boolean fileExists(String path, PipelineOptions popts) {
+    public static boolean fileExists(String path, AuthHolder authHolder) {
         final boolean MAYBE = false;
         try {
-            InputStream inputStream = BucketUtils.openFile(path, popts);
+            InputStream inputStream = BucketUtils.openFile(path, authHolder);
             int ignored = inputStream.read();
         } catch (UserException.CouldNotReadInputFile notthere) {
             // file isn't there

@@ -1,12 +1,11 @@
 package org.broadinstitute.hellbender.engine.datasources;
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.transforms.SerializableFunction;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
 import org.broadinstitute.hellbender.engine.AuthHolder;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.engine.spark.datasources.ReferenceTwoBitSource;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
@@ -29,16 +28,16 @@ public class ReferenceMultiSource implements ReferenceSource, Serializable {
     private SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction;
 
     /**
-     * @param pipelineOptions the pipeline options; must be GCSOptions if using the Google Genomics API
+     * @param authHolder the pipeline options; must be GCSOptions if using the Google Genomics API
      * @param referenceURL the name of the reference (if using the Google Genomics API), or a path to the reference file
      * @param referenceWindowFunction the custom reference window function used to map reads to desired reference bases
      */
-    public ReferenceMultiSource( final PipelineOptions pipelineOptions, final String referenceURL,
+    public ReferenceMultiSource( final AuthHolder authHolder, final String referenceURL,
                                  final SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction ) {
         Utils.nonNull(referenceWindowFunction);
         if (ReferenceTwoBitSource.isTwoBit(referenceURL)) {
             try {
-                referenceSource = new ReferenceTwoBitSource(pipelineOptions, referenceURL);
+                referenceSource = new ReferenceTwoBitSource(authHolder, referenceURL);
             } catch (IOException e) {
                 throw new UserException("Failed to create a ReferenceTwoBitSource object" + e.getMessage());
             }
@@ -49,19 +48,9 @@ public class ReferenceMultiSource implements ReferenceSource, Serializable {
                 referenceSource = new ReferenceFileSource(referenceURL);
             }
         } else { // use the Google Genomics API
-            referenceSource = new ReferenceAPISource(pipelineOptions, referenceURL);
+            referenceSource = new ReferenceAPISource(authHolder, referenceURL);
         }
         this.referenceWindowFunction = referenceWindowFunction;
-    }
-
-    /**
-     * @param auth authentication information
-     * @param referenceURL the name of the reference (if using the Google Genomics API), or a path to the reference file
-     * @param referenceWindowFunction the custom reference window function used to map reads to desired reference bases
-     */
-    public ReferenceMultiSource(final AuthHolder auth, final String referenceURL,
-                                   final SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction) {
-        this(auth.asPipelineOptionsDeprecated(), referenceURL, referenceWindowFunction);
     }
 
     private static boolean isFasta(String reference) {
@@ -82,13 +71,13 @@ public class ReferenceMultiSource implements ReferenceSource, Serializable {
 
     /**
      * Return reference bases for the given interval.
-     * @param pipelineOptions the pipeline options; must be GCSOptions if using the Google Genomics API
+     * @param authHolder the pipeline options; must be GCSOptions if using the Google Genomics API
      * @param interval the interval to return reference bases for
      * @return reference bases for the given interval
      */
     @Override
-    public ReferenceBases getReferenceBases(final PipelineOptions pipelineOptions, final SimpleInterval interval) throws IOException {
-        return referenceSource.getReferenceBases(pipelineOptions, interval);
+    public ReferenceBases getReferenceBases(final AuthHolder authHolder, final SimpleInterval interval) throws IOException {
+        return referenceSource.getReferenceBases(authHolder, interval);
     }
 
     /**
