@@ -1,20 +1,9 @@
 package org.broadinstitute.hellbender.engine.datasources;
 
 import com.google.api.services.genomics.model.Reference;
-import com.google.cloud.dataflow.sdk.Pipeline;
-import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
-import com.google.cloud.dataflow.sdk.testing.TestPipeline;
-import com.google.cloud.genomics.dataflow.utils.GCSOptions;
-import com.google.cloud.genomics.dataflow.utils.GenomicsOptions;
-import com.google.cloud.genomics.utils.GenomicsFactory;
-
 import htsjdk.samtools.SAMSequenceDictionary;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
-import org.broadinstitute.hellbender.utils.gcs.GATKGCSOptions;
 import org.broadinstitute.hellbender.utils.reference.ReferenceBases;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
@@ -27,36 +16,13 @@ import java.util.Map;
 public class ReferenceAPISourceUnitTest extends BaseTest {
 
     private ReferenceBases queryReferenceAPI( final String referenceName, final SimpleInterval interval, int pageSize ) {
-        final Pipeline p = setupPipeline();
-
-        ReferenceAPISource refAPISource = new ReferenceAPISource(p.getOptions(), ReferenceAPISource.URL_PREFIX + referenceName);
-        return refAPISource.getReferenceBases(p.getOptions(), interval, pageSize);
+        ReferenceAPISource refAPISource = new ReferenceAPISource(getAuthentication(), ReferenceAPISource.URL_PREFIX + referenceName);
+        return refAPISource.getReferenceBases(getAuthentication(), interval, pageSize);
     }
 
     private ReferenceBases queryReferenceAPI( final String referenceName, final SimpleInterval interval ) {
-        final Pipeline p = setupPipeline();
-
-        ReferenceAPISource refAPISource = new ReferenceAPISource(p.getOptions(), ReferenceAPISource.URL_PREFIX + referenceName);
-        return refAPISource.getReferenceBases(p.getOptions(), interval);
-    }
-
-    private Pipeline setupPipeline() {
-        // We create GATKGCSOptions instead of DataflowPipelineOptions to keep track of the secrets
-        // so we can read the reference.
-        final GATKGCSOptions options = PipelineOptionsFactory.as(GATKGCSOptions.class);
-        options.setProject(getGCPTestProject());
-        if ( getGCPTestApiKey() != null) {
-            options.setApiKey(getGCPTestApiKey());
-            // put a serialized version of the credentials in the pipelineOptions, so we can get to it later.
-            try {
-                GenomicsFactory.OfflineAuth auth = GCSOptions.Methods.createGCSAuth(options);
-                GATKGCSOptions.Methods.setOfflineAuth(options, auth);
-            } catch (Exception x) {
-                throw new GATKException("Error with credentials",x);
-            }
-        }
-
-        return TestPipeline.create(options); // We don't use GATKTestPipeline because we need specific options.
+        ReferenceAPISource refAPISource = new ReferenceAPISource(getAuthentication(), ReferenceAPISource.URL_PREFIX + referenceName);
+        return refAPISource.getReferenceBases(getAuthentication(), interval);
     }
 
     @DataProvider(name = "sortData")
@@ -97,19 +63,11 @@ public class ReferenceAPISourceUnitTest extends BaseTest {
         final String expected = "AAACAGGTTA";
         // -1 because we're using closed intervals
         SimpleInterval interval = new SimpleInterval("1", 50001, 50001 + expected.length() - 1);
-        Logger logger = LogManager.getLogger(ReferenceAPISourceUnitTest.class);
 
-        GenomicsOptions options = PipelineOptionsFactory.create().as(GenomicsOptions.class);
-        options.setApiKey(getGCPTestApiKey());
-        options.setProject(getGCPTestProject());
-
-        final Pipeline p = TestPipeline.create(options); // We don't use GATKTestPipeline because we need specific options.
-        ReferenceAPISource refAPISource = new ReferenceAPISource(p.getOptions(), ReferenceAPISource.URL_PREFIX + referenceName);
-        ReferenceBases bases = refAPISource.getReferenceBases(p.getOptions(), interval);
+        ReferenceAPISource refAPISource = new ReferenceAPISource(getAuthentication(), ReferenceAPISource.URL_PREFIX + referenceName);
+        ReferenceBases bases = refAPISource.getReferenceBases(getAuthentication(), interval);
         final String actual = new String(bases.getBases());
         Assert.assertEquals(actual, expected, "Wrong bases returned");
-        p.run();
-
     }
 
     @Test(groups = "cloud")

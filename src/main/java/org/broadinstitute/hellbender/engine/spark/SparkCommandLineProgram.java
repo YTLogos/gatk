@@ -1,7 +1,5 @@
 package org.broadinstitute.hellbender.engine.spark;
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptionsFactory;
-import com.google.cloud.genomics.dataflow.utils.GCSOptions;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgram;
@@ -47,20 +45,10 @@ public abstract class SparkCommandLineProgram extends CommandLineProgram impleme
         }
     }
 
+
     /**
-     * @return a GCSOptions object authenticated with apiKey suitable for accessing files in GCS,
-     *         or null if no apiKey is present.
+     * @return an {@link AuthHolder} with the specified key to access Google Cloud Storage
      */
-    protected GCSOptions getAuthenticatedGCSOptions() {
-        if ( apiKey == null ) {
-            return null;
-        }
-
-        GCSOptions options = PipelineOptionsFactory.as(GCSOptions.class);
-        options.setApiKey(apiKey);
-        return options;
-    }
-
     protected AuthHolder getAuthHolder() {
         return new AuthHolder(getClass().getSimpleName(), apiKey);
     }

@@ -1,9 +1,9 @@
 package org.broadinstitute.hellbender.utils.gcs;
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import htsjdk.samtools.util.IOUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.broadinstitute.hellbender.engine.AuthHolder;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -61,13 +61,13 @@ public final class BucketUtilsTest extends BaseTest {
         File dest = createTempFile("copy-empty", ".vcf");
         final String intermediate = BucketUtils.randomRemotePath(getGCPTestStaging(), "test-copy-empty", ".vcf");
         Assert.assertTrue(BucketUtils.isCloudStorageUrl(intermediate), "!BucketUtils.isCloudStorageUrl(intermediate)");
-        PipelineOptions popts = getAuthHolder();
-        BucketUtils.copyFile(src, popts, intermediate);
-        BucketUtils.copyFile(intermediate, popts, dest.getPath());
+        AuthHolder authHolder = getAuthentication();
+        BucketUtils.copyFile(src, authHolder, intermediate);
+        BucketUtils.copyFile(intermediate, authHolder, dest.getPath());
         IOUtil.assertFilesEqual(new File(src), dest);
-        Assert.assertTrue(BucketUtils.fileExists(intermediate, popts));
-        BucketUtils.deleteFile(intermediate, popts);
-        Assert.assertFalse(BucketUtils.fileExists(intermediate, popts));
+        Assert.assertTrue(BucketUtils.fileExists(intermediate, authHolder));
+        BucketUtils.deleteFile(intermediate, authHolder);
+        Assert.assertFalse(BucketUtils.fileExists(intermediate, authHolder));
     }
 
     @Test
@@ -82,13 +82,13 @@ public final class BucketUtilsTest extends BaseTest {
             final String intermediate = BucketUtils.randomRemotePath(staging, "test-copy-empty", ".vcf");
             Assert.assertTrue(BucketUtils.isHadoopUrl(intermediate), "!BucketUtils.isHadoopUrl(intermediate)");
 
-            PipelineOptions popts = null;
-            BucketUtils.copyFile(src, popts, intermediate);
-            BucketUtils.copyFile(intermediate, popts, dest.getPath());
+            AuthHolder auth = null;
+            BucketUtils.copyFile(src, auth, intermediate);
+            BucketUtils.copyFile(intermediate, auth, dest.getPath());
             IOUtil.assertFilesEqual(new File(src), dest);
-            Assert.assertTrue(BucketUtils.fileExists(intermediate, popts));
-            BucketUtils.deleteFile(intermediate, popts);
-            Assert.assertFalse(BucketUtils.fileExists(intermediate, popts));
+            Assert.assertTrue(BucketUtils.fileExists(intermediate, auth));
+            BucketUtils.deleteFile(intermediate, auth);
+            Assert.assertFalse(BucketUtils.fileExists(intermediate, auth));
         } finally {
             if (cluster != null) {
                 cluster.shutdown();

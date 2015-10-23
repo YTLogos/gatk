@@ -1,13 +1,17 @@
 package org.broadinstitute.hellbender.utils.reference;
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import htsjdk.samtools.SAMSequenceDictionary;
+import org.broadinstitute.hellbender.engine.AuthHolder;
 import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 
 public class ReferenceUtilsUnitTest extends BaseTest {
@@ -55,9 +59,9 @@ public class ReferenceUtilsUnitTest extends BaseTest {
     @Test(groups = {"bucket"})
     public void testLoadFastaDictionaryFromGCSBucket() throws IOException {
         final String bucketDictionary = getGCPTestInputPath() + "org/broadinstitute/hellbender/utils/ReferenceUtilsTest.dict";
-        final PipelineOptions popts = getAuthHolder();
+        final AuthHolder authHolder = getAuthentication();
 
-        try ( final InputStream referenceDictionaryStream = BucketUtils.openFile(bucketDictionary, popts) ) {
+        try ( final InputStream referenceDictionaryStream = BucketUtils.openFile(bucketDictionary, authHolder) ) {
             final SAMSequenceDictionary dictionary = ReferenceUtils.loadFastaDictionary(referenceDictionaryStream);
 
             Assert.assertNotNull(dictionary, "Sequence dictionary null after loading");

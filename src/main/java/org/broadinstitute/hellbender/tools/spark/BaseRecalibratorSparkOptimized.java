@@ -1,8 +1,6 @@
 package org.broadinstitute.hellbender.tools.spark;
 
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.common.base.Stopwatch;
-
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.apache.spark.api.java.JavaRDD;
@@ -18,15 +16,14 @@ import org.broadinstitute.hellbender.cmdline.argumentcollections.ReferenceInputA
 import org.broadinstitute.hellbender.cmdline.argumentcollections.RequiredReadInputArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.argumentcollections.RequiredReferenceInputArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.programgroups.SparkProgramGroup;
-import org.broadinstitute.hellbender.engine.ContextShard;
-import org.broadinstitute.hellbender.engine.datasources.VariantsSource;
-import org.broadinstitute.hellbender.engine.spark.AddContextDataToReadSparkOptimized;
-import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
-import org.broadinstitute.hellbender.engine.filters.CountingReadFilter;
 import org.broadinstitute.hellbender.engine.AuthHolder;
+import org.broadinstitute.hellbender.engine.ContextShard;
+import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
+import org.broadinstitute.hellbender.engine.datasources.VariantsSource;
+import org.broadinstitute.hellbender.engine.filters.CountingReadFilter;
+import org.broadinstitute.hellbender.engine.spark.AddContextDataToReadSparkOptimized;
 import org.broadinstitute.hellbender.engine.spark.SparkCommandLineProgram;
 import org.broadinstitute.hellbender.engine.spark.datasources.ReadsSparkSource;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.spark.transforms.bqsr.BaseRecalibratorEngineSparkWrapper;
 import org.broadinstitute.hellbender.tools.walkers.bqsr.BaseRecalibrator;
@@ -147,10 +144,9 @@ public class BaseRecalibratorSparkOptimized extends SparkCommandLineProgram {
                     copied=true;
                 }
                 // this only works with the API_KEY, but then again it's a hack so there's no point in polishing it. Please don't make me.
-                PipelineOptions popts = auth.asPipelineOptionsDeprecated();
                 String d = IOUtils.createTempFile("knownVariants-"+i,".vcf").getAbsolutePath();
                 try {
-                    BucketUtils.copyFile(v, popts, d);
+                    BucketUtils.copyFile(v, auth, d);
                 } catch (IOException x) {
                     throw new UserException.CouldNotReadInputFile(v,x);
                 }

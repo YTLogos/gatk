@@ -1,15 +1,22 @@
 package org.broadinstitute.hellbender.engine.spark;
 
 import com.google.cloud.dataflow.sdk.transforms.SerializableFunction;
-import com.google.cloud.genomics.dataflow.utils.GCSOptions;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.broadinstitute.hellbender.cmdline.ArgumentCollection;
-import org.broadinstitute.hellbender.cmdline.argumentcollections.*;
-import org.broadinstitute.hellbender.engine.datasources.ReferenceWindowFunctions;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.IntervalArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalIntervalArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalReadInputArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.OptionalReferenceInputArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.ReadInputArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.ReferenceInputArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.RequiredIntervalArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.RequiredReadInputArgumentCollection;
+import org.broadinstitute.hellbender.cmdline.argumentcollections.RequiredReferenceInputArgumentCollection;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
+import org.broadinstitute.hellbender.engine.datasources.ReferenceWindowFunctions;
 import org.broadinstitute.hellbender.engine.spark.datasources.ReadsSparkSource;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.SequenceDictionaryUtils;
@@ -227,10 +234,9 @@ public abstract class GATKSparkTool extends SparkCommandLineProgram {
      * Initializes our reference source. Does nothing if no reference was specified.
      */
     private void initializeReference() {
-        final GCSOptions gcsOptions = getAuthenticatedGCSOptions(); // null if we have no api key
         final String referenceURL = referenceArguments.getReferenceFileName();
         if ( referenceURL != null ) {
-            referenceSource = new ReferenceMultiSource(gcsOptions, referenceURL, getReferenceWindowFunction());
+            referenceSource = new ReferenceMultiSource(getAuthHolder(), referenceURL, getReferenceWindowFunction());
             referenceDictionary = referenceSource.getReferenceSequenceDictionary(readsHeader != null ? readsHeader.getSequenceDictionary() : null);
         }
     }

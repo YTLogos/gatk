@@ -1,14 +1,14 @@
 package org.broadinstitute.hellbender.engine.spark;
 
 import com.google.api.services.genomics.model.Read;
-import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.values.KV;
 import htsjdk.samtools.SAMRecord;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.broadinstitute.hellbender.engine.datasources.ReferenceWindowFunctions;
+import org.broadinstitute.hellbender.engine.AuthHolder;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
+import org.broadinstitute.hellbender.engine.datasources.ReferenceWindowFunctions;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.reference.ReferenceBases;
@@ -53,7 +53,7 @@ public class JoinReadsWithRefBasesSparkUnitTest extends BaseTest {
 
         ReferenceMultiSource mockSource = mock(ReferenceMultiSource.class, withSettings().serializable());
         for (SimpleInterval i : intervals) {
-            when(mockSource.getReferenceBases(any(PipelineOptions.class), eq(i))).thenReturn(FakeReferenceSource.bases(i));
+            when(mockSource.getReferenceBases(any(AuthHolder.class), eq(i))).thenReturn(FakeReferenceSource.bases(i));
         }
         when(mockSource.getReferenceWindowFunction()).thenReturn(ReferenceWindowFunctions.IDENTITY_FUNCTION);
 
@@ -76,7 +76,7 @@ public class JoinReadsWithRefBasesSparkUnitTest extends BaseTest {
 
         ReferenceMultiSource mockSource = mock(ReferenceMultiSource.class, withSettings().serializable());
         for (SimpleInterval i : intervals) {
-            when(mockSource.getReferenceBases(any(PipelineOptions.class), eq(i))).thenReturn(FakeReferenceSource.bases(i));
+            when(mockSource.getReferenceBases(any(AuthHolder.class), eq(i))).thenReturn(FakeReferenceSource.bases(i));
         }
         when(mockSource.getReferenceWindowFunction()).thenReturn(ReferenceWindowFunctions.IDENTITY_FUNCTION);
 

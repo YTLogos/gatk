@@ -80,7 +80,7 @@ public class BaseRecalibratorSpark extends GATKSparkTool {
         // TODO: broadcast the reads header?
         final RecalibrationReport bqsrReport = BaseRecalibratorSparkFn.apply(rddReadContext, getHeaderForReads(), getReferenceSequenceDictionary(), bqsrArgs);
 
-        try ( final PrintStream reportStream = new PrintStream(BucketUtils.createFile(outputTablesPath, getAuthenticatedGCSOptions())) ) {
+        try ( final PrintStream reportStream = new PrintStream(BucketUtils.createFile(outputTablesPath, getAuthHolder())) ) {
             RecalUtils.outputRecalibrationReport(reportStream, bqsrArgs, bqsrReport.getQuantizationInfo(), bqsrReport.getRecalibrationTables(), new StandardCovariateList(bqsrArgs, getHeaderForReads()), true);
         }
     }

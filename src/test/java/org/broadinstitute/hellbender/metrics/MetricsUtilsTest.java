@@ -56,7 +56,7 @@ public class MetricsUtilsTest extends BaseTest {
         final MetricsFile<TestMetric, ?> metrics = new MetricsFile<>();
         metrics.addMetric(testMetric);
         MetricsUtils.saveMetrics(metrics, outputPath,getAuthentication());
-        Assert.assertTrue(BucketUtils.fileExists(outputPath, getAuthenticatedPipelineOptions()));
+        Assert.assertTrue(BucketUtils.fileExists(outputPath, getAuthentication()));
         File localCopy = copyFileToLocalTmpFile(outputPath);
 
         final File expectedMetrics = createTempFile("expectedMetrics", ".txt");
@@ -67,7 +67,7 @@ public class MetricsUtilsTest extends BaseTest {
 
     private File copyFileToLocalTmpFile(String outputPath) throws IOException {
         File localCopy = createTempFile("local_metrics_copy",".txt");
-        BucketUtils.copyFile(outputPath, getAuthenticatedPipelineOptions(), localCopy.getAbsolutePath());
+        BucketUtils.copyFile(outputPath, getAuthentication(), localCopy.getAbsolutePath());
         return localCopy;
     }
 }

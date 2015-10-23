@@ -2,10 +2,8 @@ package org.broadinstitute.hellbender.utils.gcs;
 
 import com.google.api.client.util.ByteStreams;
 import com.google.api.services.storage.Storage;
-import com.google.cloud.dataflow.sdk.options.GcsOptions;
 import com.google.cloud.dataflow.sdk.options.PipelineOptions;
 import com.google.cloud.dataflow.sdk.util.GcsUtil;
-import com.google.cloud.dataflow.sdk.util.Transport;
 import com.google.cloud.dataflow.sdk.util.gcsfs.GcsPath;
 import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.Tribble;
@@ -162,14 +160,13 @@ public final class BucketUtils {
      * Deletes a file: local, GCS or HDFS.
      *
      * @param pathToDelete the path to delete. If GCS, it must start with "gs://", or "hdfs://" for HDFS.
-     * @param popts the pipeline's options, with authentication information.
+     * @param authHolder an AuthHolder with authentication information if needed
      */
-    public static void deleteFile(String pathToDelete, PipelineOptions popts) throws IOException {
+    public static void deleteFile(String pathToDelete, AuthHolder authHolder) throws IOException {
         if (BucketUtils.isCloudStorageUrl(pathToDelete)) {
             GcsPath path = GcsPath.fromUri(pathToDelete);
-            GcsOptions gcsOptions = popts.as(GcsOptions.class);
-            Storage storage = Transport.newStorageClient(gcsOptions).build();
-            storage.objects().delete(path.getBucket(), path.getObject()).execute();
+            final Storage.Objects objects = authHolder.makeStorageClient();
+            objects.delete(path.getBucket(), path.getObject()).execute();
         } else if (isHadoopUrl(pathToDelete)) {
             Path file = new Path(pathToDelete);
             FileSystem fs = file.getFileSystem(new Configuration());
@@ -216,7 +213,7 @@ public final class BucketUtils {
             @Override
             public void run() {
                 try {
-                    deleteFile(fileToDelete, authHolder.asPipelineOptionsDeprecated());
+                    deleteFile(fileToDelete, authHolder);
                 } catch (IOException e) {
                     logger.warn("Failed to delete file: " + fileToDelete+ ".", e);
                 }

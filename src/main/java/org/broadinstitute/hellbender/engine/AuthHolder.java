@@ -88,7 +88,7 @@ public class AuthHolder implements Serializable {
     /**
      * @return a Storage.Objects, authenticated using the information held in this object.
      */
-    public Storage.Objects makeStorageClient() throws IOException, ClassNotFoundException, GeneralSecurityException {
+    public Storage.Objects makeStorageClient() throws IOException{
         GCSOptions options = PipelineOptionsFactory.as(GCSOptions.class);
         options.setAppName(appName);
         options.setApiKey(apiKey);
