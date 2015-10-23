@@ -8,7 +8,9 @@ import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.metrics.MetricsFile;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.broadinstitute.hellbender.engine.AuthHolder;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.metrics.MetricsUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadCoordinateComparator;
 import org.broadinstitute.hellbender.utils.read.ReadUtils;
@@ -20,8 +22,6 @@ import org.broadinstitute.hellbender.utils.read.markduplicates.PairedEnds;
 import org.broadinstitute.hellbender.utils.read.markduplicates.ReadsKey;
 import scala.Tuple2;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
@@ -242,13 +242,13 @@ public class MarkDuplicatesSparkUtils {
                 });
     }
 
-    public static void writeMetricsToStream(final JavaPairRDD<String, DuplicationMetrics> metrics, final OutputStream outputStream) {
-        final MetricsFile<DuplicationMetrics, Double> file = new MetricsFile<>();
-        for (final Map.Entry<String, DuplicationMetrics> entry : metrics.collectAsMap().entrySet()) {
-            file.addMetric(entry.getValue());
+    public static void writeMetricsToStream(final JavaPairRDD<String, DuplicationMetrics> metricsRDD, final String metricsOutputPath, AuthHolder authHolder) {
+        final MetricsFile<DuplicationMetrics, Double> metrics = new MetricsFile<>();
+        for (final Map.Entry<String, DuplicationMetrics> entry : metricsRDD.collectAsMap().entrySet()) {
+            metrics.addMetric(entry.getValue());
         }
 
-        file.write(new PrintWriter(outputStream));
+        MetricsUtils.saveMetrics(metrics, metricsOutputPath, authHolder );
     }
 
     /**

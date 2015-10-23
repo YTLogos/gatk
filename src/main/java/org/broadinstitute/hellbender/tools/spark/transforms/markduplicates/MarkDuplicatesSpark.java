@@ -13,15 +13,12 @@ import org.broadinstitute.hellbender.cmdline.programgroups.SparkProgramGroup;
 import org.broadinstitute.hellbender.engine.spark.GATKSparkTool;
 import org.broadinstitute.hellbender.engine.spark.datasources.ReadsSparkSink;
 import org.broadinstitute.hellbender.exceptions.GATKException;
-import org.broadinstitute.hellbender.exceptions.UserException;
-import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.read.ReadsWriteFormat;
 import org.broadinstitute.hellbender.utils.read.markduplicates.DuplicationMetrics;
 import org.broadinstitute.hellbender.utils.read.markduplicates.OpticalDuplicateFinder;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 @CommandLineProgramProperties(
         summary ="Marks duplicates on spark",
@@ -86,11 +83,7 @@ public final class MarkDuplicatesSpark extends GATKSparkTool {
 
         if (metricsFile != null) {
             final JavaPairRDD<String, DuplicationMetrics> metrics = MarkDuplicatesSparkUtils.generateMetrics(getHeaderForReads(), finalReads);
-            try(final OutputStream metricsOutputStream = BucketUtils.createFile(metricsFile, getAuthHolder())) {
-                MarkDuplicatesSparkUtils.writeMetricsToStream(metrics, metricsOutputStream);
-            } catch (IOException e) {
-                throw new UserException.CouldNotCreateOutputFile("Could not close stream while writing MarkDuplicates metrics to " +metricsFile + ".", e);
-            }
+            MarkDuplicatesSparkUtils.writeMetricsToStream(metrics, metricsFile, getAuthHolder());
         }
     }
 }
