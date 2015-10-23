@@ -96,13 +96,15 @@ public final class BucketUtils {
      * Open a binary file for writing regardless of whether it's on GCS, HDFS or local disk.
      * For writing to GCS it'll use the application/octet-stream MIME type.
      *
-     * @param path the GCS or local path to write to. If GCS, it must start with "gs://", or "hdfs://" for HDFS.
-     * @param popts the pipeline's options, with authentication information.
+     * @param path the GCS , HDFS, or local path to write to. If HDFS, it must start with "hdfs://".
+     *             If GCS, it must start with "gs://" and you must be using API Key authentication.
+     * @param auth authentication information.
      * @return an OutputStream that writes to the specified file.
      */
-    public static OutputStream createFile(String path, PipelineOptions popts) {
+    public static OutputStream createFile(String path, AuthHolder auth) {
         try {
             if (isCloudStorageUrl(path)) {
+                PipelineOptions popts = auth.asPipelineOptionsDeprecated();
                 return Channels.newOutputStream(new GcsUtil.GcsUtilFactory().create(popts).create(GcsPath.fromUri(path), "application/octet-stream"));
             } else if (isHadoopUrl(path)) {
                 Path file = new Path(path);
@@ -117,27 +119,13 @@ public final class BucketUtils {
     }
 
     /**
-     * Open a binary file for writing regardless of whether it's on GCS, HDFS or local disk.
-     * For writing to GCS it'll use the application/octet-stream MIME type.
-     *
-     * @param path the GCS , HDFS, or local path to write to. If HDFS, it must start with "hdfs://".
-     *             If GCS, it must start with "gs://" and you must be using API Key authentication.
-     * @param auth authentication information.
-     * @return an OutputStream that writes to the specified file.
-     */
-    public static OutputStream createFile(String path, AuthHolder auth) {
-        PipelineOptions popts = auth.asPipelineOptionsDeprecated();
-        return createFile(path, popts);
-    }
-
-    /**
      * Open a binary file for writing regardless of whether it's on HDFS or local disk.
      *
      * @param path the local path to write to.
      * @return an OutputStream that writes to the specified file.
      */
     public static OutputStream createNonGCSFile(String path) {
-        return createFile(path, (PipelineOptions)null);
+        return createFile(path, null);
     }
 
     /**
@@ -266,13 +254,13 @@ public final class BucketUtils {
      * Returns the file size of a file pointed to by a GCS/HDFS/local path
      *
      * @param path The URL to the file whose size to return
-     * @param popts PipelineOptions for GCS (if relevant; otherwise pass null)
+     * @param auth authentication for GCS (if relevant; otherwise pass null)
      * @return the file size in bytes
      * @throws IOException
      */
-    public static long fileSize(String path, PipelineOptions popts) throws IOException {
+    public static long fileSize(String path, AuthHolder auth) throws IOException {
         if (isCloudStorageUrl(path)) {
-            return new GcsUtil.GcsUtilFactory().create(popts).fileSize(GcsPath.fromUri(path));
+            return new GcsUtil.GcsUtilFactory().create(auth.asPipelineOptionsDeprecated()).fileSize(GcsPath.fromUri(path));
         } else if (isHadoopUrl(path)) {
             Path hadoopPath = new Path(path);
             FileSystem fs = hadoopPath.getFileSystem(new Configuration());

@@ -65,12 +65,6 @@ public class ReferenceAPISource implements ReferenceSource, Serializable {
         String referenceName = getReferenceSetID(referenceURL);
         this.referenceMap = getReferenceNameToReferenceTable(authHolder, referenceName);
         this.referenceNameToIdTable = getReferenceNameToIdTableFromMap(referenceMap);
-
-        // For Spark, we keep around the apiKey from the PipelineOptions since we don't have
-        // a "context" with PipelineOptions available on each worker.
-        // If we go with Spark, we'll end up refactoring this to store all of the secrets
-        // directly in this class and get rid of PipelineOptions as an argument to
-        // getReferenceBases.
         this.authHolder = Utils.nonNull(authHolder);
     }
 
@@ -100,18 +94,17 @@ public class ReferenceAPISource implements ReferenceSource, Serializable {
        */
       @Override
       public ReferenceBases getReferenceBases(final AuthHolder authHolder, final SimpleInterval interval) {
-          return getReferenceBases(authHolder, interval, defaultPageSize);
+          return getReferenceBases(interval, defaultPageSize);
       }
 
       /**
        * Query the Google Genomics API for reference bases spanning the specified interval from the specified
        * reference name.
        *
-       * @param authHolder -- are used to get the credentials necessary to call the Genomics API
        * @param interval - the range of bases to retrieve.
        * @return the reference bases specified by interval and apiData (using the Google Genomics API).
        */
-      public ReferenceBases getReferenceBases(final AuthHolder authHolder, final SimpleInterval interval, int pageSize) {
+      public ReferenceBases getReferenceBases(final SimpleInterval interval, int pageSize) {
           Utils.nonNull(interval);
 
           if (genomicsService == null) {
@@ -281,10 +274,6 @@ public class ReferenceAPISource implements ReferenceSource, Serializable {
         if (null==genomicsService) genomicsService = authHolder.makeGenomicsService();
     }
 
-    private Genomics createGenomicsService(final AuthHolder authHolder) {
-        return authHolder.makeGenomicsService();
-    }
-
     // TODO: Move these to a CustomCoder. That will allow us to do something else (possibly better) for Spark.
     // TODO: See Issue #849.
     // implement methods for Java serialization, since Reference does not implement Serializable
@@ -298,7 +287,7 @@ public class ReferenceAPISource implements ReferenceSource, Serializable {
         stream.writeObject(referenceNameToIdTable);
         stream.writeObject(authHolder);
     }
-    
+
     private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
         JsonFactory jsonFactory = com.google.api.client.googleapis.util.Utils.getDefaultJsonFactory();
         final Map<String, Reference> refs = new HashMap<>();
@@ -308,9 +297,8 @@ public class ReferenceAPISource implements ReferenceSource, Serializable {
         }
         @SuppressWarnings("unchecked")
         final Map<String, String> refTable = (Map<String, String>) stream.readObject();
-        final String apiKey = (String) stream.readObject();
         this.referenceMap = refs;
         this.referenceNameToIdTable = refTable;
-        this.authHolder = authHolder;
+        this.authHolder = (AuthHolder) stream.readObject();
     }
 }

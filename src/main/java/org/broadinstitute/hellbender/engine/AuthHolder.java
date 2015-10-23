@@ -43,26 +43,10 @@ public class AuthHolder implements Serializable {
         this.serializedOfflineAuth = serializeOfflineAuth(offlineAuth);
     }
 
-    private AuthHolder(String appName, String apiKey, GenomicsFactory.OfflineAuth auth) throws IOException {
-        this.appName = appName;
-        this.apiKey = apiKey;
-        this.serializedOfflineAuth = serializeOfflineAuth(auth);
-    }
-
     public AuthHolder(String appName, String apiKey) {
         this.appName = appName;
         this.apiKey = apiKey;
         this.serializedOfflineAuth = null;
-    }
-
-    public AuthHolder(String appName, GenomicsFactory.OfflineAuth auth) throws IOException {
-        this.appName = appName;
-        this.apiKey = null;
-        this.serializedOfflineAuth = serializeOfflineAuth(auth);
-    }
-
-    public AuthHolder(GCSOptions options) throws IOException, GeneralSecurityException {
-        this(options.getAppName(), options.getApiKey(), options.getSecretsFile());
     }
 
     public String getAppName() {

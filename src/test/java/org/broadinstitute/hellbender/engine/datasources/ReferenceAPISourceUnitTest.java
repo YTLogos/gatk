@@ -17,7 +17,7 @@ public class ReferenceAPISourceUnitTest extends BaseTest {
 
     private ReferenceBases queryReferenceAPI( final String referenceName, final SimpleInterval interval, int pageSize ) {
         ReferenceAPISource refAPISource = new ReferenceAPISource(getAuthentication(), ReferenceAPISource.URL_PREFIX + referenceName);
-        return refAPISource.getReferenceBases(getAuthentication(), interval, pageSize);
+        return refAPISource.getReferenceBases(interval, pageSize);
     }
 
     private ReferenceBases queryReferenceAPI( final String referenceName, final SimpleInterval interval ) {

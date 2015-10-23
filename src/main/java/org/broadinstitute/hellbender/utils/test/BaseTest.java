@@ -140,7 +140,7 @@ public abstract class BaseTest {
         }
         return value;
     }
-    
+
     /**
      * Gets an {@link AuthHolder} object containing our API key as specified in the HELLBENDER_TEST_APIKEY
      * environment variable. Useful for tests that need to access data in a GCS bucket via the
@@ -149,7 +149,7 @@ public abstract class BaseTest {
      * @return an AuthHolder object containing our API key
      */
     public static AuthHolder getAuthentication(){
-        return new AuthHolder("test-app",getGCPTestApiKey());
+        return new AuthHolder("test-app", getGCPTestApiKey());
     }
 
     @BeforeClass
