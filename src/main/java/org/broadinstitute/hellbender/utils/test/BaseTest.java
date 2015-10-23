@@ -152,8 +152,8 @@ public abstract class BaseTest {
      *
      * @return a PipelineOptions object containing our API key
      */
-    public static PipelineOptions getAuthenticatedPipelineOptions() {
-        final GCSOptions popts = PipelineOptionsFactory.as(GCSOptions.class);
+    public static AuthHolder getAuthHolder() {
+        final AuthHolder authHolder = new AuthHolder("test-app",getGCPTestApiKey(),)
         popts.setApiKey(getGCPTestApiKey());
         return popts;
     }

@@ -61,7 +61,7 @@ public final class BucketUtilsTest extends BaseTest {
         File dest = createTempFile("copy-empty", ".vcf");
         final String intermediate = BucketUtils.randomRemotePath(getGCPTestStaging(), "test-copy-empty", ".vcf");
         Assert.assertTrue(BucketUtils.isCloudStorageUrl(intermediate), "!BucketUtils.isCloudStorageUrl(intermediate)");
-        PipelineOptions popts = getAuthenticatedPipelineOptions();
+        PipelineOptions popts = getAuthHolder();
         BucketUtils.copyFile(src, popts, intermediate);
         BucketUtils.copyFile(intermediate, popts, dest.getPath());
         IOUtil.assertFilesEqual(new File(src), dest);

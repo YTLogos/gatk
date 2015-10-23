@@ -55,7 +55,7 @@ public class ReferenceUtilsUnitTest extends BaseTest {
     @Test(groups = {"bucket"})
     public void testLoadFastaDictionaryFromGCSBucket() throws IOException {
         final String bucketDictionary = getGCPTestInputPath() + "org/broadinstitute/hellbender/utils/ReferenceUtilsTest.dict";
-        final PipelineOptions popts = getAuthenticatedPipelineOptions();
+        final PipelineOptions popts = getAuthHolder();
 
         try ( final InputStream referenceDictionaryStream = BucketUtils.openFile(bucketDictionary, popts) ) {
             final SAMSequenceDictionary dictionary = ReferenceUtils.loadFastaDictionary(referenceDictionaryStream);
