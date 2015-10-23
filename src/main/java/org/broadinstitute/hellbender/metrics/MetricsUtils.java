@@ -13,9 +13,7 @@ import java.io.PrintWriter;
  */
 public final class MetricsUtils {
 
-
     private MetricsUtils(){} //don't instantiate this utility class
-
 
     /**
      * Write a {@link MetricsFile} to the given path, can be any destination supported by {@link BucketUtils#createFile(String, AuthHolder)}

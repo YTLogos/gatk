@@ -47,7 +47,7 @@ public class MetricsUtilsTest extends BaseTest {
     }
 
     @Test(dataProvider = "metricsPaths", groups = "cloud")
-    public void testSaveMetrics(String destinationPrefix) throws Exception {
+    public void testSaveMetrics(String destinationPrefix) throws IOException {
         final String outputPath = BucketUtils.getTempFilePath(destinationPrefix, ".txt", getAuthentication());
         TestMetric testMetric = new TestMetric();
         testMetric.value1 = 10;
