@@ -83,7 +83,7 @@ public final class MarkDuplicatesSpark extends GATKSparkTool {
 
         if (metricsFile != null) {
             final JavaPairRDD<String, DuplicationMetrics> metrics = MarkDuplicatesSparkUtils.generateMetrics(getHeaderForReads(), finalReads);
-            MarkDuplicatesSparkUtils.writeMetricsToStream(metrics, metricsFile, getAuthHolder());
+            MarkDuplicatesSparkUtils.saveMetricsRDD(metrics, metricsFile, getAuthHolder());
         }
     }
 }

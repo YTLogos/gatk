@@ -242,7 +242,7 @@ public class MarkDuplicatesSparkUtils {
                 });
     }
 
-    public static void writeMetricsToStream(final JavaPairRDD<String, DuplicationMetrics> metricsRDD, final String metricsOutputPath, AuthHolder authHolder) {
+    public static void saveMetricsRDD(final JavaPairRDD<String, DuplicationMetrics> metricsRDD, final String metricsOutputPath, AuthHolder authHolder) {
         final MetricsFile<DuplicationMetrics, Double> metrics = new MetricsFile<>();
         for (final Map.Entry<String, DuplicationMetrics> entry : metricsRDD.collectAsMap().entrySet()) {
             metrics.addMetric(entry.getValue());
