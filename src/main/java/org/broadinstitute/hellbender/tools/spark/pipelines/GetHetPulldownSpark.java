@@ -14,8 +14,8 @@ import org.broadinstitute.hellbender.cmdline.Argument;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgramProperties;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.cmdline.programgroups.SparkProgramGroup;
-import org.broadinstitute.hellbender.engine.spark.BroadcastJoinReadsWithRefBases;
 import org.broadinstitute.hellbender.engine.spark.GATKSparkTool;
+import org.broadinstitute.hellbender.engine.spark.ShuffleJoinReadsWithRefBases;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.exome.HashedListTargetCollection;
 import org.broadinstitute.hellbender.tools.exome.TargetCollection;
@@ -105,7 +105,7 @@ public final class GetHetPulldownSpark extends GATKSparkTool {
 
         final JavaRDD<GATKRead> rawReads = getReads();
         final JavaRDD<GATKRead> reads = rawReads.filter(read -> !read.isUnmapped() && read.getStart() <= read.getEnd() && !read.isDuplicate());
-        final JavaPairRDD<GATKRead, ReferenceBases> readsWithRefBases = BroadcastJoinReadsWithRefBases.addBases(getReference(), reads);
+        final JavaPairRDD<GATKRead, ReferenceBases> readsWithRefBases = ShuffleJoinReadsWithRefBases.addBases(getReference(), reads);
 
         Function<Tuple2<Locatable, Tuple2<Integer, Integer>>, Boolean> filter;
         if (mode.equals(NORMAL_MODE_ARGUMENT)) {
