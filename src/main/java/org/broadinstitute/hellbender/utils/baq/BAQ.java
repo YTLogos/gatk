@@ -526,13 +526,13 @@ public final class BAQ implements Serializable {
     }
 
     public BAQCalculationResult calcBAQFromHMM(GATKRead read, ReferenceDataSource refDS) {
-        final SimpleInterval referenceWindow = getReferenceWindowForRead(read, getBandWidth(), includeClippedBases);
+        final SimpleInterval referenceWindow = getReferenceWindowForRead(read, cb, includeClippedBases);
 
         if ( referenceWindow.getEnd() > refDS.getSequenceDictionary().getSequence(read.getContig()).getSequenceLength() ) {
             return null;
         } else {
             // now that we have the start and stop, get the reference sequence covering it
-            ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
+            final ReferenceSequence refSeq = refDS.queryAndPrefetch(referenceWindow.getContig(), referenceWindow.getStart(), referenceWindow.getEnd());
             return calcBAQFromHMM(read, refSeq.getBases(), (referenceWindow.getStart() - (includeClippedBases ? read.getUnclippedStart() : read.getStart())));
         }
     }
@@ -634,7 +634,7 @@ public final class BAQ implements Serializable {
                     readI += l; refI += l;
                     break;
                 default:
-                    throw new GATKException("BUG: Unexpected CIGAR element " + elt + " in read " + read.getName());
+                    throw new GATKException("BUG: Unexpected CIGAR element " + elt.getOperator() + " in read " + read.getName());
             }
         }
         if ( readI != read.getLength() ) // odd cigar string

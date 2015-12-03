@@ -147,7 +147,7 @@ public final class CachingIndexedFastaSequenceFile extends IndexedFastaSequenceF
     public static CachingIndexedFastaSequenceFile checkAndCreate(final File fastaFile) {
         // does the fasta file exist? check that first...
         if (!fastaFile.exists())
-            throw new UserException("The fasta file you specified (" + fastaFile.getAbsolutePath() + ") does not exist.");
+            throw new UserException.CouldNotReadInputFile("The fasta file you specified (" + fastaFile.getAbsolutePath() + ") does not exist.");
 
         final boolean isGzipped = fastaFile.getAbsolutePath().endsWith(".gz");
         if ( isGzipped ) {
