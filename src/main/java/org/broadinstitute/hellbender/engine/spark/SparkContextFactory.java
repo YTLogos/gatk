@@ -117,7 +117,7 @@ public final class SparkContextFactory {
     }
 
     private static JavaSparkContext createTestSparkContext() {
-        final SparkConf sparkConf = setupSparkConf("TestContext", DEFAULT_SPARK_MASTER, TEST_ATTRIBUTES);
+        final SparkConf sparkConf = setupSparkConf("TestContext", "local[1]", TEST_ATTRIBUTES);
         return new JavaSparkContext(sparkConf);
     }
 }
