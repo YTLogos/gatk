@@ -249,8 +249,8 @@ public class ReadsSparkSink {
                 IOUtils.copyBytes(in, out, conf, false);
             }
         }
-        for (final FileStatus part : parts) {
-            fs.delete(part.getPath(), false);
-        }
+//        for (final FileStatus part : parts) {
+//            fs.delete(part.getPath(), false);
+//        }
     }
 }
