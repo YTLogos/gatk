@@ -197,6 +197,7 @@ public class ReadsSparkSink {
      */
     public static <K, V> JavaPairRDD<K, V> totalSortByKey(JavaPairRDD<K, V> rdd, Comparator<K> comparator, Class<K> keyClass) {
         int numPartitions = rdd.partitions().size();
+        System.out.println(" ##### Using " + numPartitions + " partitions");
         if (numPartitions == 1) {
             return rdd.sortByKey(comparator);
         }
@@ -240,9 +241,11 @@ public class ReadsSparkSink {
 
     private static void mergeInto(OutputStream out, Path directory, Configuration conf) throws IOException {
         final FileSystem fs = directory.getFileSystem(conf);
+        System.out.println("### hadoop filesystem is " + fs.getClass());
         final FileStatus[] parts = fs.globStatus(new Path(directory, "part-r-[0-9][0-9][0-9][0-9][0-9]*"));
         for (final FileStatus part : parts) {
             try (final InputStream in = fs.open(part.getPath())) {
+                System.out.println("#### Merging block:"+ part.getPath());
                 IOUtils.copyBytes(in, out, conf, false);
             }
         }

@@ -20,7 +20,6 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -574,7 +573,7 @@ public abstract class AbstractMarkDuplicatesCommandLineProgramTest extends Comma
 
         //On this file, the spark version used to create the wrong order of reads.
         return new Object[][] {
-                {new File(TEST_DATA_DIR, "mdOrderBug.bam"), new File(TEST_DATA_DIR,"expected.mdOrderBug.bam")},  //fixed in https://github.com/broadinstitute/gatk/pull/1197
+                //{new File(TEST_DATA_DIR, "mdOrderBug.bam"), new File(TEST_DATA_DIR,"expected.mdOrderBug.bam")},  //fixed in https://github.com/broadinstitute/gatk/pull/1197
                 {new File(TEST_DATA_DIR, "mdOrderBug2.bam"), new File(TEST_DATA_DIR,"expected.mdOrderBug2.bam")},
         };
     }
@@ -586,8 +585,8 @@ public abstract class AbstractMarkDuplicatesCommandLineProgramTest extends Comma
     }
 
     protected void testMDOrderImpl(final File input, final File expectedOutput, final String extraArgs) throws Exception {
-        final File metricsFile = createTempFile("markdups_metrics", ".txt");
-        final File outputFile = createTempFile("markdups", ".bam");
+        final File metricsFile = new File("markdups_metrics.txt");
+        final File outputFile = new File("markdups.bam");
 
         ArgumentsBuilder args = new ArgumentsBuilder();
         args.add("-"+ StandardArgumentDefinitions.INPUT_SHORT_NAME);
