@@ -9,7 +9,6 @@ jdk:
 - oraclejdk8
 env:
   matrix:
-  d CLOUD=mandatory
   - CLOUD=false
   global:
   #gradle needs this
