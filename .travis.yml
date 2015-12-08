@@ -60,7 +60,7 @@ script:
     echo "Can't run cloud tests without keys so don't run tests";
   else
    bash scripts/install_git_lfs.sh;
-   ./gradlew test -Dtest.single=MarkDuplicatesSparkIntegrationTest ;
+   ./gradlew test -Dtest.single=MarkDuplicatesSparkIntegrationTest
   fi
 after_failure:
 - dmesg | tail -100
