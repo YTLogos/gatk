@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,7 +40,7 @@ public class MarkDuplicatesSparkIntegrationTest extends AbstractMarkDuplicatesCo
     }
 
     // This test passes locally, but fails intermittently in travis. Disabled until we determine the cause.
-    @Test(dataProvider = "testMDdata", enabled = false)
+    @Test(dataProvider = "testMDdata", enabled = true)
     @Override
     public void testMDOrder(final File input, final File expectedOutput) throws Exception {
         // Override this test case to provide a --parallelism argument, so that we write a single, sorted
