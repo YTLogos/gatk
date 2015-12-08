@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public final class SparkContextFactory {
 
-    public static final String DEFAULT_SPARK_MASTER = "local[*]";
+    public static final String DEFAULT_SPARK_MASTER = "local[1]";
     private static final boolean SPARK_DEBUG_ENABLED = Boolean.getBoolean("gatk.spark.debug");
 
     public static final Map<String, String> TEST_ATTRIBUTES = ImmutableMap.<String, String>builder()
@@ -117,7 +117,7 @@ public final class SparkContextFactory {
     }
 
     private static JavaSparkContext createTestSparkContext() {
-        final SparkConf sparkConf = setupSparkConf("TestContext", "local[1]", TEST_ATTRIBUTES);
+        final SparkConf sparkConf = setupSparkConf("TestContext", DEFAULT_SPARK_MASTER, TEST_ATTRIBUTES);
         return new JavaSparkContext(sparkConf);
     }
 }
