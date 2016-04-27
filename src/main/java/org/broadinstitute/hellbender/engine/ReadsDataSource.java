@@ -137,6 +137,20 @@ public final class ReadsDataSource implements GATKDataSource<GATKRead>, AutoClos
             if ( ! reader.hasIndex() ) {
                 indicesAvailable = false;
             }
+            else {
+                File indexFile = SamFiles.findIndex(samFile);
+                if (indexFile.lastModified() < samFile.lastModified()) {
+                    String message = "WARNING: index file " + indexFile.getAbsolutePath() +
+                            " is older than alignment file " + samFile.getAbsolutePath();
+                    //TODO: what should be the trigger to opt-in so we throw on out-of-date index ?
+                    if (samReaderFactory.validationStringency() == ValidationStringency.STRICT) {
+                        throw new IllegalArgumentException(message);
+                    }
+                    else {
+                        logger.warn(message);
+                    }
+                }
+            }
 
             readers.put(reader, null);
             backingFiles.put(reader, samFile);
