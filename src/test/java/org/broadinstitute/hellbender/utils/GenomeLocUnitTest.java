@@ -174,7 +174,7 @@ public final class GenomeLocUnitTest extends BaseTest {
             }
 
             this.overlapSize = shared;
-            this.overlapFraction = Math.min((1.0*shared)/gl1.size(), (1.0*shared)/gl2.size());
+            this.overlapFraction = StrictMath.min((1.0*shared)/gl1.size(), (1.0*shared)/gl2.size());
             super.setName(String.format("%d-%d / %d-%d overlap=%d / %.2f", start1, stop1, start2, stop2, overlapSize, overlapFraction));
         }
     }

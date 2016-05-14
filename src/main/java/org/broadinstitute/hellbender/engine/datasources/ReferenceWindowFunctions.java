@@ -51,7 +51,7 @@ public class ReferenceWindowFunctions {
         @Override
         public SimpleInterval apply( GATKRead read ) {
             // TODO: truncate interval at contig end (requires a sequence dictionary)
-            return new SimpleInterval(read.getContig(), Math.max(read.getStart() - leadingWindowBases, 1), read.getEnd() + trailingWindowBases);
+            return new SimpleInterval(read.getContig(), StrictMath.max(read.getStart() - leadingWindowBases, 1), read.getEnd() + trailingWindowBases);
         }
     }
 }

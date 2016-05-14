@@ -5,8 +5,8 @@ import org.broadinstitute.hellbender.utils.QualityUtils;
 import static org.broadinstitute.hellbender.utils.pairhmm.PairHMMModel.*;
 
 public class LoglessPairHMM extends N2MemoryPairHMM {
-    static final double INITIAL_CONDITION = Math.pow(2, 1020);
-    static final double INITIAL_CONDITION_LOG10 = Math.log10(INITIAL_CONDITION);
+    static final double INITIAL_CONDITION = StrictMath.pow(2, 1020);
+    static final double INITIAL_CONDITION_LOG10 = StrictMath.log10(INITIAL_CONDITION);
 
     // we divide e by 3 because the observed base could have come from any of the non-observed alleles
     static final double TRISTATE_CORRECTION = 3.0;
@@ -64,7 +64,7 @@ public class LoglessPairHMM extends N2MemoryPairHMM {
         for (int j = 1; j < paddedHaplotypeLength; j++) {
             finalSumProbabilities += matchMatrix[endI][j] + insertionMatrix[endI][j];
         }
-        return Math.log10(finalSumProbabilities) - INITIAL_CONDITION_LOG10;
+        return StrictMath.log10(finalSumProbabilities) - INITIAL_CONDITION_LOG10;
     }
 
     /**

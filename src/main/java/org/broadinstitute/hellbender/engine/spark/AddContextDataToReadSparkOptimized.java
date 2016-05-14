@@ -135,8 +135,8 @@ public final class AddContextDataToReadSparkOptimized implements Serializable {
         SerializableFunction<GATKRead, SimpleInterval> referenceWindowFunction = refSource.getReferenceWindowFunction();
         for (GATKRead r : shard.reads) {
             SimpleInterval readRefs = referenceWindowFunction.apply(r);
-            start = Math.min(readRefs.getStart(), start);
-            end = Math.max(readRefs.getEnd(), end);
+            start = StrictMath.min(readRefs.getStart(), start);
+            end = StrictMath.max(readRefs.getEnd(), end);
         }
 
         if (start==Integer.MAX_VALUE) {
@@ -189,7 +189,7 @@ public final class AddContextDataToReadSparkOptimized implements Serializable {
             this.optFilter = optFilter;
             // it's OK if this goes beyond the contig boundaries.
             lastValidPos = shard.interval.getEnd() + margin;
-            firstValidPos = Math.max(shard.interval.getStart() - margin, 1);
+            firstValidPos = StrictMath.max(shard.interval.getStart() - margin, 1);
             ArrayList<SimpleInterval> ints =new ArrayList<>();
             ints.add(shard.interval);
             subshards = IntervalUtils.cutToShards(ints, outputShardSize);
@@ -336,7 +336,7 @@ public final class AddContextDataToReadSparkOptimized implements Serializable {
         IntervalsSkipList<GATKVariant> intervals = new IntervalsSkipList<>(variants);
         ArrayList<ContextShard> ret = new ArrayList<>();
         for (SimpleInterval s : shardedIntervals) {
-            int start = Math.max(s.getStart() - margin, 1);
+            int start = StrictMath.max(s.getStart() - margin, 1);
             int end = s.getEnd() + margin;
             // here it's OK if end is past the contig's boundary, there just won't be any variant there.
             SimpleInterval expandedInterval = new SimpleInterval(s.getContig(), start, end);

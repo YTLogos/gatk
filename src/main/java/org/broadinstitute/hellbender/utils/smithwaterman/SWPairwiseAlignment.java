@@ -332,15 +332,15 @@ public final class SWPairwiseAlignment {
                                                 && (step_diag >= step_right);
 
                 if ( diagHighestOrEqual ) {
-                    curRow[j]= Math.max(MATRIX_MIN_CUTOFF, step_diag);
+                    curRow[j]= StrictMath.max(MATRIX_MIN_CUTOFF, step_diag);
                     curBackTrackRow[j]=0;
                 }
                 else if(step_right>=step_down) { //moving right is the highest
-                    curRow[j]= Math.max(MATRIX_MIN_CUTOFF, step_right);
+                    curRow[j]= StrictMath.max(MATRIX_MIN_CUTOFF, step_right);
                     curBackTrackRow[j]=-ki; // negative = horizontal
                 }
                 else  {
-                    curRow[j]= Math.max(MATRIX_MIN_CUTOFF, step_down);
+                    curRow[j]= StrictMath.max(MATRIX_MIN_CUTOFF, step_down);
                     curBackTrackRow[j]= kd; // positive=vertical
                 }
             }
@@ -402,7 +402,7 @@ public final class SWPairwiseAlignment {
                     final int curScore=bottomRow[j];
                     // data_offset is the offset of [n][j]
                     if ( curScore > maxscore ||
-                            (curScore == maxscore && Math.abs(refLength - j) < Math.abs(p1 - p2) ) ) {
+                            (curScore == maxscore && StrictMath.abs(refLength - j) < StrictMath.abs(p1 - p2) ) ) {
                         p1 = refLength;
                         p2 = j ;
                         maxscore = curScore;
@@ -587,7 +587,7 @@ public final class SWPairwiseAlignment {
         for ( ; j < read.length; j++ ) bread.append((char)read[j]);
 
         int pos = 0 ;
-        final int maxlength = Math.max(match.length(), Math.max(bread.length(), bref.length()));
+        final int maxlength = StrictMath.max(match.length(), StrictMath.max(bread.length(), bref.length()));
         while ( pos < maxlength ) {
             print_cautiously(match,pos,width);
             print_cautiously(bread,pos,width);
@@ -610,7 +610,7 @@ public final class SWPairwiseAlignment {
             System.out.println();
             return;
         }
-        final int end = Math.min(start + width, s.length());
+        final int end = StrictMath.min(start + width, s.length());
         System.out.println(s.substring(start,end));
     }
 }

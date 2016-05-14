@@ -56,7 +56,7 @@ public final class GenotypeSummariesUnitTest {
 
         Assert.assertEquals(resultMap.get(GATKVCFConstants.NOCALL_CHROM_KEY), 0); // 1 no-called called sample
         Assert.assertEquals(Double.parseDouble((String) resultMap.get(GATKVCFConstants.GQ_MEAN_KEY)), 35.0, 1E-4); // mean GQ is 35
-        Assert.assertEquals(Double.parseDouble((String) resultMap.get(GATKVCFConstants.GQ_STDEV_KEY)), Math.sqrt(Math.pow(30-35, 2)+Math.pow(40-35, 2)), 1E-2);
+        Assert.assertEquals(Double.parseDouble((String) resultMap.get(GATKVCFConstants.GQ_STDEV_KEY)), StrictMath.sqrt(StrictMath.pow(30-35, 2)+StrictMath.pow(40-35, 2)), 1E-2);
         Assert.assertEquals(GS.getKeyNames(), Arrays.asList(GATKVCFConstants.NOCALL_CHROM_KEY, GATKVCFConstants.GQ_MEAN_KEY, GATKVCFConstants.GQ_STDEV_KEY));
     }
 

@@ -40,7 +40,7 @@ public final class BaseRecalibratorSparkFn {
         final RecalibrationTables combinedTables = unmergedTables.treeAggregate(emptyRecalibrationTable,
                 RecalibrationTables::inPlaceCombine,
                 RecalibrationTables::inPlaceCombine,
-                Math.max(1, (int)(Math.log(unmergedTables.partitions().size()) / Math.log(2))));
+                StrictMath.max(1, (int)(StrictMath.log(unmergedTables.partitions().size()) / StrictMath.log(2))));
 
         BaseRecalibrationEngine.finalizeRecalibrationTables(combinedTables);
 

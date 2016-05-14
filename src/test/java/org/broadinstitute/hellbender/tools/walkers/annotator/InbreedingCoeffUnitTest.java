@@ -177,7 +177,7 @@ public final class InbreedingCoeffUnitTest {
 
         Assert.assertEquals(IC1, 10000+1);
         Assert.assertEquals(IC2, 10000+1);
-        Assert.assertTrue(Math.abs(ICsingleton) < Math.abs(ICcommon), String.format("singleton=%f common=%f", ICsingleton, ICcommon));
+        Assert.assertTrue(StrictMath.abs(ICsingleton) < StrictMath.abs(ICcommon), String.format("singleton=%f common=%f", ICsingleton, ICcommon));
     }
 
     @Test
@@ -207,7 +207,7 @@ public final class InbreedingCoeffUnitTest {
 
         Assert.assertEquals(IC1, 10000+1);
         Assert.assertEquals(IC2, 10000+1);
-        Assert.assertTrue(Math.abs(ICsingleton) < Math.abs(ICcommon), String.format("singleton=%f common=%f", ICsingleton, ICcommon));
+        Assert.assertTrue(StrictMath.abs(ICsingleton) < StrictMath.abs(ICcommon), String.format("singleton=%f common=%f", ICsingleton, ICcommon));
     }
 
     @Test
@@ -238,7 +238,7 @@ public final class InbreedingCoeffUnitTest {
         final VariantContext hundredton = makeVC("hundredton", Arrays.asList(Aref, T), allGTs.toArray(new Genotype[allGTs.size()]));
         final double IChundredton = new InbreedingCoeff().calculateIC(hundredton, hundredton.getGenotypes()).getRight();
 
-        Assert.assertTrue(Math.abs(ICsingleton) < Math.abs(IChundredton), String.format("singleton=%f hundredton=%f", ICsingleton, IChundredton));
+        Assert.assertTrue(StrictMath.abs(ICsingleton) < StrictMath.abs(IChundredton), String.format("singleton=%f hundredton=%f", ICsingleton, IChundredton));
 
         for ( int i = numHetGTs; i < numHomRefGTs; i++ )
             allGTs.add(makeG("het" + i, Aref, T, hetPLs));
@@ -246,7 +246,7 @@ public final class InbreedingCoeffUnitTest {
         final VariantContext common = makeVC("common", Arrays.asList(Aref, T), allGTs.toArray(new Genotype[allGTs.size()]));
         final double ICcommon = new InbreedingCoeff().calculateIC(common, common.getGenotypes()).getRight();
 
-        Assert.assertTrue(Math.abs(IChundredton) < Math.abs(ICcommon), String.format("hundredton=%f common=%f", IChundredton, ICcommon));
+        Assert.assertTrue(StrictMath.abs(IChundredton) < StrictMath.abs(ICcommon), String.format("hundredton=%f common=%f", IChundredton, ICcommon));
     }
 
     @Test
@@ -270,7 +270,7 @@ public final class InbreedingCoeffUnitTest {
         final VariantContext allHet = makeVC("allHet", Arrays.asList(Aref, T), allHetGTs.toArray(new Genotype[allHetGTs.size()]));
         final double ICHets = new InbreedingCoeff().calculateIC(allHet, allHet.getGenotypes()).getRight();
 
-        Assert.assertTrue(Math.abs(ICsingleton) < Math.abs(ICHets), String.format("singleton=%f allHets=%f", ICsingleton, ICHets));
+        Assert.assertTrue(StrictMath.abs(ICsingleton) < StrictMath.abs(ICHets), String.format("singleton=%f allHets=%f", ICsingleton, ICHets));
     }
 
     @Test

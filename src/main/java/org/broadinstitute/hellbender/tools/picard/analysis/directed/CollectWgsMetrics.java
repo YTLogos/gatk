@@ -183,7 +183,7 @@ public final class CollectWgsMetrics extends PicardCommandLineProgram {
                 }
             }
 
-            final int depth = Math.min(readNames.size(), max);
+            final int depth = StrictMath.min(readNames.size(), max);
             if (depth < readNames.size()) basesExcludedByCapping += readNames.size() - max;
             HistogramArray[depth]++;
 

@@ -238,9 +238,9 @@ public final class AssemblyRegion implements Locatable {
         if ( extensionSize < 0) {
             throw new IllegalArgumentException("the extensionSize size must be 0 or greater");
         }
-        final int extendStart = Math.max(1,span.getStart() - extensionSize);
+        final int extendStart = StrictMath.max(1,span.getStart() - extensionSize);
         final int maxStop = header.getSequence(span.getContig()).getSequenceLength();
-        final int extendStop = Math.min(span.getEnd() + extensionSize, maxStop);
+        final int extendStop = StrictMath.min(span.getEnd() + extensionSize, maxStop);
         final SimpleInterval extendedSpan = new SimpleInterval(span.getContig(), extendStart, extendStop);
         return trim(span, extendedSpan);
 
@@ -290,9 +290,9 @@ public final class AssemblyRegion implements Locatable {
         }
 
         final SimpleInterval subActive = getSpan().intersect(span);
-        final int requiredOnRight = Math.max(extendedSpan.getEnd() - subActive.getEnd(), 0);
-        final int requiredOnLeft = Math.max(subActive.getStart() - extendedSpan.getStart(), 0);
-        final int requiredExtension = Math.min(Math.max(requiredOnLeft, requiredOnRight), getExtension());
+        final int requiredOnRight = StrictMath.max(extendedSpan.getEnd() - subActive.getEnd(), 0);
+        final int requiredOnLeft = StrictMath.max(subActive.getStart() - extendedSpan.getStart(), 0);
+        final int requiredExtension = StrictMath.min(StrictMath.max(requiredOnLeft, requiredOnRight), getExtension());
 
         final AssemblyRegion result = new AssemblyRegion( subActive, Collections.<ActivityProfileState>emptyList(), isActive, requiredExtension, header );
 
@@ -462,8 +462,8 @@ public final class AssemblyRegion implements Locatable {
         }
 
         return referenceReader.getSubsequenceAt( genomeLoc.getContig(),
-                Math.max(1, genomeLoc.getStart() - padding),
-                Math.min(referenceReader.getSequenceDictionary().getSequence(genomeLoc.getContig()).getSequenceLength(), genomeLoc.getEnd() + padding) ).getBases();
+                StrictMath.max(1, genomeLoc.getStart() - padding),
+                StrictMath.min(referenceReader.getSequenceDictionary().getSequence(genomeLoc.getContig()).getSequenceLength(), genomeLoc.getEnd() + padding) ).getBases();
     }
 
     /**

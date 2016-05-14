@@ -116,7 +116,7 @@ public class BaseRecalibratorSparkSharded extends SparkCommandLineProgram {
         final RecalibrationTables table = tables.treeAggregate(emptyRecalibrationTable,
                 RecalibrationTables::inPlaceCombine,
                 RecalibrationTables::inPlaceCombine,
-                Math.max(1, (int)(Math.log(tables.partitions().size()) / Math.log(2))));
+                StrictMath.max(1, (int)(StrictMath.log(tables.partitions().size()) / StrictMath.log(2))));
 
         BaseRecalibrationEngine.finalizeRecalibrationTables(table);
 

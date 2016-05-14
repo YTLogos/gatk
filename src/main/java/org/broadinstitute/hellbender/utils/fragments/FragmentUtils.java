@@ -42,7 +42,7 @@ public final class FragmentUtils {
 
         final Pair<Integer, Boolean> pair = ReadUtils.getReadCoordinateForReferenceCoordinate(clippedFirstRead, clippedSecondRead.getStart());
         final int firstReadStop = ( pair.getRight() ? pair.getLeft() + 1 : pair.getLeft() );
-        final int numOverlappingBases = Math.min(clippedFirstRead.getLength() - firstReadStop, clippedSecondRead.getLength());
+        final int numOverlappingBases = StrictMath.min(clippedFirstRead.getLength() - firstReadStop, clippedSecondRead.getLength());
 
         final byte[] firstReadBases = clippedFirstRead.getBases();
         final byte[] firstReadQuals = clippedFirstRead.getBaseQualities();
@@ -55,8 +55,8 @@ public final class FragmentUtils {
             final byte secondReadBase = secondReadBases[i];
 
             if ( firstReadBase == secondReadBase ) {
-                firstReadQuals[firstReadIndex] = (byte) Math.min(firstReadQuals[firstReadIndex], HALF_OF_DEFAULT_PCR_ERROR_QUAL);
-                secondReadQuals[i] = (byte) Math.min(secondReadQuals[i], HALF_OF_DEFAULT_PCR_ERROR_QUAL);
+                firstReadQuals[firstReadIndex] = (byte) StrictMath.min(firstReadQuals[firstReadIndex], HALF_OF_DEFAULT_PCR_ERROR_QUAL);
+                secondReadQuals[i] = (byte) StrictMath.min(secondReadQuals[i], HALF_OF_DEFAULT_PCR_ERROR_QUAL);
             } else {
                 // TODO -- use the proper statistical treatment of the quals from DiploidSNPGenotypeLikelihoods.java
                 firstReadQuals[firstReadIndex] = 0;

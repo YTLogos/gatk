@@ -229,7 +229,7 @@ public final class GenotypeLikelihoodCalculators {
             throw new IllegalArgumentException("the requested maximum allele cannot be negative: " + alleleCount);
         }
         final int length = genotypeOffsetTable[ploidy][alleleCount];
-        final int strongRefLength = length == GENOTYPE_COUNT_OVERFLOW ? MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY : Math.min(length, MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY);
+        final int strongRefLength = length == GENOTYPE_COUNT_OVERFLOW ? MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY : StrictMath.min(length, MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY);
         final GenotypeAlleleCounts[] result = new GenotypeAlleleCounts[strongRefLength];
         result[0] = GenotypeAlleleCounts.first(ploidy);
         for (int genotypeIndex = 1; genotypeIndex < strongRefLength; genotypeIndex++) {
@@ -276,8 +276,8 @@ public final class GenotypeLikelihoodCalculators {
             return;
         }
 
-        final int newMaximumPloidy = Math.max(maximumPloidy, requestedMaximumPloidy);
-        final int newMaximumAllele = Math.max(maximumAllele, requestedMaximumAllele);
+        final int newMaximumPloidy = StrictMath.max(maximumPloidy, requestedMaximumPloidy);
+        final int newMaximumAllele = StrictMath.max(maximumAllele, requestedMaximumAllele);
 
         // Update tables first.
         alleleFirstGenotypeOffsetByPloidy = buildAlleleFirstGenotypeOffsetTable(newMaximumPloidy,newMaximumAllele);

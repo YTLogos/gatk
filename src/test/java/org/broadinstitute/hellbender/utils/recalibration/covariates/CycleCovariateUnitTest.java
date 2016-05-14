@@ -13,7 +13,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static java.lang.Math.abs;
+import static java.lang.StrictMath.abs;
 
 public final class CycleCovariateUnitTest extends BaseTest {
 

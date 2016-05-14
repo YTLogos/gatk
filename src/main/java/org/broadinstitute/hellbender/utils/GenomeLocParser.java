@@ -337,8 +337,8 @@ public final class GenomeLocParser {
             return GenomeLoc.UNMAPPED;
         }
         else {
-            // Use Math.max to ensure that end >= start (Picard assigns the end to reads that are entirely within an insertion as start-1)
-            final int end = Math.max(read.getEnd(), read.getStart());
+            // Use StrictMath.max to ensure that end >= start (Picard assigns the end to reads that are entirely within an insertion as start-1)
+            final int end = StrictMath.max(read.getEnd(), read.getStart());
             return createGenomeLoc(read.getContig(), getSequenceDictionary().getSequenceIndex(read.getContig()), read.getStart(), end, false);
         }
     }
@@ -459,8 +459,8 @@ public final class GenomeLocParser {
      */
     public GenomeLoc createGenomeLocOnContig(final String contig, final int contigIndex, final int start, final int stop) {
         final int contigLength = contigInfo.getSequence(contigIndex).getSequenceLength();
-        final int boundedStart = Math.max(1, start);
-        final int boundedStop = Math.min(contigLength, stop);
+        final int boundedStart = StrictMath.max(1, start);
+        final int boundedStop = StrictMath.min(contigLength, stop);
 
         if ( boundedStart > contigLength || boundedStop < 1 )
             // there's no meaningful way to create this genome loc, as the start and stop are off the contig

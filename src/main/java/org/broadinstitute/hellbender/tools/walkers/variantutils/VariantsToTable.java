@@ -389,7 +389,7 @@ public final class VariantsToTable extends VariantWalker {
             int maxLength = 0;
             for ( final Allele a : vc.getAlternateAlleles() ) {
                 final int length = a.length() - vc.getReference().length();
-                if( Math.abs(length) > Math.abs(maxLength) ) { maxLength = length; }
+                if( StrictMath.abs(length) > StrictMath.abs(maxLength) ) { maxLength = length; }
             }
             return Integer.toString(maxLength);
         });

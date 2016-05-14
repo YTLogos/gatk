@@ -137,7 +137,7 @@ public final class CollectGcBiasMetrics extends SinglePassSamProgram {
             m.READ_STARTS = readsByGc[i];
             if (errorsByGc[i] > 0) m.MEAN_BASE_QUALITY = QualityUtil.getPhredScoreFromObsAndErrors(basesByGc[i], errorsByGc[i]);
             m.NORMALIZED_COVERAGE = (m.READ_STARTS / (double) m.WINDOWS) / meanReadsPerWindow;
-            m.ERROR_BAR_WIDTH = (Math.sqrt(m.READ_STARTS) / (double) m.WINDOWS) / meanReadsPerWindow;
+            m.ERROR_BAR_WIDTH = (StrictMath.sqrt(m.READ_STARTS) / (double) m.WINDOWS) / meanReadsPerWindow;
 
             metricsFile.addMetric(m);
         }

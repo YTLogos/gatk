@@ -518,7 +518,7 @@ public final class CalculateTargetCoverageIntegrationTest extends CommandLinePro
                 // Check row sum agree:
                 long rowCount = 0;
                 for (int c = targetOutInfo.columnCount(); c < matrix.columnCount; c++) {
-                    rowCount += Math.round(matrix.getDouble(r, c) * column.getLong(c - targetOutInfo.columnCount(), 1));
+                    rowCount += StrictMath.round(matrix.getDouble(r, c) * column.getLong(c - targetOutInfo.columnCount(), 1));
                 }
                 Assert.assertEquals(rowCount, row.getLong(r, targetOutInfo.columnCount()));
                 // Check consistent average per bp and column epsilon of 0.005 assume two decimal precision (~ %.2f).

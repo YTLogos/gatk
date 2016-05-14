@@ -127,8 +127,8 @@ public final class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<R
             } else if (rec.getMateUnmappedFlag() || rec.getReferenceIndex() != rec.getMateReferenceIndex()) {
                 fragmentInterval = null;
             } else {
-                final int fragmentStart = Math.min(rec.getAlignmentStart(), rec.getMateAlignmentStart());
-                final int fragmentEnd = CoordMath.getEnd(fragmentStart, Math.abs(rec.getInferredInsertSize()));
+                final int fragmentStart = StrictMath.min(rec.getAlignmentStart(), rec.getMateAlignmentStart());
+                final int fragmentEnd = CoordMath.getEnd(fragmentStart, StrictMath.abs(rec.getInferredInsertSize()));
                 fragmentInterval = new Interval(rec.getReferenceName(), fragmentStart, fragmentEnd);
             }
             if (fragmentInterval != null) {
@@ -136,7 +136,7 @@ public final class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<R
                 int intersectionLength = 0;
                 for (final Interval overlappingInterval : overlappingRibosomalIntervals) {
                     final int thisIntersectionLength = overlappingInterval.getIntersectionLength(fragmentInterval);
-                    intersectionLength = Math.max(intersectionLength, thisIntersectionLength);
+                    intersectionLength = StrictMath.max(intersectionLength, thisIntersectionLength);
                 }
                 if (intersectionLength/(double)fragmentInterval.length() >= rrnaFragmentPercentage) {
                     // Assume entire read is ribosomal.
@@ -317,8 +317,8 @@ public final class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<R
 
                     for (int percent=0; percent<=100; ++percent) {
                         final double p = percent / 100d;
-                        final int start  = (int) Math.max(0, lastIndex * (p - 0.005));
-                        final int end    = (int) Math.min(lastIndex, lastIndex * (p + 0.005));
+                        final int start  = (int) StrictMath.max(0, lastIndex * (p - 0.005));
+                        final int end    = (int) StrictMath.min(lastIndex, lastIndex * (p + 0.005));
                         final int length = end - start + 1;
 
                         double sum = 0;
@@ -366,7 +366,7 @@ public final class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<R
                 for (final Gene.Transcript tx : gene) {
                     final int[] cov = transcriptCoverage.get(tx);
 
-                    if (tx.length() < Math.max(minimumLength, 100)) continue;
+                    if (tx.length() < StrictMath.max(minimumLength, 100)) continue;
                     if (cov == null) continue;
 
                     final double mean = MathUtils.mean(MathUtils.promote(cov), 0, cov.length);
@@ -385,7 +385,7 @@ public final class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<R
             int i=0;
             for (final double d : bestPerGene.values()) coverages[i++] = d;
             Arrays.sort(coverages);
-            final double min = coverages.length == 0 ? 0 : coverages[Math.max(0, coverages.length - 1001)];
+            final double min = coverages.length == 0 ? 0 : coverages[StrictMath.max(0, coverages.length - 1001)];
 
             // And finally build the output map
             final Map<Gene.Transcript, int[]> retval = new HashMap<>();

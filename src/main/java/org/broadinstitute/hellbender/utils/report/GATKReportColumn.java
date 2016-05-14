@@ -112,7 +112,7 @@ public final class GATKReportColumn {
     }
 
     private void updateMaxWidth(final String formatted) {
-        maxWidth = Math.max(formatted.length(), maxWidth);
+        maxWidth = StrictMath.max(formatted.length(), maxWidth);
     }
 
     private void updateFormat(final String formatted) {

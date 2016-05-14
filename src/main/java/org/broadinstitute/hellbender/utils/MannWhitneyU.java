@@ -16,7 +16,7 @@ public final class MannWhitneyU {
 
     private static final NormalDistribution STANDARD_NORMAL = new NormalDistribution(0.0,1.0);
     private static final NormalDistribution APACHE_NORMAL = new NormalDistribution(0.0,1.0,1e-2);
-    private static final double LNSQRT2PI = Math.log(Math.sqrt(2.0 * Math.PI));
+    private static final double LNSQRT2PI = StrictMath.log(StrictMath.sqrt(2.0 * StrictMath.PI));
 
     private final SortedSet<Pair<Number,USet>> observations;
     private int sizeSet1;
@@ -154,7 +154,7 @@ public final class MannWhitneyU {
     private static double getZApprox(final int n, final int m, final long u) {
         final double mean = ( ((long)m)*n+1.0)/2;
         final double var = (((long) n)*m*(n+m+1.0))/12;
-        final double z = ( u - mean )/ Math.sqrt(var);
+        final double z = ( u - mean )/ StrictMath.sqrt(var);
         return z;
     }
 
@@ -198,15 +198,15 @@ public final class MannWhitneyU {
         if ( mode == ExactMode.CUMULATIVE ) {
             z = APACHE_NORMAL.inverseCumulativeProbability(p);
         } else {
-            final double sd = Math.sqrt((1.0 + 1.0 / (1 + n + m)) * (n * m) * (1.0 + n + m) / 12); // biased variance empirically better fit to distribution then asymptotic variance
-            //System.out.printf("SD is %f and Max is %f and prob is %f%n",sd,1.0/Math.sqrt(sd*sd*2.0*Math.PI),p);
-            if ( p > 1.0/ Math.sqrt(sd * sd * 2.0 * Math.PI) ) { // possible for p-value to be outside the range of the normal. Happens at the mean, so z is 0.
+            final double sd = StrictMath.sqrt((1.0 + 1.0 / (1 + n + m)) * (n * m) * (1.0 + n + m) / 12); // biased variance empirically better fit to distribution then asymptotic variance
+            //System.out.printf("SD is %f and Max is %f and prob is %f%n",sd,1.0/StrictMath.sqrt(sd*sd*2.0*StrictMath.PI),p);
+            if ( p > 1.0/ StrictMath.sqrt(sd * sd * 2.0 * StrictMath.PI) ) { // possible for p-value to be outside the range of the normal. Happens at the mean, so z is 0.
                 z = 0.0;
             } else {
                 if ( u >= n*m/2 ) {
-                    z = Math.sqrt(-2.0 * (Math.log(sd) + Math.log(p) + LNSQRT2PI));
+                    z = StrictMath.sqrt(-2.0 * (StrictMath.log(sd) + StrictMath.log(p) + LNSQRT2PI));
                 } else {
-                    z = -Math.sqrt(-2.0 * (Math.log(sd) + Math.log(p) + LNSQRT2PI));
+                    z = -StrictMath.sqrt(-2.0 * (StrictMath.log(sd) + StrictMath.log(p) + LNSQRT2PI));
                 }
             }
         }

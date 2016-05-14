@@ -230,7 +230,7 @@ public final class CountSet implements Set<Integer> {
      */
     private void ensureCapacity(final int capacity) {
         if (elements.length >= capacity) return;
-        final int newLength = Math.max(elements.length << 1, capacity);
+        final int newLength = StrictMath.max(elements.length << 1, capacity);
         elements = Arrays.copyOf(elements, newLength);
     }
 

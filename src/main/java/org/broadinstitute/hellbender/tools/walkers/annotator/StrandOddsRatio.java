@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.StrictMath.max;
+import static java.lang.StrictMath.min;
 
 /**
  * Strand bias estimated by the Symmetric Odds Ratio test
@@ -91,7 +91,7 @@ public final class StrandOddsRatio extends StrandBiasTest implements StandardAnn
         final double refRatio = min(t00, t01)/ max(t00, t01);
         final double altRatio = min(t10, t11)/ max(t10, t11);
 
-        return Math.log(ratio) + Math.log(refRatio) - Math.log(altRatio);
+        return StrictMath.log(ratio) + StrictMath.log(refRatio) - StrictMath.log(altRatio);
     }
 
     /**

@@ -163,7 +163,7 @@ public class ActivityProfileUnitTest extends BaseTest {
 //                        for ( final boolean forceConversion : Arrays.asList(false) ) {
 //                            for ( final boolean startWithActive : Arrays.asList(true) ) {
 //                                for ( int nParts : Arrays.asList(3) ) {
-                                    regionSize = Math.min(regionSize, contigLength - start);
+                                    regionSize = StrictMath.min(regionSize, contigLength - start);
                                     final List<Boolean> regions = makeRegions(regionSize, startWithActive, nParts);
                                     tests.add(new Object[]{ start, regions, maxRegionSize, nParts, forceConversion, waitUntilEnd });
                                 }
@@ -183,7 +183,7 @@ public class ActivityProfileUnitTest extends BaseTest {
         final List<Boolean> regions = new SizeToStringList<Boolean>();
 
         boolean isActive = startWithActive;
-        final int activeRegionSize = Math.max(totalRegionSize / nParts, 1);
+        final int activeRegionSize = StrictMath.max(totalRegionSize / nParts, 1);
         for ( int i = 0; i < totalRegionSize; i += activeRegionSize ) {
             for ( int j = 0; j < activeRegionSize && j + i < totalRegionSize; j++ ) {
                 regions.add(isActive);
@@ -296,9 +296,9 @@ public class ActivityProfileUnitTest extends BaseTest {
         final GenomeLoc softClipLoc = genomeLocParser.createGenomeLoc(contig, nPrecedingSites + start);
         profile.add(new ActivityProfileState(new SimpleInterval(softClipLoc), 1.0, ActivityProfileState.Type.HIGH_QUALITY_SOFT_CLIPS, softClipSize));
 
-        final int actualNumOfSoftClips = Math.min(softClipSize, profile.getMaxProbPropagationDistance());
+        final int actualNumOfSoftClips = StrictMath.min(softClipSize, profile.getMaxProbPropagationDistance());
         if ( nPrecedingSites == 0 ) {
-            final int profileSize = Math.min(start + actualNumOfSoftClips, contigLength) - start + 1;
+            final int profileSize = StrictMath.min(start + actualNumOfSoftClips, contigLength) - start + 1;
             Assert.assertEquals(profile.size(), profileSize, "Wrong number of states in the profile");
         }
 
@@ -341,7 +341,7 @@ public class ActivityProfileUnitTest extends BaseTest {
                 { // test point profile is properly handled
                     for ( int end = 1; end < activeRegionSize; end++ ) {
                         final List<Double> probs = Collections.nCopies(end, 1.0);
-                        tests.add(new Object[]{minRegionSize, maxRegionSize, Math.min(end, maxRegionSize), probs});
+                        tests.add(new Object[]{minRegionSize, maxRegionSize, StrictMath.min(end, maxRegionSize), probs});
                     }
                 }
 
@@ -376,7 +376,7 @@ public class ActivityProfileUnitTest extends BaseTest {
                                 }
                                 final int cutSite = findCutSiteForTwoMaxPeaks(probs, minRegionSize);
                                 if ( cutSite != -1 && cutSite < maxRegionSize )
-                                    tests.add(new Object[]{minRegionSize, maxRegionSize, Math.max(cutSite, minRegionSize), probs});
+                                    tests.add(new Object[]{minRegionSize, maxRegionSize, StrictMath.max(cutSite, minRegionSize), probs});
                             }
                         }
                     }
@@ -403,7 +403,7 @@ public class ActivityProfileUnitTest extends BaseTest {
                                 expectedCut = firstMin + 1;
                             }
 
-                            Math.min(firstMin + 1, maxRegionSize);
+                            StrictMath.min(firstMin + 1, maxRegionSize);
                             tests.add(new Object[]{minRegionSize, maxRegionSize, expectedCut, probs});
                         }
                     }

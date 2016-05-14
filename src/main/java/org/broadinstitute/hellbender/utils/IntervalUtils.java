@@ -656,7 +656,7 @@ public final class IntervalUtils {
 
         // the ideal size of each split
         final long bp = IntervalUtils.intervalSize(locs);
-        final long idealSplitSize = Math.max((long)Math.floor(bp / (1.0*numParts)), 1);
+        final long idealSplitSize = StrictMath.max((long)StrictMath.floor(bp / (1.0*numParts)), 1);
 
         // algorithm:
         // split = ()
@@ -932,8 +932,8 @@ public final class IntervalUtils {
     public static SimpleInterval trimIntervalToContig(final String contig, final int start, final int stop, final int contigLength) {
         Utils.nonNull(contig);
         Utils.validateArg(contigLength >= 1, "contigLength should be at least 1 but was " + contigLength);
-        final int boundedStart = Math.max(1, start);
-        final int boundedStop = Math.min(contigLength, stop);
+        final int boundedStart = StrictMath.max(1, start);
+        final int boundedStop = StrictMath.min(contigLength, stop);
 
         if ( boundedStart > contigLength || boundedStop < 1 ){
             // there's no meaningful way to create this interval, as the start and stop are off the contig

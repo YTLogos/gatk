@@ -89,7 +89,7 @@ public class ReferenceTwoBitSource implements ReferenceSource, Serializable {
             throw new IllegalArgumentException("Contig " + interval.getContig() + " not found in reference dictionary");
         }
 
-        return new SimpleInterval(interval.getContig(), interval.getStart(), Math.min(interval.getEnd(), contigRecord.dnaSize()));
+        return new SimpleInterval(interval.getContig(), interval.getStart(), StrictMath.min(interval.getEnd(), contigRecord.dnaSize()));
     }
 
 }

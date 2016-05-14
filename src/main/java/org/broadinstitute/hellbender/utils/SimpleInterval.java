@@ -260,8 +260,8 @@ public final class SimpleInterval implements Locatable, Serializable {
          }
 
          return new SimpleInterval(getContig(),
-                 Math.max(getStart(), that.getStart()),
-                 Math.min( getEnd(), that.getEnd()) );
+                 StrictMath.max(getStart(), that.getStart()),
+                 StrictMath.min( getEnd(), that.getEnd()) );
      }
 
      /**
@@ -275,8 +275,8 @@ public final class SimpleInterval implements Locatable, Serializable {
          }
 
          return new SimpleInterval(getContig(),
-                 Math.min( getStart(), that.getStart() ),
-                 Math.max( getEnd(), that.getEnd()) );
+                 StrictMath.min( getStart(), that.getStart() ),
+                 StrictMath.max( getEnd(), that.getEnd()) );
      }
 
      /**
@@ -293,7 +293,7 @@ public final class SimpleInterval implements Locatable, Serializable {
              throw new IllegalArgumentException("Cannot get span for intervals on different contigs");
          }
 
-         return new SimpleInterval(contig, Math.min(start, other.getStart()), Math.max(end, other.getEnd()));
+         return new SimpleInterval(contig, StrictMath.min(start, other.getStart()), StrictMath.max(end, other.getEnd()));
      }
 
      private boolean contiguous(final Locatable that) {

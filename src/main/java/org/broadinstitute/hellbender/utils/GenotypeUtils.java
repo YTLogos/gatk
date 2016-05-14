@@ -38,7 +38,7 @@ public final class GenotypeUtils {
             final double[] normalizedLikelihoodsUnrounded = MathUtils.normalizeFromLog10(g.getLikelihoods().getAsVector());
             final int[] normalizedLikelihoods = new int[normalizedLikelihoodsUnrounded.length];
             for (int i = 0; i < normalizedLikelihoodsUnrounded.length; i++) {
-                normalizedLikelihoods[i] = (int) Math.round(normalizedLikelihoodsUnrounded[i]);
+                normalizedLikelihoods[i] = (int) StrictMath.round(normalizedLikelihoodsUnrounded[i]);
             }
 
             if (doMultiallelicMapping) {
@@ -75,9 +75,9 @@ public final class GenotypeUtils {
          * Note: all that likelihood normalization etc may have accumulated some error.
          * We smooth it out my rounding the numbers to integers before the final computation.
          */
-        refCount = Math.round(refCount);
-        hetCount = Math.round(hetCount);
-        homCount = Math.round(homCount);
+        refCount = StrictMath.round(refCount);
+        hetCount = StrictMath.round(hetCount);
+        homCount = StrictMath.round(homCount);
         return new GenotypeCounts(refCount, hetCount, homCount);
     }
 }

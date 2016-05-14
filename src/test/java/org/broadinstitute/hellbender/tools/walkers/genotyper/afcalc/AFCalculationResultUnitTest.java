@@ -124,13 +124,13 @@ public final class AFCalculationResultUnitTest extends BaseTest {
                 alleles,
                 MathUtils.normalizeFromLog10(new double[]{1 - pNonRef, pNonRef}, true, false),
                 log10Even,
-                Collections.singletonMap(C, Math.log10(1 - pNonRef)));
+                Collections.singletonMap(C, StrictMath.log10(1 - pNonRef)));
     }
 
     @Test(dataProvider = "TestIsPolymorphic")
     private void testIsPolymorphic(final double pNonRef, final double pThreshold, final boolean shouldBePoly) {
             final AFCalculationResult result = makePolymorphicTestData(pNonRef);
-            final boolean actualIsPoly = result.isPolymorphic(C, Math.log10(1 - pThreshold));
+            final boolean actualIsPoly = result.isPolymorphic(C, StrictMath.log10(1 - pThreshold));
             Assert.assertEquals(actualIsPoly, shouldBePoly,
                     "isPolymorphic with pNonRef " + pNonRef + " and threshold " + pThreshold + " returned "
                             + actualIsPoly + " but the expected result is " + shouldBePoly);

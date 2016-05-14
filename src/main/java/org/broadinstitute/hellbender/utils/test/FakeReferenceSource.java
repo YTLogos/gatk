@@ -20,8 +20,8 @@ public class FakeReferenceSource {
         int start = interval.getStart();
         int end = interval.getEnd();
 
-        int chunkStart = 4*(Math.floorDiv(start, 4));
-        int chunkEnd = 4*(Math.floorDiv(end + 1, 4) + 1);
+        int chunkStart = 4*(StrictMath.floorDiv(start, 4));
+        int chunkEnd = 4*(StrictMath.floorDiv(end + 1, 4) + 1);
         String full = StringUtils.repeat("tagc", chunkEnd - chunkStart);
         String substring = full.substring(start - chunkStart, end - chunkStart + 1);
 

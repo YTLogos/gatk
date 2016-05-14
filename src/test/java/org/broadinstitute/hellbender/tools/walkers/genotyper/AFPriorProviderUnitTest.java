@@ -34,7 +34,7 @@ public final class AFPriorProviderUnitTest extends BaseTest {
             for (int j = 0; j < priors.length; j++) {
                 Assert.assertTrue(!Double.isNaN(priors[j]));
                 Assert.assertTrue(priors[j] < 0);
-                if (j > 0) Assert.assertEquals(priors[j], Math.log10(het) - Math.log10(j), TOLERANCE);
+                if (j > 0) Assert.assertEquals(priors[j], StrictMath.log10(het) - StrictMath.log10(j), TOLERANCE);
             }
         }
     }
@@ -78,7 +78,7 @@ public final class AFPriorProviderUnitTest extends BaseTest {
         Assert.assertNotNull(providedPriors);
         Assert.assertEquals(providedPriors.length, priors.length + 1);
         for (int i = 0; i < priors.length; i++)
-            Assert.assertEquals(providedPriors[i + 1], Math.log10(priors[i]), TOLERANCE);
+            Assert.assertEquals(providedPriors[i + 1], StrictMath.log10(priors[i]), TOLERANCE);
         Assert.assertEquals(MathUtils.approximateLog10SumLog10(providedPriors), 0, TOLERANCE);
     }
 

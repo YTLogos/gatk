@@ -141,8 +141,8 @@ public final class MostDistantPrimaryAlignmentSelectionStrategy implements Prima
 
         public void considerBest(final SAMRecord firstEnd, final SAMRecord secondEnd) {
             final int thisPairMapq = SAMUtils.combineMapqs(firstEnd.getMappingQuality(), secondEnd.getMappingQuality());
-            final int thisDistance = CoordMath.getLength(Math.min(firstEnd.getAlignmentStart(), secondEnd.getAlignmentStart()),
-                    Math.max(firstEnd.getAlignmentEnd(), secondEnd.getAlignmentEnd()));
+            final int thisDistance = CoordMath.getLength(StrictMath.min(firstEnd.getAlignmentStart(), secondEnd.getAlignmentStart()),
+                    StrictMath.max(firstEnd.getAlignmentEnd(), secondEnd.getAlignmentEnd()));
             if (thisDistance > bestDistance || (thisDistance == bestDistance && thisPairMapq > bestPairMapq)) {
                 bestDistance = thisDistance;
                 bestPairMapq = thisPairMapq;

@@ -92,8 +92,8 @@ public class BandPassActivityProfileUnitTest extends BaseTest {
         // apply the band pass filter for activeProbArray into filteredProbArray
         final double[] GaussianKernel = profile.getKernel();
         for( int iii = 0; iii < activeProbArray.length; iii++ ) {
-            final double[] kernel = ArrayUtils.subarray(GaussianKernel, Math.max(profile.getFilteredSize() - iii, 0), Math.min(GaussianKernel.length, profile.getFilteredSize() + activeProbArray.length - iii));
-            final double[] activeProbSubArray = ArrayUtils.subarray(activeProbArray, Math.max(0,iii - profile.getFilteredSize()), Math.min(activeProbArray.length,iii + profile.getFilteredSize() + 1));
+            final double[] kernel = ArrayUtils.subarray(GaussianKernel, StrictMath.max(profile.getFilteredSize() - iii, 0), StrictMath.min(GaussianKernel.length, profile.getFilteredSize() + activeProbArray.length - iii));
+            final double[] activeProbSubArray = ArrayUtils.subarray(activeProbArray, StrictMath.max(0,iii - profile.getFilteredSize()), StrictMath.min(activeProbArray.length,iii + profile.getFilteredSize() + 1));
             bandPassProbArray[iii] = dotProduct(activeProbSubArray, kernel);
         }
 

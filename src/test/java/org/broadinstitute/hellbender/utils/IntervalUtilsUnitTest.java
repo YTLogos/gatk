@@ -134,7 +134,7 @@ public final class IntervalUtilsUnitTest extends BaseTest {
             //logger.warn(String.format("Split %d size %d ideal %d sigma %.2f", counter, splitSize, idealSplitSize, sigma));
             counter++;
             sumOfSplitSizes += splitSize;
-            Assert.assertTrue(Math.abs(sigma) <= test.maxAllowableVariance, String.format("Interval %d (size %d ideal %d) has a variance %.2f outside of the tolerated range %.2f", counter, splitSize, idealSplitSize, sigma, test.maxAllowableVariance));
+            Assert.assertTrue(StrictMath.abs(sigma) <= test.maxAllowableVariance, String.format("Interval %d (size %d ideal %d) has a variance %.2f outside of the tolerated range %.2f", counter, splitSize, idealSplitSize, sigma, test.maxAllowableVariance));
         }
 
         Assert.assertEquals(totalSize, sumOfSplitSizes, "Split intervals don't contain the exact number of bases in the origianl intervals");
@@ -185,7 +185,7 @@ public final class IntervalUtilsUnitTest extends BaseTest {
         Assert.assertEquals(flatSize, originalSize, "SplitLocusIntervals locs cover an incorrect number of bases");
 
         // test size of each split
-        final long ideal = (long)Math.floor(originalSize / (1.0 * test.parts));
+        final long ideal = (long)StrictMath.floor(originalSize / (1.0 * test.parts));
         final long maxSize = ideal + (originalSize % test.parts) * test.parts; // no more than N * rounding error in size
         for ( final List<GenomeLoc> split : splitByLocus ) {
             final long splitSize = IntervalUtils.intervalSize(split);

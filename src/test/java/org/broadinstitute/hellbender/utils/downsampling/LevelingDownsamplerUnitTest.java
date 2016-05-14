@@ -61,7 +61,7 @@ public final class LevelingDownsamplerUnitTest extends BaseTest {
                 return stackSize;
             }
 
-            return Math.max(1, stackSize - (numItemsToRemove / numStacks));
+            return StrictMath.max(1, stackSize - (numItemsToRemove / numStacks));
         }
     }
 
@@ -129,7 +129,7 @@ public final class LevelingDownsamplerUnitTest extends BaseTest {
 
         int totalRemainingItems = 0;
         for ( final List<Object> stack : downsampledStacks ) {
-            Assert.assertTrue(Math.abs(stack.size() - test.expectedSize) <= 1);
+            Assert.assertTrue(StrictMath.abs(stack.size() - test.expectedSize) <= 1);
             totalRemainingItems += stack.size();
         }
 
@@ -142,6 +142,6 @@ public final class LevelingDownsamplerUnitTest extends BaseTest {
         downsampler.resetStats();
         Assert.assertEquals(downsampler.getNumberOfDiscardedItems(), 0);
 
-        Assert.assertTrue(totalRemainingItems <= Math.max(test.targetSize, test.numStacks));
+        Assert.assertTrue(totalRemainingItems <= StrictMath.max(test.targetSize, test.numStacks));
     }
 }

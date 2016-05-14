@@ -67,7 +67,7 @@ public final class HitsForInsert {
      * Note that a single alignment for each end of a read pair is counted as a single hit.
      */
     public int numHits() {
-        return Math.max(firstOfPairOrFragment.size(), secondOfPair.size());
+        return StrictMath.max(firstOfPairOrFragment.size(), secondOfPair.size());
     }
 
     /** True if either the first or second of pair has supplementary alignments, otherwise false. */
@@ -162,7 +162,7 @@ public final class HitsForInsert {
 
         // Insert nulls as necessary in the two lists so that correlated alignments have the same index
         // and uncorrelated alignments have null in the other list at the corresponding index.
-        for (int i = 0; i < Math.min(firstOfPairOrFragment.size(), secondOfPair.size()); ++i) {
+        for (int i = 0; i < StrictMath.min(firstOfPairOrFragment.size(), secondOfPair.size()); ++i) {
             final Integer leftHi = firstOfPairOrFragment.get(i).getIntegerAttribute(SAMTag.HI.name());
             final Integer rightHi = secondOfPair.get(i).getIntegerAttribute(SAMTag.HI.name());
             if (leftHi != null) {

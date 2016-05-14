@@ -80,7 +80,7 @@ public final class PairHMMUnitTest extends BaseTest {
 
         public double expectedLogLikelihood() {
             final double log10MagicConstant = 0.03;
-            return (expectedQual / -10.0) + 0.03 + Math.log10(1.0 /
+            return (expectedQual / -10.0) + 0.03 + StrictMath.log10(1.0 /
                     refBasesWithContext.length);
         }
 
@@ -287,7 +287,7 @@ public final class PairHMMUnitTest extends BaseTest {
             // change single base at position k to C. If it's a C, change to T
             mread[k] = ( mread[k] == (byte)'C' ? (byte)'T' : (byte)'C');
             final double res1 = loglessHMM.computeReadLikelihoodGivenHaplotypeLog10(haplotype1, mread, quals, gop, gop, gcp, true, null);
-            final double expected = Math.log10(1.0 / haplotype1.length * Math.pow(QualityUtils.qualToProb(matchQual), mread.length - 1) * QualityUtils.qualToErrorProb(mismatchQual));
+            final double expected = StrictMath.log10(1.0 / haplotype1.length * StrictMath.pow(QualityUtils.qualToProb(matchQual), mread.length - 1) * QualityUtils.qualToErrorProb(mismatchQual));
             Assert.assertEquals(res1, expected, 1e-2);
         }
     }
@@ -316,7 +316,7 @@ public final class PairHMMUnitTest extends BaseTest {
             // change single base at position k to C. If it's a C, change to T
             mread[k] = ( mread[k] == (byte)'C' ? (byte)'T' : (byte)'C');
             final double res1 = loglessHMM.computeReadLikelihoodGivenHaplotypeLog10(haplotype1, mread, quals, gop, gop, gcp, true, null);
-            final double expected = Math.log10(1.0 / haplotype1.length * Math.pow(QualityUtils.qualToProb(matchQual), mread.length - 1) * QualityUtils.qualToErrorProb(mismatchQual));
+            final double expected = StrictMath.log10(1.0 / haplotype1.length * StrictMath.pow(QualityUtils.qualToProb(matchQual), mread.length - 1) * QualityUtils.qualToErrorProb(mismatchQual));
             Assert.assertEquals(res1, expected, 1e-2);
         }
     }
@@ -405,11 +405,11 @@ public final class PairHMMUnitTest extends BaseTest {
 
     private static double getExpectedMatchingLogLikelihood(final byte[] readBases, final byte[] refBases, final byte baseQual, final byte insQual) {
         double expected =  0;
-        final double initialCondition = ((double) Math.abs(refBases.length - readBases.length + 1))/refBases.length;
+        final double initialCondition = ((double) StrictMath.abs(refBases.length - readBases.length + 1))/refBases.length;
         if (readBases.length < refBases.length) {
-            expected = Math.log10(initialCondition * Math.pow(QualityUtils.qualToProb(baseQual), readBases.length));
+            expected = StrictMath.log10(initialCondition * StrictMath.pow(QualityUtils.qualToProb(baseQual), readBases.length));
         } else if (readBases.length > refBases.length) {
-            expected = Math.log10(initialCondition * Math.pow(QualityUtils.qualToProb(baseQual), refBases.length) * Math.pow(QualityUtils.qualToErrorProb(insQual), readBases.length - refBases.length));
+            expected = StrictMath.log10(initialCondition * StrictMath.pow(QualityUtils.qualToProb(baseQual), refBases.length) * StrictMath.pow(QualityUtils.qualToErrorProb(insQual), readBases.length - refBases.length));
         }
         return expected;
     }
@@ -677,8 +677,8 @@ public final class PairHMMUnitTest extends BaseTest {
     public void testFindFirstPositionWhereHaplotypesDiffer() {
         for ( int haplotypeSize1 = 10; haplotypeSize1 < 30; haplotypeSize1++ ) {
             for ( int haplotypeSize2 = 10; haplotypeSize2 < 50; haplotypeSize2++ ) {
-                final int maxLength = Math.max(haplotypeSize1, haplotypeSize2);
-                final int minLength = Math.min(haplotypeSize1, haplotypeSize2);
+                final int maxLength = StrictMath.max(haplotypeSize1, haplotypeSize2);
+                final int minLength = StrictMath.min(haplotypeSize1, haplotypeSize2);
                 for ( int differingSite = 0; differingSite < maxLength + 1; differingSite++) {
                     for ( final boolean oneIsDiff : Arrays.asList(true, false) ) {
                         final byte[] hap1 = Utils.dupBytes((byte)'A', haplotypeSize1);
@@ -697,7 +697,7 @@ public final class PairHMMUnitTest extends BaseTest {
     private int makeDiff(final byte[] bytes, final int site, final int minSize) {
         if ( site < bytes.length ) {
             bytes[site] = 'C';
-            return Math.min(site, minSize);
+            return StrictMath.min(site, minSize);
         } else
             return minSize;
     }

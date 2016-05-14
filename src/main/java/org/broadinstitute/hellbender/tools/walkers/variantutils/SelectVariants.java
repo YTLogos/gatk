@@ -885,7 +885,7 @@ public final class SelectVariants extends VariantWalker {
             return false;
 
         for (final Integer indelLength : lengths) {
-            if (Math.abs(indelLength) > maxIndelSize || Math.abs(indelLength) < minIndelSize)
+            if (StrictMath.abs(indelLength) > maxIndelSize || StrictMath.abs(indelLength) < minIndelSize)
                 return true;
         }
 

@@ -52,7 +52,7 @@ public final class ArtificialReadUtilsUnitTest extends BaseTest {
         while (iter.hasNext()) {
             GATKRead rec = iter.next();
 
-            assertEquals(Math.round(count / 10), ReadUtils.getReferenceIndex(rec, iter.getHeader()));
+            assertEquals(StrictMath.round(count / 10), ReadUtils.getReferenceIndex(rec, iter.getHeader()));
             count++;
         }
         assertEquals(count, 100 * 10);

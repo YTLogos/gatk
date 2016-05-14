@@ -243,7 +243,7 @@ public class ActivityProfile {
             // special code to deal with the problem that high quality soft clipped bases aren't added to pileups
             final List<ActivityProfileState> states = new ArrayList<>();
             // add no more than the max prob propagation distance num HQ clips
-            final int numHQClips = Math.min(justAddedState.getResultValue().intValue(), getMaxProbPropagationDistance());
+            final int numHQClips = StrictMath.min(justAddedState.getResultValue().intValue(), getMaxProbPropagationDistance());
             for( int i = - numHQClips; i <= numHQClips; i++ ) {
                 final SimpleInterval loc = getLocForOffset(justAddedState.getLoc(), i);
                 if ( loc != null ) {

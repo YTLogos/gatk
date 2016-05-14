@@ -286,7 +286,7 @@ public final class InsertSizeMetricsCollectorSpark implements Serializable {
     // this is the first step to traverse all valid reads and extract relevant information
     private static Tuple2<GroupMetaInfo, Tuple2<SamPairUtil.PairOrientation, Integer>> traverseReadsToExtractInfo(final GATKRead read, final SAMFileHeader header){
         final GroupMetaInfo readsGroupMetaInfo = new GroupMetaInfo(read, header, MetricAccumulationLevel.READ_GROUP);
-        final Tuple2<SamPairUtil.PairOrientation, Integer> readsPairInfo = new Tuple2<>(SamPairUtil.getPairOrientation(read.convertToSAMRecord(header)), Math.abs(read.getFragmentLength()));
+        final Tuple2<SamPairUtil.PairOrientation, Integer> readsPairInfo = new Tuple2<>(SamPairUtil.getPairOrientation(read.convertToSAMRecord(header)), StrictMath.abs(read.getFragmentLength()));
         return new Tuple2<>(readsGroupMetaInfo, readsPairInfo);
     }
 

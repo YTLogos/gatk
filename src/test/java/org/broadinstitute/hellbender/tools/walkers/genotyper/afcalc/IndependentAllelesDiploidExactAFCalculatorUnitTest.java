@@ -133,7 +133,7 @@ public final class IndependentAllelesDiploidExactAFCalculatorUnitTest extends Ba
         for ( final double log10pRef : Arrays.asList(-1, -2, -3) ) {
             for ( final int ploidy : Arrays.asList(1, 2, 3, 4) ) {
                 for ( List<Double> permutations : Utils.makePermutations(log10LAlleles, ploidy, true)) {
-                    tests.add(new Object[]{permutations, Math.pow(10, log10pRef)});
+                    tests.add(new Object[]{permutations, StrictMath.pow(10, log10pRef)});
                 }
             }
         }
@@ -146,7 +146,7 @@ public final class IndependentAllelesDiploidExactAFCalculatorUnitTest extends Ba
         // biallelic
         final double[] rawPriors = MathUtils.toLog10(new double[]{pRef, 1 - pRef});
 
-        final double log10pNonRef = Math.log10(1 - pRef);
+        final double log10pNonRef = StrictMath.log10(1 - pRef);
 
         final List<AFCalculationResult> originalPriors = new LinkedList<>();
         final List<Double> pNonRefN = new LinkedList<>();

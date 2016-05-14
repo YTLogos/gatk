@@ -48,8 +48,8 @@ public final class FractionalDownsamplerUnitTest extends BaseTest {
                 expectedMinNumReadsAfterDownsampling = expectedMaxNumReadsAfterDownsampling = totalReads;
                 expectedMinDiscardedItems = expectedMaxDiscardedItems = 0;
             } else {
-                expectedMinNumReadsAfterDownsampling = Math.max((int) ((fraction - EXPECTED_ACCURACY) * totalReads), 0);
-                expectedMaxNumReadsAfterDownsampling = Math.min((int) ((fraction + EXPECTED_ACCURACY) * totalReads), totalReads);
+                expectedMinNumReadsAfterDownsampling = StrictMath.max((int) ((fraction - EXPECTED_ACCURACY) * totalReads), 0);
+                expectedMaxNumReadsAfterDownsampling = StrictMath.min((int) ((fraction + EXPECTED_ACCURACY) * totalReads), totalReads);
                 expectedMinDiscardedItems = totalReads - expectedMaxNumReadsAfterDownsampling;
                 expectedMaxDiscardedItems = totalReads - expectedMinNumReadsAfterDownsampling;
             }

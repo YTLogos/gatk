@@ -781,7 +781,7 @@ public final class Utils {
             throw new IllegalArgumentException("the length provided cannot be negative");
         }
 
-        final int removeLength = Math.min(remove.length - removeOffset,length);
+        final int removeLength = StrictMath.min(remove.length - removeOffset,length);
 
         if (removeLength < 0) {
             throw new IllegalArgumentException("the remove offset provided falls beyond the remove array end");

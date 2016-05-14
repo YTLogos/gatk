@@ -102,8 +102,8 @@ public final class Gene extends Interval implements Iterable<Gene.Transcript> {
          * @param locusFunctions
          */
         public void assignLocusFunctionForRange(final int start, final LocusFunction[] locusFunctions) {
-            for (int i = Math.max(start, transcriptionStart);
-                    i <= Math.min(transcriptionEnd, CoordMath.getEnd(start, locusFunctions.length)); ++i) {
+            for (int i = StrictMath.max(start, transcriptionStart);
+                    i <= StrictMath.min(transcriptionEnd, CoordMath.getEnd(start, locusFunctions.length)); ++i) {
 
                 if (locusFunctions[i - start].ordinal() > LocusFunction.CODING.ordinal()) continue;
 

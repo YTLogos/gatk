@@ -376,8 +376,8 @@ public abstract class BaseTest {
         else if ( Double.isInfinite(expected) ) // NaN == NaN => false unfortunately
             Assert.assertTrue(Double.isInfinite(actual), "expected is infinite, actual is not");
         else {
-            final double delta = Math.abs(actual - expected);
-            final double ratio = Math.abs(actual / expected - 1.0);
+            final double delta = StrictMath.abs(actual - expected);
+            final double ratio = StrictMath.abs(actual / expected - 1.0);
             Assert.assertTrue(delta < tolerance || ratio < tolerance, "expected = " + expected + " actual = " + actual
                     + " not within tolerance " + tolerance
                     + (message == null ? "" : "message: " + message));

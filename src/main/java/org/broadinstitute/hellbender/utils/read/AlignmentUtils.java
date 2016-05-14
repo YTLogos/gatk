@@ -817,7 +817,7 @@ public final class AlignmentUtils {
 
         // get the indel element and move it left one base
         CigarElement ce = cigar.getCigarElement(indexOfIndel - 1);
-        elements.add(new CigarElement(Math.max(ce.getLength() - 1, 0), ce.getOperator()));
+        elements.add(new CigarElement(StrictMath.max(ce.getLength() - 1, 0), ce.getOperator()));
         elements.add(cigar.getCigarElement(indexOfIndel));
         if (indexOfIndel + 1 < cigar.numCigarElements()) {
             ce = cigar.getCigarElement(indexOfIndel + 1);
@@ -1006,7 +1006,7 @@ public final class AlignmentUtils {
      * @return the position after we've traversed all elt.length bases of elt
      */
     protected static int addCigarElements(final List<CigarElement> dest, int pos, final int start, final int end, final CigarElement elt) {
-        final int length = Math.min(pos + elt.getLength() - 1, end) - Math.max(pos, start) + 1;
+        final int length = StrictMath.min(pos + elt.getLength() - 1, end) - StrictMath.max(pos, start) + 1;
         if ( length > 0 )
             dest.add(new CigarElement(length, elt.getOperator()));
         return pos + elt.getLength();

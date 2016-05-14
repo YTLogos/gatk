@@ -146,8 +146,8 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
         }
 
         return new GenomeLoc(getContig(), this.contigIndex,
-                Math.min( getStart(), that.getStart() ),
-                Math.max( getStop(), that.getStop()) );
+                StrictMath.min( getStart(), that.getStart() ),
+                StrictMath.max( getStop(), that.getStop()) );
     }
 
     /**
@@ -177,8 +177,8 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
         }
 
         return new GenomeLoc(getContig(), this.contigIndex,
-                Math.max(getStart(), that.getStart()),
-                Math.min( getStop(), that.getStop()) );
+                StrictMath.max(getStart(), that.getStart()),
+                StrictMath.min( getStop(), that.getStop()) );
     }
 
     public final List<GenomeLoc> subtract( final GenomeLoc that ) {
@@ -266,7 +266,7 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
 
     public final int distance( final GenomeLoc that ) {
         if ( this.onSameContig(that) ) {
-            return Math.abs(this.getStart() - that.getStart());
+            return StrictMath.abs(this.getStart() - that.getStart());
         } else {
             return Integer.MAX_VALUE;
         }
@@ -418,7 +418,7 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
      */
     public final double reciprocialOverlapFraction(final GenomeLoc o) {
         if ( overlapsP(o) ) {
-            return Math.min(overlapPercent(this, o), overlapPercent(o, this));
+            return StrictMath.min(overlapPercent(this, o), overlapPercent(o, this));
         } else {
             return 0.0;
         }
@@ -454,7 +454,7 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
             throw new GATKException("The two genome locs need to be contiguous");
         }
 
-        return new GenomeLoc(a.getContig(), a.contigIndex, Math.min(a.getStart(), b.getStart()), Math.max(a.getStop(), b.getStop()));
+        return new GenomeLoc(a.getContig(), a.contigIndex, StrictMath.min(a.getStart(), b.getStart()), StrictMath.max(a.getStop(), b.getStop()));
     }
 
     /**
@@ -511,7 +511,7 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
         }
 
         // add any contig (in its entirety) in between the two genomeLocs
-        for (int i=Math.min(this.contigIndex, other.contigIndex) + 1; i < Math.max(this.contigIndex, other.contigIndex); i++) {
+        for (int i=StrictMath.min(this.contigIndex, other.contigIndex) + 1; i < StrictMath.max(this.contigIndex, other.contigIndex); i++) {
             distance += samFileHeader.getSequence(i).getSequenceLength();
         }
         return distance;
@@ -560,6 +560,6 @@ public class GenomeLoc implements Comparable<GenomeLoc>, Serializable, HasGenome
             throw new IllegalArgumentException("Cannot get endpoint span for genome locs on different contigs");
         }
 
-        return new GenomeLoc(getContig(),this.contigIndex,Math.min(getStart(),that.getStart()),Math.max(getStop(),that.getStop()));
+        return new GenomeLoc(getContig(),this.contigIndex,StrictMath.min(getStart(),that.getStart()),StrictMath.max(getStop(),that.getStop()));
     }
 }

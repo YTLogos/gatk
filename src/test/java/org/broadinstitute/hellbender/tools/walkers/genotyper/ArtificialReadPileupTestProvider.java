@@ -98,7 +98,7 @@ public final class ArtificialReadPileupTestProvider {
         }
         else {
             // deletion
-            refAllele = new String(referenceContext.getForwardBases()).substring(0, Math.abs(eventLength)+1);
+            refAllele = new String(referenceContext.getForwardBases()).substring(0, StrictMath.abs(eventLength)+1);
             altAllele = refChar;
         }
 
@@ -157,7 +157,7 @@ public final class ArtificialReadPileupTestProvider {
                 read.setCigar(readBases.length + "M");
             else {
                 if (isBeforeDeletion || isBeforeInsertion)
-                    read.setCigar((readOffset+1)+"M"+ Math.abs(eventLength) + (isBeforeDeletion?"D":"I") +
+                    read.setCigar((readOffset+1)+"M"+ StrictMath.abs(eventLength) + (isBeforeDeletion?"D":"I") +
                             (readBases.length-readOffset)+"M");
                 else // SNP case
                     read.setCigar(readBases.length+"M");

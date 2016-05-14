@@ -1531,8 +1531,8 @@ public final class GATKVariantContextUtilsUnitTest extends BaseTest {
         for (final String chr : chrs )
             for (final int size : eventSizes )
                 for (final int starts : eventStarts ) {
-                    locs[nextIndex] = hg19GenomeLocParser.createGenomeLoc(chr,starts,starts + Math.max(0,size));
-                    events[nextIndex++] = new VariantContextBuilder().source("test").loc(chr,starts,starts + Math.max(0,size)).alleles(Arrays.asList(
+                    locs[nextIndex] = hg19GenomeLocParser.createGenomeLoc(chr,starts,starts + StrictMath.max(0,size));
+                    events[nextIndex++] = new VariantContextBuilder().source("test").loc(chr,starts,starts + StrictMath.max(0,size)).alleles(Arrays.asList(
                             Allele.create(randomBases(size <= 0 ? 1 : size + 1, true), true), Allele.create(randomBases(size < 0 ? -size + 1 : 1, false), false))).make();
                 }
 

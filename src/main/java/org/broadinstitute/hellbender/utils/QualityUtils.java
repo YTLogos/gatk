@@ -18,11 +18,11 @@ public final class QualityUtils {
     /**
      * conversion factor from phred scaled quality to log error probability and vice versa
      */
-    public static final double PHRED_TO_LOG_PROB_MULTIPLIER = -Math.log(10)/10.0;
+    public static final double PHRED_TO_LOG_PROB_MULTIPLIER = -StrictMath.log(10)/10.0;
     public static final double LOG_PROB_TO_PHRED_MULTIPLIER = 1/PHRED_TO_LOG_PROB_MULTIPLIER;
 
 
-    private static final double MIN_LOG10_SCALED_QUAL = Math.log10(Double.MIN_VALUE);
+    private static final double MIN_LOG10_SCALED_QUAL = StrictMath.log10(Double.MIN_VALUE);
     protected static final double MIN_PHRED_SCALED_QUAL = -10.0 * MIN_LOG10_SCALED_QUAL;
 
     /**
@@ -52,7 +52,7 @@ public final class QualityUtils {
     static {
         for (int i = 0; i <= MAX_QUAL; i++) {
             qualToErrorProbCache[i] = qualToErrorProb((double) i);
-            qualToProbLog10Cache[i] = Math.log10(1.0 - qualToErrorProbCache[i]);
+            qualToProbLog10Cache[i] = StrictMath.log10(1.0 - qualToErrorProbCache[i]);
         }
     }
 
@@ -89,7 +89,7 @@ public final class QualityUtils {
      *
      * This is the Phred-style conversion, *not* the Illumina-style conversion.
      *
-     * Because the input is a double value, this function must call Math.pow so can be quite expensive
+     * Because the input is a double value, this function must call StrictMath.pow so can be quite expensive
      *
      * @param qual a phred-scaled quality score encoded as a double.  Can be non-integer values (30.5)
      * @return a probability (0.0-1.0)
@@ -104,7 +104,7 @@ public final class QualityUtils {
      *
      * This is the Phred-style conversion, *not* the Illumina-style conversion.
      *
-     * Because the input is a double value, this function must call Math.pow so can be quite expensive
+     * Because the input is a double value, this function must call StrictMath.pow so can be quite expensive
      *
      * WARNING -- because this function takes a byte for maxQual, you must be careful in converting
      * integers to byte.  The appropriate way to do this is ((byte)(myInt & 0xFF))
@@ -132,14 +132,14 @@ public final class QualityUtils {
      *
      * This is the Phred-style conversion, *not* the Illumina-style conversion.
      *
-     * Because the input is a double value, this function must call Math.pow so can be quite expensive
+     * Because the input is a double value, this function must call StrictMath.pow so can be quite expensive
      *
      * @param qual a phred-scaled quality score encoded as a double.  Can be non-integer values (30.5)
      * @return a probability (0.0-1.0)
      */
     public static double qualToErrorProb(final double qual) {
         if ( qual < 0.0 ) throw new IllegalArgumentException("qual must be >= 0.0 but got " + qual);
-        return Math.pow(10.0, qual / -10.0);
+        return StrictMath.pow(10.0, qual / -10.0);
     }
 
     /**
@@ -226,7 +226,7 @@ public final class QualityUtils {
      */
     public static byte errorProbToQual(final double errorRate, final byte maxQual) {
         if ( ! MathUtils.goodProbability(errorRate) ) throw new IllegalArgumentException("errorRate must be good probability but got " + errorRate);
-        final double d = Math.round(-10.0*Math.log10(errorRate));
+        final double d = StrictMath.round(-10.0*StrictMath.log10(errorRate));
         return boundQual((int)d, maxQual);
     }
 
@@ -270,7 +270,7 @@ public final class QualityUtils {
      */
     public static byte trueProbToQual(final double trueProb, final byte maxQual) {
         if ( ! MathUtils.goodProbability(trueProb) ) throw new IllegalArgumentException("trueProb must be good probability but got " + trueProb);
-        final double lp = Math.round(-10.0*MathUtils.log10OneMinusX(trueProb));
+        final double lp = StrictMath.round(-10.0*MathUtils.log10OneMinusX(trueProb));
         return boundQual((int)lp, maxQual);
     }
 
@@ -305,7 +305,7 @@ public final class QualityUtils {
      * @return a phred-scaled version of the error rate
      */
     public static double phredScaleErrorRate(final double errorRate) {
-        return phredScaleLog10ErrorRate(Math.log10(errorRate));
+        return phredScaleLog10ErrorRate(StrictMath.log10(errorRate));
     }
 
     /**
@@ -322,7 +322,7 @@ public final class QualityUtils {
         if ( ! MathUtils.goodLog10Probability(errorRateLog10) ) throw new
                 IllegalArgumentException("errorRateLog10 must be good probability but got " + errorRateLog10);
         // abs is necessary for edge base with errorRateLog10 = 0 producing -0.0 doubles
-        return Math.abs(-10.0 * Math.max(errorRateLog10, MIN_LOG10_SCALED_QUAL));
+        return StrictMath.abs(-10.0 * StrictMath.max(errorRateLog10, MIN_LOG10_SCALED_QUAL));
     }
 
     /**
@@ -336,7 +336,7 @@ public final class QualityUtils {
      * @return a phred-scaled version of the error rate implied by trueRate
      */
     public static double phredScaleLog10CorrectRate(final double trueRateLog10) {
-        return phredScaleCorrectRate(Math.pow(10.0, trueRateLog10));
+        return phredScaleCorrectRate(StrictMath.pow(10.0, trueRateLog10));
     }
 
     // ----------------------------------------------------------------------
@@ -368,7 +368,7 @@ public final class QualityUtils {
      * @return the bounded quality score
      */
     public static byte boundQual(final int qual, final byte maxQual) {
-        return (byte) (Math.max(Math.min(qual, maxQual & 0xFF), 1) & 0xFF);
+        return (byte) (StrictMath.max(StrictMath.min(qual, maxQual & 0xFF), 1) & 0xFF);
     }
 
 }

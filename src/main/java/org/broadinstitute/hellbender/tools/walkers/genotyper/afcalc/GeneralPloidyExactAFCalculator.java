@@ -340,7 +340,7 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
         // update the MLE if necessary
         final int altCounts[] = Arrays.copyOfRange(set.getACcounts().getCounts(), 1, set.getACcounts().getCounts().length);
         // TODO -- GUILLERMO THIS CODE MAY PRODUCE POSITIVE LIKELIHOODS OR -INFINITY
-        stateTracker.updateMLEifNeeded(Math.max(log10LofK, -Double.MAX_VALUE), altCounts);
+        stateTracker.updateMLEifNeeded(StrictMath.max(log10LofK, -Double.MAX_VALUE), altCounts);
 
         // apply the priors over each alternate allele
         for (final int ACcount : altCounts ) {
@@ -349,7 +349,7 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
             }
         }
         // TODO -- GUILLERMO THIS CODE MAY PRODUCE POSITIVE LIKELIHOODS OR -INFINITY
-        stateTracker.updateMAPifNeeded(Math.max(log10LofK, -Double.MAX_VALUE), altCounts);
+        stateTracker.updateMAPifNeeded(StrictMath.max(log10LofK, -Double.MAX_VALUE), altCounts);
 
         return log10LofK;
     }

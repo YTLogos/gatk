@@ -358,7 +358,7 @@ public final class BaseRecalibrationEngine implements Serializable {
                 featureStartOnRead = featureEndOnRead = readLength;
             }
 
-            Arrays.fill(knownSitesArray, Math.max(0, featureStartOnRead), Math.min(readLength, featureEndOnRead + 1), true);
+            Arrays.fill(knownSitesArray, StrictMath.max(0, featureStartOnRead), StrictMath.min(readLength, featureEndOnRead + 1), true);
         }
         return knownSitesArray;
     }
@@ -475,11 +475,11 @@ public final class BaseRecalibrationEngine implements Serializable {
                                                         final int[] errorArray,
                                                         final double[] fractionalErrors ) {
         int totalErrors = 0;
-        for( int j = Math.max(0, blockStartIndex - 1); j <= i; j++ ) {
+        for( int j = StrictMath.max(0, blockStartIndex - 1); j <= i; j++ ) {
             totalErrors += errorArray[j];
         }
-        for( int j = Math.max(0, blockStartIndex - 1); j <= i; j++ ) {
-            fractionalErrors[j] = ((double) totalErrors) / ((double)(i - Math.max(0, blockStartIndex - 1) + 1));
+        for( int j = StrictMath.max(0, blockStartIndex - 1); j <= i; j++ ) {
+            fractionalErrors[j] = ((double) totalErrors) / ((double)(i - StrictMath.max(0, blockStartIndex - 1) + 1));
         }
     }
 

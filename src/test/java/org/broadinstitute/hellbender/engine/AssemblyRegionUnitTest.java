@@ -82,10 +82,10 @@ public final class AssemblyRegionUnitTest extends BaseTest {
         final AssemblyRegion region = new AssemblyRegion(loc, supportingStates, isActive, extension, header);
         Assert.assertFalse(region.isFinalized());
         Assert.assertEquals(region.getSpan(), loc);
-        Assert.assertEquals(region.getExtendedSpan().getStart(), Math.max(loc.getStart() - extension, 1));
-        Assert.assertEquals(region.getExtendedSpan().getEnd(), Math.min(loc.getEnd() + extension, contigLength));
-        Assert.assertEquals(region.getReadSpanLoc().getStart(), Math.max(loc.getStart() - extension, 1));
-        Assert.assertEquals(region.getReadSpanLoc().getEnd(), Math.min(loc.getEnd() + extension, contigLength));
+        Assert.assertEquals(region.getExtendedSpan().getStart(), StrictMath.max(loc.getStart() - extension, 1));
+        Assert.assertEquals(region.getExtendedSpan().getEnd(), StrictMath.min(loc.getEnd() + extension, contigLength));
+        Assert.assertEquals(region.getReadSpanLoc().getStart(), StrictMath.max(loc.getStart() - extension, 1));
+        Assert.assertEquals(region.getReadSpanLoc().getEnd(), StrictMath.min(loc.getEnd() + extension, contigLength));
         Assert.assertEquals(region.isActive(), isActive);
         Assert.assertEquals(region.getExtension(), extension);
         Assert.assertEquals(region.getReads(), Collections.emptyList());
@@ -110,8 +110,8 @@ public final class AssemblyRegionUnitTest extends BaseTest {
     }
 
     private void assertGoodReferenceGetter(final byte[] actualBytes, final SimpleInterval span, final int padding) {
-        final int expectedStart = Math.max(span.getStart() - padding, 1);
-        final int expectedStop = Math.min(span.getEnd() + padding, contigLength);
+        final int expectedStart = StrictMath.max(span.getStart() - padding, 1);
+        final int expectedStop = StrictMath.min(span.getEnd() + padding, contigLength);
         final byte[] expectedBytes = seq.getSubsequenceAt(span.getContig(), expectedStart, expectedStop).getBases();
         Assert.assertEquals(actualBytes, expectedBytes);
     }
@@ -125,8 +125,8 @@ public final class AssemblyRegionUnitTest extends BaseTest {
                 for ( final int readSize : Arrays.asList(10, 100, 1000) ) {
                     final SimpleInterval loc = IntervalUtils.trimIntervalToContig(contig, start, start + 10, header.getSequence(contig).getSequenceLength());
 
-                    final int readStart = Math.max(start + readStartOffset, 1);
-                    final int readStop = Math.min(readStart + readSize, contigLength);
+                    final int readStart = StrictMath.max(start + readStartOffset, 1);
+                    final int readStop = StrictMath.min(readStart + readSize, contigLength);
                     final int readLength = readStop - readStart + 1;
                     if ( readLength > 0 ) {
                         final GATKRead read = ArtificialReadUtils.createArtificialRead(header, "read", 0, readStart, readLength);

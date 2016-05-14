@@ -104,11 +104,11 @@ public final class FamilyLikelihoods {
         int phredScaledJL = -1;
         int phredScaledJP = -1;
         if(jointLikelihood != NO_JOINT_VALUE){
-            final double dphredScaledJL = QualityUtils.phredScaleLog10ErrorRate(Math.log10(1-jointLikelihood));
+            final double dphredScaledJL = QualityUtils.phredScaleLog10ErrorRate(StrictMath.log10(1-jointLikelihood));
             phredScaledJL = dphredScaledJL < Byte.MAX_VALUE ? (byte)dphredScaledJL : Byte.MAX_VALUE;
         }
         if(jointPosteriorProb != NO_JOINT_VALUE){
-            final double dphredScaledJP = QualityUtils.phredScaleLog10ErrorRate(Math.log10(1-jointPosteriorProb));
+            final double dphredScaledJP = QualityUtils.phredScaleLog10ErrorRate(StrictMath.log10(1-jointPosteriorProb));
             phredScaledJP = dphredScaledJP < Byte.MAX_VALUE ? (byte)dphredScaledJP : Byte.MAX_VALUE;
         }
 
@@ -372,8 +372,8 @@ public final class FamilyLikelihoods {
                         fatherLikelihoods.entrySet()){
                     mvCount = mvCountMatrix.get(motherGenotype.getKey()).get(fatherGenotype.getKey()).get(childGenotype.getKey());
                     jointLikelihood = motherGenotype.getValue()+fatherGenotype.getValue()+childGenotype.getValue();
-                    mvCoeff = mvCount>0 ? Math.pow(deNovoPrior,mvCount) : (1.0-10*deNovoPrior-deNovoPrior*deNovoPrior);
-                    configurationLikelihood =  Math.log10(mvCoeff) + jointLikelihood;
+                    mvCoeff = mvCount>0 ? StrictMath.pow(deNovoPrior,mvCount) : (1.0-10*deNovoPrior-deNovoPrior*deNovoPrior);
+                    configurationLikelihood =  StrictMath.log10(mvCoeff) + jointLikelihood;
                     matInd = getLikelihoodMatrixIndex(motherGenotype.getKey(), fatherGenotype.getKey(), childGenotype.getKey());
                     configurationLikelihoodsMatrix[matInd] = configurationLikelihood;
                 }

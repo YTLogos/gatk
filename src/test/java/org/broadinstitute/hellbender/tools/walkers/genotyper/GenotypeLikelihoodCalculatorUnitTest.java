@@ -28,7 +28,7 @@ public final class GenotypeLikelihoodCalculatorUnitTest {
         Assert.assertEquals(calculator.alleleCount(), alleleCount);
         Assert.assertEquals(calculator.genotypeCount(), calculateGenotypeCount(ploidy, alleleCount), " ploidy = " + ploidy + " alleleCount = " + alleleCount);
         final int genotypeCount = calculator.genotypeCount();
-        final int testGenotypeCount = Math.min(30000, genotypeCount);
+        final int testGenotypeCount = StrictMath.min(30000, genotypeCount);
         for (int i = 0; i < testGenotypeCount; i++) {
             final GenotypeAlleleCounts alleleCounts = calculator.genotypeAlleleCountsAt(i);
             Assert.assertNotNull(alleleCounts);
@@ -51,7 +51,7 @@ public final class GenotypeLikelihoodCalculatorUnitTest {
         final ReadLikelihoods<Allele> readLikelihoods = ReadLikelihoodsUnitTester.readLikelihoods(alleleCount, readCount);
         final GenotypeLikelihoodCalculator calculator = new GenotypeLikelihoodCalculators().getInstance(ploidy, alleleCount);
         final int genotypeCount = calculator.genotypeCount();
-        final int testGenotypeCount = Math.min(30000, genotypeCount);
+        final int testGenotypeCount = StrictMath.min(30000, genotypeCount);
         final int sampleCount = readCount.length;
         for (int s = 0; s < sampleCount ; s++) {
             final LikelihoodMatrix<Allele> sampleLikelihoods = readLikelihoods.sampleMatrix(s);
@@ -68,9 +68,9 @@ public final class GenotypeLikelihoodCalculatorUnitTest {
                         final int a = genotypeAlleleCounts.alleleIndexAt(ar);
                         final int aCount = genotypeAlleleCounts.alleleCountAt(ar);
                         final double readLk = sampleLikelihoods.get(a, r);
-                        compoments[ar] = readLk + Math.log10(aCount);
+                        compoments[ar] = readLk + StrictMath.log10(aCount);
                     }
-                    readGenotypeLikelihoods[r] = MathUtils.approximateLog10SumLog10(compoments) - Math.log10(ploidy);
+                    readGenotypeLikelihoods[r] = MathUtils.approximateLog10SumLog10(compoments) - StrictMath.log10(ploidy);
                 }
                 final double genotypeLikelihood = MathUtils.sum(readGenotypeLikelihoods);
                 Assert.assertEquals(genotypeLikelihoodsDoubles[i], genotypeLikelihood, 0.0001);
@@ -81,7 +81,7 @@ public final class GenotypeLikelihoodCalculatorUnitTest {
     @Test(dataProvider = "ploidyAndMaximumAlleleAndNewMaximumAlleleData")
     public void testGenotypeIndexMap(final int ploidy, final int oldAlleleCount, final int newAlleleCount) {
         final Random rnd = Utils.getRandomGenerator();
-        final int maxAlleleCount = Math.max(oldAlleleCount, newAlleleCount);
+        final int maxAlleleCount = StrictMath.max(oldAlleleCount, newAlleleCount);
         final int[] alleleMap = new int[newAlleleCount];
         final Map<Integer,Set<Integer>> reverseMap = new HashMap<>(oldAlleleCount);
         for (int i = 0; i < alleleMap.length; i++) {

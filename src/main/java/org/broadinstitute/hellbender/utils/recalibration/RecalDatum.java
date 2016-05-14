@@ -93,7 +93,7 @@ public final class RecalDatum implements Serializable {
     public void combine(final RecalDatum other) {
         final double sumErrors = this.calcExpectedErrors() + other.calcExpectedErrors();
         increment(other.getNumObservations(), other.getNumMismatches());
-        estimatedQReported = -10 * Math.log10(sumErrors / getNumObservations());
+        estimatedQReported = -10 * StrictMath.log10(sumErrors / getNumObservations());
         empiricalQuality = UNINITIALIZED;
     }
 
@@ -110,7 +110,7 @@ public final class RecalDatum implements Serializable {
         return estimatedQReported;
     }
     public final byte getEstimatedQReportedAsByte() {
-        return (byte)(int)(Math.round(getEstimatedQReported()));
+        return (byte)(int)(StrictMath.round(getEstimatedQReported()));
     }
 
     //---------------------------------------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ public final class RecalDatum implements Serializable {
     }
 
     public final byte getEmpiricalQualityAsByte() {
-        return (byte)(Math.round(getEmpiricalQuality()));
+        return (byte)(StrictMath.round(getEmpiricalQuality()));
     }
 
     //---------------------------------------------------------------------------------------------------------------
@@ -246,7 +246,7 @@ public final class RecalDatum implements Serializable {
 
         final double empiricalQual = RecalDatum.bayesianEstimateOfEmpiricalQuality(observations, mismatches, conditionalPrior);
 
-        empiricalQuality = Math.min(empiricalQual, (double) MAX_RECALIBRATED_Q_SCORE);
+        empiricalQuality = StrictMath.min(empiricalQual, (double) MAX_RECALIBRATED_Q_SCORE);
     }
 
     //static final boolean DEBUG = false;
@@ -287,7 +287,7 @@ public final class RecalDatum implements Serializable {
 
         final Gaussian gaussian = new Gaussian(GF_a, GF_b, GF_c);
         for ( int i = 0; i <= MAX_GATK_USABLE_Q_SCORE; i++ ) {
-            double log10Prior = Math.log10(gaussian.value((double) i));
+            double log10Prior = StrictMath.log10(gaussian.value((double) i));
             if ( Double.isInfinite(log10Prior) )
                 log10Prior = -Double.MAX_VALUE;
             log10QempPriorCache[i] = log10Prior;
@@ -295,7 +295,7 @@ public final class RecalDatum implements Serializable {
     }
 
     protected static double log10QempPrior(final double Qempirical, final double Qreported) {
-        final int difference = Math.min(Math.abs((int) (Qempirical - Qreported)), MAX_GATK_USABLE_Q_SCORE);
+        final int difference = StrictMath.min(StrictMath.abs((int) (Qempirical - Qreported)), MAX_GATK_USABLE_Q_SCORE);
         return log10QempPriorCache[difference];
     }
 
@@ -311,7 +311,7 @@ public final class RecalDatum implements Serializable {
         if ( nObservations > MAX_NUMBER_OF_OBSERVATIONS ) {
             // we need to decrease nErrors by the same fraction that we are decreasing nObservations
             final double fraction = (double)MAX_NUMBER_OF_OBSERVATIONS / (double)nObservations;
-            nErrors = Math.round((double) nErrors * fraction);
+            nErrors = StrictMath.round((double) nErrors * fraction);
             nObservations = MAX_NUMBER_OF_OBSERVATIONS;
         }
 

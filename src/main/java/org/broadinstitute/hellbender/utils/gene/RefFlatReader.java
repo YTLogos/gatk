@@ -100,8 +100,8 @@ public final class RefFlatReader {
         int start = Integer.MAX_VALUE;
         int end = Integer.MIN_VALUE;
         for (final TabbedTextFileWithHeaderParser.Row row: transcriptLines) {
-            start = Math.min(start, row.getIntegerField(RefFlatColumns.TX_START.name()) + 1);
-            end   = Math.max(end, row.getIntegerField(RefFlatColumns.TX_END.name()));
+            start = StrictMath.min(start, row.getIntegerField(RefFlatColumns.TX_START.name()) + 1);
+            end   = StrictMath.max(end, row.getIntegerField(RefFlatColumns.TX_END.name()));
         }
 
         final Gene gene = new Gene(chromosome, start, end, negative, geneName);

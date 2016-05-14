@@ -137,7 +137,7 @@ public final class RecalibrationReportUnitTest extends BaseTest {
     private static RecalDatum createRandomRecalDatum(int maxObservations, int maxErrors) {
         final Random random = new Random();
         final int nObservations = random.nextInt(maxObservations);
-        final int nErrors = Math.min(random.nextInt(maxErrors), nObservations);
+        final int nErrors = StrictMath.min(random.nextInt(maxErrors), nObservations);
         final int qual = random.nextInt(QualityUtils.MAX_SAM_QUAL_SCORE);
         return new RecalDatum((long)nObservations, (double)nErrors, (byte)qual);
     }

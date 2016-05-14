@@ -290,7 +290,7 @@ public final class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenc
                                 ++this.chimerasDenominator;
 
                                 // With both reads mapped we can see if this pair is chimeric
-                                if (Math.abs(record.getInferredInsertSize()) > maxInsertSize ||
+                                if (StrictMath.abs(record.getInferredInsertSize()) > maxInsertSize ||
                                         !record.getReferenceIndex().equals(record.getMateReferenceIndex())) {
                                     ++this.chimeras;
                                 }

@@ -52,7 +52,7 @@ public final class AlleleBalanceFilter implements VariantFilter {
 
         for (final Counts counts : countsMap.values()) {
             final int total = counts.allele1 + counts.allele2;
-            if (total > 0 && Math.min(counts.allele1, counts.allele2) / (double) total < this.hetAlleleBalance) return AB_FILTER;
+            if (total > 0 && StrictMath.min(counts.allele1, counts.allele2) / (double) total < this.hetAlleleBalance) return AB_FILTER;
         }
 
         return null;

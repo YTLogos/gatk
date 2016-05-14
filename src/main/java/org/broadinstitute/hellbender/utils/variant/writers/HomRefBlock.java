@@ -83,7 +83,7 @@ final class HomRefBlock implements Locatable {
         // cap the quality to the highest quality that will be emitted by the VCFEncoder
         // this isn't strictly necessary since it will be capped when written anyway
         // it should help avoid confusion by preventing the quality from changing when written and loaded from disk
-        return Math.min(rawQuality, VCFConstants.MAX_GENOTYPE_QUAL);
+        return StrictMath.min(rawQuality, VCFConstants.MAX_GENOTYPE_QUAL);
     }
 
     /**
@@ -140,11 +140,11 @@ final class HomRefBlock implements Locatable {
                 throw new GATKException("trying to merge different PL array sizes: " + pls.length + " != " + minPLs.length);
             }
             for (int i = 0; i < pls.length; i++) {
-                minPLs[i] = Math.min(minPLs[i], pls[i]);
+                minPLs[i] = StrictMath.min(minPLs[i], pls[i]);
             }
         }
         end = pos;
-        DPs.add(Math.max(genotype.getDP(), 0)); // DP must be >= 0
+        DPs.add(StrictMath.max(genotype.getDP(), 0)); // DP must be >= 0
     }
 
     /**
@@ -164,7 +164,7 @@ final class HomRefBlock implements Locatable {
     /** Get the median DP observed within this band
      * If there are an even number of DPs recorded in this band the median is the mean of the two middle values */
     public int getMedianDP() {
-        return (int) Math.round(MathUtils.median(DPs));
+        return (int) StrictMath.round(MathUtils.median(DPs));
     }
 
     /** Get the min PLs observed within this band, can be null if no PLs have yet been observed */

@@ -31,7 +31,7 @@ public final class LIBS_position {
     }
 
     public int getCurrentReadOffset() {
-        return Math.max(0, currentReadOffset - 1);
+        return StrictMath.max(0, currentReadOffset - 1);
     }
 
     public int getCurrentPositionOnOperatorBase0() {

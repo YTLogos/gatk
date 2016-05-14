@@ -460,8 +460,8 @@ public final class GenomeLocParserUnitTest extends BaseTest {
         else {
             Assert.assertNotNull(loc);
             Assert.assertEquals(loc.getContig(), contig);
-            Assert.assertEquals(loc.getStart(), Math.max(start, 1));
-            Assert.assertEquals(loc.getStop(), Math.min(stop, contigLength));
+            Assert.assertEquals(loc.getStart(), StrictMath.max(start, 1));
+            Assert.assertEquals(loc.getStop(), StrictMath.min(stop, contigLength));
         }
     }
 
@@ -488,8 +488,8 @@ public final class GenomeLocParserUnitTest extends BaseTest {
 
         Assert.assertNotNull(padded);
         Assert.assertEquals(padded.getContig(), input.getContig());
-        Assert.assertEquals(padded.getStart(), Math.max(input.getStart() - pad, 1));
-        Assert.assertEquals(padded.getStop(), Math.min(input.getStop() + pad, contigLength));
+        Assert.assertEquals(padded.getStart(), StrictMath.max(input.getStart() - pad, 1));
+        Assert.assertEquals(padded.getStop(), StrictMath.min(input.getStop() + pad, contigLength));
     }
 
 }

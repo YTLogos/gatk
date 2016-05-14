@@ -11,8 +11,8 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static java.lang.Math.exp;
-import static java.lang.Math.log10;
+import static java.lang.StrictMath.exp;
+import static java.lang.StrictMath.log10;
 import static org.broadinstitute.hellbender.utils.MathUtils.*;
 
 /**
@@ -43,7 +43,7 @@ public final class MathUtilsUnitTest extends BaseTest {
     @Test
     public void testRMS()  {
         Assert.assertEquals(MathUtils.rms(Arrays.asList(2,2,2)), 2.0);
-        Assert.assertEquals(MathUtils.rms(Arrays.asList(1,2,3)), Math.sqrt((1.0 + 4.0 + 9.0)/3));
+        Assert.assertEquals(MathUtils.rms(Arrays.asList(1,2,3)), StrictMath.sqrt((1.0 + 4.0 + 9.0)/3));
     }
 
     @Test
@@ -96,7 +96,7 @@ public final class MathUtilsUnitTest extends BaseTest {
             @Override
             public Object[] next() {
                 final double input = inValues[i++];
-                final double output = log10(1 - Math.pow(10, input));
+                final double output = log10(1 - StrictMath.pow(10, input));
                 return new Object[] { input, output };
             }
 
@@ -124,7 +124,7 @@ public final class MathUtilsUnitTest extends BaseTest {
             @Override
             public Object[] next() {
                 final double input = inValues[i++];
-                final double output = Math.log(1 - exp(input));
+                final double output = StrictMath.log(1 - exp(input));
                 return new Object[] { input, output };
             }
 
@@ -257,7 +257,7 @@ public final class MathUtilsUnitTest extends BaseTest {
     }
 
     private static double exp10(final double x){
-        return Math.pow(10.0, x);
+        return StrictMath.pow(10.0, x);
     }
 
     @Test
@@ -446,9 +446,9 @@ public final class MathUtilsUnitTest extends BaseTest {
     @Test
     public void testLogLog10conversions(){
         final double error = 1e-6;
-        for (final double x : new double[]{Math.E, 10.0, 0.5, 1, 1.5, 100.0}) {
-            final double logX = Math.log(x);
-            final double log10X = Math.log10(x);
+        for (final double x : new double[]{StrictMath.E, 10.0, 0.5, 1, 1.5, 100.0}) {
+            final double logX = StrictMath.log(x);
+            final double log10X = StrictMath.log10(x);
             Assert.assertEquals(log10ToLog(log10X), logX, error, "log10ToLog");
             Assert.assertEquals(logToLog10(logX), log10X, error, "logToLog10");
             Assert.assertEquals(logToLog10(log10ToLog(log10X)), log10X, error, "log10->log->log10");
@@ -624,49 +624,49 @@ public final class MathUtilsUnitTest extends BaseTest {
         Assert.assertEquals(MathUtils.log10sumLog10(new double[] {130.0}), 130.0, requiredPrecision);
         Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-0.145}), -0.145, requiredPrecision);
 
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, 0.0}), Math.log10(Math.pow(10.0, 0.0) + Math.pow(10.0, 0.0)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, 0.0}), Math.log10(Math.pow(10.0, -1.0) + Math.pow(10.0, 0.0)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, -1.0}), Math.log10(Math.pow(10.0, 0.0) + Math.pow(10.0, -1.0)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-2.2, -3.5}), Math.log10(Math.pow(10.0, -2.2) + Math.pow(10.0, -3.5)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, -7.1}), Math.log10(Math.pow(10.0, -1.0) + Math.pow(10.0, -7.1)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {5.0, 6.2}), Math.log10(Math.pow(10.0, 5.0) + Math.pow(10.0, 6.2)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {38.1, 16.2}), Math.log10(Math.pow(10.0, 38.1) + Math.pow(10.0, 16.2)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-38.1, 6.2}), Math.log10(Math.pow(10.0, -38.1) + Math.pow(10.0, 6.2)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-19.1, -37.1}), Math.log10(Math.pow(10.0, -19.1) + Math.pow(10.0, -37.1)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-29.1, -27.6}), Math.log10(Math.pow(10.0, -29.1) + Math.pow(10.0, -27.6)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-0.12345, -0.23456}), Math.log10(Math.pow(10.0, -0.12345) + Math.pow(10.0, -0.23456)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-15.7654, -17.0101}), Math.log10(Math.pow(10.0, -15.7654) + Math.pow(10.0, -17.0101)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, 0.0}), StrictMath.log10(StrictMath.pow(10.0, 0.0) + StrictMath.pow(10.0, 0.0)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, 0.0}), StrictMath.log10(StrictMath.pow(10.0, -1.0) + StrictMath.pow(10.0, 0.0)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, -1.0}), StrictMath.log10(StrictMath.pow(10.0, 0.0) + StrictMath.pow(10.0, -1.0)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-2.2, -3.5}), StrictMath.log10(StrictMath.pow(10.0, -2.2) + StrictMath.pow(10.0, -3.5)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, -7.1}), StrictMath.log10(StrictMath.pow(10.0, -1.0) + StrictMath.pow(10.0, -7.1)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {5.0, 6.2}), StrictMath.log10(StrictMath.pow(10.0, 5.0) + StrictMath.pow(10.0, 6.2)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {38.1, 16.2}), StrictMath.log10(StrictMath.pow(10.0, 38.1) + StrictMath.pow(10.0, 16.2)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-38.1, 6.2}), StrictMath.log10(StrictMath.pow(10.0, -38.1) + StrictMath.pow(10.0, 6.2)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-19.1, -37.1}), StrictMath.log10(StrictMath.pow(10.0, -19.1) + StrictMath.pow(10.0, -37.1)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-29.1, -27.6}), StrictMath.log10(StrictMath.pow(10.0, -29.1) + StrictMath.pow(10.0, -27.6)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-0.12345, -0.23456}), StrictMath.log10(StrictMath.pow(10.0, -0.12345) + StrictMath.pow(10.0, -0.23456)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-15.7654, -17.0101}), StrictMath.log10(StrictMath.pow(10.0, -15.7654) + StrictMath.pow(10.0, -17.0101)), requiredPrecision);
 
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, 0.0, 0.0}), Math.log10(Math.pow(10.0, 0.0) + Math.pow(10.0, 0.0) + Math.pow(10.0, 0.0)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, 0.0, 0.0}), Math.log10(Math.pow(10.0, -1.0) + Math.pow(10.0, 0.0) + Math.pow(10.0, 0.0)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, -1.0, -2.5}), Math.log10(Math.pow(10.0, 0.0) + Math.pow(10.0, -1.0) + Math.pow(10.0, -2.5)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-2.2, -3.5, -1.1}), Math.log10(Math.pow(10.0, -2.2) + Math.pow(10.0, -3.5) + Math.pow(10.0, -1.1)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, -7.1, 0.5}), Math.log10(Math.pow(10.0, -1.0) + Math.pow(10.0, -7.1) + Math.pow(10.0, 0.5)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {5.0, 6.2, 1.3}), Math.log10(Math.pow(10.0, 5.0) + Math.pow(10.0, 6.2) + Math.pow(10.0, 1.3)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {38.1, 16.2, 18.1}), Math.log10(Math.pow(10.0, 38.1) + Math.pow(10.0, 16.2) + Math.pow(10.0, 18.1)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-38.1, 6.2, 26.6}), Math.log10(Math.pow(10.0, -38.1) + Math.pow(10.0, 6.2) + Math.pow(10.0, 26.6)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-19.1, -37.1, -45.1}), Math.log10(Math.pow(10.0, -19.1) + Math.pow(10.0, -37.1) + Math.pow(10.0, -45.1)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-29.1, -27.6, -26.2}), Math.log10(Math.pow(10.0, -29.1) + Math.pow(10.0, -27.6) + Math.pow(10.0, -26.2)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-0.12345, -0.23456, -0.34567}), Math.log10(Math.pow(10.0, -0.12345) + Math.pow(10.0, -0.23456) + Math.pow(10.0, -0.34567)), requiredPrecision);
-        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-15.7654, -17.0101, -17.9341}), Math.log10(Math.pow(10.0, -15.7654) + Math.pow(10.0, -17.0101) + Math.pow(10.0, -17.9341)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, 0.0, 0.0}), StrictMath.log10(StrictMath.pow(10.0, 0.0) + StrictMath.pow(10.0, 0.0) + StrictMath.pow(10.0, 0.0)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, 0.0, 0.0}), StrictMath.log10(StrictMath.pow(10.0, -1.0) + StrictMath.pow(10.0, 0.0) + StrictMath.pow(10.0, 0.0)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {0.0, -1.0, -2.5}), StrictMath.log10(StrictMath.pow(10.0, 0.0) + StrictMath.pow(10.0, -1.0) + StrictMath.pow(10.0, -2.5)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-2.2, -3.5, -1.1}), StrictMath.log10(StrictMath.pow(10.0, -2.2) + StrictMath.pow(10.0, -3.5) + StrictMath.pow(10.0, -1.1)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-1.0, -7.1, 0.5}), StrictMath.log10(StrictMath.pow(10.0, -1.0) + StrictMath.pow(10.0, -7.1) + StrictMath.pow(10.0, 0.5)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {5.0, 6.2, 1.3}), StrictMath.log10(StrictMath.pow(10.0, 5.0) + StrictMath.pow(10.0, 6.2) + StrictMath.pow(10.0, 1.3)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {38.1, 16.2, 18.1}), StrictMath.log10(StrictMath.pow(10.0, 38.1) + StrictMath.pow(10.0, 16.2) + StrictMath.pow(10.0, 18.1)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-38.1, 6.2, 26.6}), StrictMath.log10(StrictMath.pow(10.0, -38.1) + StrictMath.pow(10.0, 6.2) + StrictMath.pow(10.0, 26.6)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-19.1, -37.1, -45.1}), StrictMath.log10(StrictMath.pow(10.0, -19.1) + StrictMath.pow(10.0, -37.1) + StrictMath.pow(10.0, -45.1)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-29.1, -27.6, -26.2}), StrictMath.log10(StrictMath.pow(10.0, -29.1) + StrictMath.pow(10.0, -27.6) + StrictMath.pow(10.0, -26.2)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-0.12345, -0.23456, -0.34567}), StrictMath.log10(StrictMath.pow(10.0, -0.12345) + StrictMath.pow(10.0, -0.23456) + StrictMath.pow(10.0, -0.34567)), requiredPrecision);
+        Assert.assertEquals(MathUtils.log10sumLog10(new double[] {-15.7654, -17.0101, -17.9341}), StrictMath.log10(StrictMath.pow(10.0, -15.7654) + StrictMath.pow(10.0, -17.0101) + StrictMath.pow(10.0, -17.9341)), requiredPrecision);
 
         // magnitude of the sum doesn't matter, so we can combinatorially test this via partitions of unity
         double[] mult_partitionFactor = new double[]{0.999,0.98,0.95,0.90,0.8,0.5,0.3,0.1,0.05,0.001};
         int[] n_partitions = new int[] {2,4,8,16,32,64,128,256,512,1028};
         for ( double alpha : mult_partitionFactor ) {
-            double log_alpha = Math.log10(alpha);
-            double log_oneMinusAlpha = Math.log10(1-alpha);
+            double log_alpha = StrictMath.log10(alpha);
+            double log_oneMinusAlpha = StrictMath.log10(1-alpha);
             for ( int npart : n_partitions ) {
                 double[] multiplicative = new double[npart];
                 double[] equal = new double[npart];
                 double remaining_log = 0.0;  // realspace = 1
                 for ( int i = 0 ; i < npart-1; i++ ) {
-                    equal[i] = -Math.log10(npart);
+                    equal[i] = -StrictMath.log10(npart);
                     double piece = remaining_log + log_alpha; // take a*remaining, leaving remaining-a*remaining = (1-a)*remaining
                     multiplicative[i] = piece;
                     remaining_log = remaining_log + log_oneMinusAlpha;
                 }
-                equal[npart-1] = -Math.log10(npart);
+                equal[npart-1] = -StrictMath.log10(npart);
                 multiplicative[npart-1] = remaining_log;
                 Assert.assertEquals(MathUtils.log10sumLog10(equal),0.0,requiredPrecision);
                 Assert.assertEquals(MathUtils.log10sumLog10(multiplicative),0.0,requiredPrecision,String.format("Did not sum to one: nPartitions=%d, alpha=%f",npart,alpha));
@@ -974,7 +974,7 @@ public final class MathUtilsUnitTest extends BaseTest {
                         maxLog = likelihood;
                     likelihoods.add(likelihood);
                 }
-                //System.out.printf("%d likelihoods and max is (probability) %e\n",likelihoods.size(),Math.pow(10,maxLog));
+                //System.out.printf("%d likelihoods and max is (probability) %e\n",likelihoods.size(),StrictMath.pow(10,maxLog));
                 Assert.assertEquals(MathUtils.sumLog10(unwrap(likelihoods)),1.0,1e-7,
                         String.format("Counts %d and alleles %d have nLikelihoods %d. \n Counts: %s",
                                 count,alleles.length,likelihoods.size(), "NODEBUG"/*,countLog*/));

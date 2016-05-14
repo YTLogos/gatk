@@ -527,7 +527,7 @@ public final class MergeBamAlignmentIntegrationTest extends CommandLineProgramTe
         alignedHeader.setSortOrder(SAMFileHeader.SortOrder.queryname);
         alignedHeader.setSequenceDictionary(SamReaderFactory.makeDefault().getFileHeader(sequenceDict).getSequenceDictionary());
         try (final SAMFileWriter alignedWriter = new SAMFileWriterFactory().makeSAMWriter(alignedHeader, true, alignedSam)) {
-            for (int i = 0; i < Math.max(firstOfPair.size(), secondOfPair.size()); ++i) {
+            for (int i = 0; i < StrictMath.max(firstOfPair.size(), secondOfPair.size()); ++i) {
                 final HitSpec firstHitSpec = firstOfPair.isEmpty() ? null : firstOfPair.get(i);
                 final HitSpec secondHitSpec = secondOfPair.isEmpty() ? null : secondOfPair.get(i);
                 final SAMRecord first = makeRead(alignedHeader, firstUnmappedRec, firstHitSpec, true, i);
@@ -1122,8 +1122,8 @@ public final class MergeBamAlignmentIntegrationTest extends CommandLineProgramTe
                 if (otherEnd == null) {
                     firstReadEncountered.put(rec.getReadName(), rec);
                 } else {
-                    final int fragmentStart = Math.min(rec.getAlignmentStart(), otherEnd.getAlignmentStart());
-                    final int fragmentEnd = Math.max(rec.getAlignmentEnd(), otherEnd.getAlignmentEnd());
+                    final int fragmentStart = StrictMath.min(rec.getAlignmentStart(), otherEnd.getAlignmentStart());
+                    final int fragmentEnd = StrictMath.max(rec.getAlignmentEnd(), otherEnd.getAlignmentEnd());
                     final String[] readNameFields = rec.getReadName().split(":");
                     // Read name of each pair includes the expected fragment start and fragment end positions.
                     final int expectedFragmentStart = Integer.parseInt(readNameFields[1]);
@@ -1229,8 +1229,8 @@ public final class MergeBamAlignmentIntegrationTest extends CommandLineProgramTe
                 Assert.assertEquals(numSecondRecords, 1);
             } else {
                 // If no alignments for an end, there will be a single unmapped record
-                Assert.assertEquals(numFirstRecords, Math.max(1, firstMapQs.length));
-                Assert.assertEquals(numSecondRecords, Math.max(1, secondMapQs.length));
+                Assert.assertEquals(numFirstRecords, StrictMath.max(1, firstMapQs.length));
+                Assert.assertEquals(numSecondRecords, StrictMath.max(1, secondMapQs.length));
             }
         }
     }
@@ -1465,8 +1465,8 @@ public final class MergeBamAlignmentIntegrationTest extends CommandLineProgramTe
             Assert.assertEquals(numSecondRecords, 1);
         } else {
             // If no alignments for an end, there will be a single unmapped record
-            Assert.assertEquals(numFirstRecords, Math.max(1, firstEndSpecs.length));
-            Assert.assertEquals(numSecondRecords, Math.max(1, secondEndSpecs.length));
+            Assert.assertEquals(numFirstRecords, StrictMath.max(1, firstEndSpecs.length));
+            Assert.assertEquals(numSecondRecords, StrictMath.max(1, secondEndSpecs.length));
         }
     }
 

@@ -75,7 +75,7 @@ public final class BaseQualitySumPerAlleleBySample extends GenotypeAnnotation im
             }
         }
 
-        gb.attribute(GATKVCFConstants.QUALITY_SCORE_SUM_KEY, new Integer[]{(int)Math.floor(refQualSum), (int) Math.floor(altQualSum)});
+        gb.attribute(GATKVCFConstants.QUALITY_SCORE_SUM_KEY, new Integer[]{(int)StrictMath.floor(refQualSum), (int) StrictMath.floor(altQualSum)});
     }
 
     @VisibleForTesting

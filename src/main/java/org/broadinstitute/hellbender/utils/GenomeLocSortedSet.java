@@ -160,7 +160,7 @@ public final class GenomeLocSortedSet extends AbstractSet<GenomeLoc> {
             return true;
 
         // check whether it overlaps the interval before or after the insertion point
-        previousOverlapSearchIndex = Math.max(0, -1 * previousOverlapSearchIndex - 2);
+        previousOverlapSearchIndex = StrictMath.max(0, -1 * previousOverlapSearchIndex - 2);
         return overlapsAtOrImmediatelyAfterCachedIndex(loc, false);
     }
 
@@ -198,7 +198,7 @@ public final class GenomeLocSortedSet extends AbstractSet<GenomeLoc> {
         // which the key would be inserted into the list: the index of the first element greater than the key, or list.size()
         // -ins - 1 = index => -ins = index + 1 => ins = -(index + 1)
         // Note that we look one before the index in this case, as loc might occur after the previous overlapping interval
-        final int start = Math.max(-(index + 1) - 1, 0);
+        final int start = StrictMath.max(-(index + 1) - 1, 0);
         final int size = mArray.size();
 
         final List<GenomeLoc> overlapping = new LinkedList<>();

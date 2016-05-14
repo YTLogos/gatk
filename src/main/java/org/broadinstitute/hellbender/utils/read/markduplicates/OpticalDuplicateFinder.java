@@ -231,7 +231,7 @@ public final class OpticalDuplicateFinder implements Serializable {
                 if (lhs.getTile() != rhs.getTile()) continue outer;
                 if (rhs.getX() > lhs.getX() + this.opticalDuplicatePixelDistance) continue outer;
 
-                if (Math.abs(lhs.getY() - rhs.getY()) <= this.opticalDuplicatePixelDistance) {
+                if (StrictMath.abs(lhs.getY() - rhs.getY()) <= this.opticalDuplicatePixelDistance) {
                     opticalDuplicateFlags[j] = true;
                 }
             }

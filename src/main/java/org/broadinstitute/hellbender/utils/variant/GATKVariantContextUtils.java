@@ -1274,7 +1274,7 @@ public final class GATKVariantContextUtils {
         final int currentCapacity = NOCALL_LISTS.length - 1;
         if (currentCapacity >= capacity)
             return;
-        NOCALL_LISTS = Arrays.copyOf(NOCALL_LISTS,Math.max(capacity,currentCapacity << 1) + 1);
+        NOCALL_LISTS = Arrays.copyOf(NOCALL_LISTS,StrictMath.max(capacity,currentCapacity << 1) + 1);
         for (int i = currentCapacity + 1; i < NOCALL_LISTS.length; i++)
             NOCALL_LISTS[i] = Collections.nCopies(i,Allele.NO_CALL);
     }
@@ -1446,7 +1446,7 @@ public final class GATKVariantContextUtils {
         for ( final Allele a : unclippedAlleles ) {
             if ( a.isSymbolic() )
                 return -1;
-            minAlleleLength = Math.min(minAlleleLength, a.length());
+            minAlleleLength = StrictMath.min(minAlleleLength, a.length());
         }
 
         final byte[] firstAlleleBases = unclippedAlleles.get(0).getBases();

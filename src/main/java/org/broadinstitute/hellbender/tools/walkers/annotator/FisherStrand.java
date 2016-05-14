@@ -83,7 +83,7 @@ public final class FisherStrand extends StrandBiasTest implements StandardAnnota
     }
 
     public static String makeValueObjectForAnnotation(double pValue) {
-        return String.format("%.3f", QualityUtils.phredScaleErrorRate(Math.max(pValue, MIN_PVALUE))); // prevent INFINITYs
+        return String.format("%.3f", QualityUtils.phredScaleErrorRate(StrictMath.max(pValue, MIN_PVALUE))); // prevent INFINITYs
     }
 
     public static Double pValueForContingencyTable(final int[][] originalTable) {
@@ -116,7 +116,7 @@ public final class FisherStrand extends StrandBiasTest implements StandardAnnota
     private static int addExact(final int... ints){
         int res = ints[0];
         for (int i = 1; i < ints.length; i++) {
-            res = Math.addExact(res, ints[i]);
+            res = StrictMath.addExact(res, ints[i]);
         }
         return res;
     }

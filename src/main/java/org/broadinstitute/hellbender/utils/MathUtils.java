@@ -24,19 +24,19 @@ public final class MathUtils {
      */
     public static final double LOG10_P_OF_ZERO = -1000000.0;
 
-    public static final double LOG10_ONE_HALF = Math.log10(0.5);
+    public static final double LOG10_ONE_HALF = StrictMath.log10(0.5);
 
-    public static final double LOG10_ONE_THIRD = -Math.log10(3.0);
+    public static final double LOG10_ONE_THIRD = -StrictMath.log10(3.0);
 
-    private static final double LN_10 = Math.log(10);
+    private static final double LN_10 = StrictMath.log(10);
 
-    private static final double LOG1MEXP_THRESHOLD = Math.log(0.5);
+    private static final double LOG1MEXP_THRESHOLD = StrictMath.log(0.5);
 
     /**
      * Log10 of the e constant.
      */
-    public static final double LOG10_OF_E = Math.log10(Math.E);
-    public static final double FAIR_BINOMIAL_PROB_LOG10_0_5 = Math.log10(0.5);
+    public static final double LOG10_OF_E = StrictMath.log10(StrictMath.E);
+    public static final double FAIR_BINOMIAL_PROB_LOG10_0_5 = StrictMath.log10(0.5);
 
     /**
      * Private constructor.  No instantiating this class!
@@ -77,7 +77,7 @@ public final class MathUtils {
         }
 
         public double stddev() {
-            return Math.sqrt(s / (obs_count - 1));
+            return StrictMath.sqrt(s / (obs_count - 1));
         }
 
         public double var() {
@@ -124,7 +124,7 @@ public final class MathUtils {
      */
     public static double rms(final Collection<Integer> list) {
         Utils.nonNull(list);
-        return Math.sqrt(list.stream().mapToInt(i -> i * i).average().orElse(0.0));
+        return StrictMath.sqrt(list.stream().mapToInt(i -> i * i).average().orElse(0.0));
     }
 
     /**
@@ -179,7 +179,7 @@ public final class MathUtils {
         if (a > 0) return Double.NaN;
         if (a == 0) return Double.NEGATIVE_INFINITY;
 
-        return (a < LOG1MEXP_THRESHOLD) ? Math.log1p(-Math.exp(a)) : Math.log(-Math.expm1(a));
+        return (a < LOG1MEXP_THRESHOLD) ? StrictMath.log1p(-StrictMath.exp(a)) : StrictMath.log(-StrictMath.expm1(a));
     }
 
     /**
@@ -209,7 +209,7 @@ public final class MathUtils {
      *  Returns the sum of values whose log10s we have. That is, returns sum(10^x_i).
      */
     public static double sumLog10(final double[] log10values) {
-        return Math.pow(10.0, log10SumLog10(log10values));
+        return StrictMath.pow(10.0, log10SumLog10(log10values));
     }
 
     /** Compute Z=X-Y for two numeric vectors X and Y
@@ -289,13 +289,13 @@ public final class MathUtils {
                 continue;
             }
             else {
-                sum += Math.pow(10.0, scaled_val);
+                sum += StrictMath.pow(10.0, scaled_val);
             }
         }
         if ( Double.isNaN(sum) || sum == Double.POSITIVE_INFINITY ) {
             throw new IllegalArgumentException("log10p: Values must be non-infinite and non-NAN");
         }
-        return maxValue + (sum != 1.0 ? Math.log10(sum) : 0.0);
+        return maxValue + (sum != 1.0 ? StrictMath.log10(sum) : 0.0);
     }
 
 
@@ -311,7 +311,7 @@ public final class MathUtils {
             cache = new double[capacity + 1];
             cache[0] = Double.NEGATIVE_INFINITY;    //initialize with the special case: log(0) = NEGATIVE_INFINITY
             for (int i = 1; i < cache.length; i++) {
-                cache[i] = Math.log10(i);
+                cache[i] = StrictMath.log10(i);
             }
         }
 
@@ -325,7 +325,7 @@ public final class MathUtils {
                 throw new IllegalArgumentException(String.format("Can't take the log of a negative number: %d", i));
             }
             if (i >= cache.length) {
-                return Math.log10(i);
+                return StrictMath.log10(i);
             }
             return cache[i];
         }
@@ -358,7 +358,7 @@ public final class MathUtils {
                 final int tableSize = (int) (MAX_TOLERANCE / TABLE_STEP) + 1;
                 cache = new double[tableSize];
                 for (int k = 0; k < cache.length; k++) {
-                    cache[k] = Math.log10(1.0 + Math.pow(10.0, -((double) k) * TABLE_STEP));
+                    cache[k] = StrictMath.log10(1.0 + StrictMath.pow(10.0, -((double) k) * TABLE_STEP));
                 }
             }
         }
@@ -371,7 +371,7 @@ public final class MathUtils {
         private static double[] cache = null;
     }
 
-    // A fast implementation of the Math.round() method.  This method does not perform
+    // A fast implementation of the StrictMath.round() method.  This method does not perform
     // under/overflow checking, so this shouldn't be used in the general case (but is fine
     // if one is already make those checks before calling in to the rounding).
     public static int fastRound(final double d) {
@@ -525,7 +525,7 @@ public final class MathUtils {
      * @return -1 if a is greater than b, 0 if a is equal to be within epsilon, 1 if b is greater than a.
      */
     public static byte compareDoubles(final double a, final double b, final double epsilon) {
-        if (Math.abs(a - b) < epsilon) {
+        if (StrictMath.abs(a - b) < epsilon) {
             return 0;
         }
         if (a > b) {
@@ -575,7 +575,7 @@ public final class MathUtils {
      * @return the binomial probability of the specified configuration.  Computes values down to about 1e-237.
      */
     public static double binomialProbability(final int n, final int k, final double p) {
-        return Math.pow(10.0, log10BinomialProbability(n, k, Math.log10(p)));
+        return StrictMath.pow(10.0, log10BinomialProbability(n, k, StrictMath.log10(p)));
     }
 
     /**
@@ -584,7 +584,7 @@ public final class MathUtils {
     public static double log10BinomialProbability(final int n, final int k, final double log10p) {
         if ( log10p > 1e-18 )
             throw new IllegalArgumentException("log10p: Log10-probability must be 0 or less");
-        double log10OneMinusP = Math.log10(1 - Math.pow(10.0, log10p));
+        double log10OneMinusP = StrictMath.log10(1 - StrictMath.pow(10.0, log10p));
         return log10BinomialCoefficient(n, k) + log10p * k + log10OneMinusP * (n - k);
     }
 
@@ -619,13 +619,13 @@ public final class MathUtils {
             if (i == maxElementIndex || curVal == Double.NEGATIVE_INFINITY) {
                 continue;
             } else {
-                sum += Math.pow(10.0, scaled_val);
+                sum += StrictMath.pow(10.0, scaled_val);
             }
         }
         if ( Double.isNaN(sum) || sum == Double.POSITIVE_INFINITY ) {
             throw new IllegalArgumentException("log10 p: Values must be non-infinite and non-NAN");
         }
-        return maxValue + (sum != 1.0 ? Math.log10(sum) : 0.0);
+        return maxValue + (sum != 1.0 ? StrictMath.log10(sum) : 0.0);
     }
 
     /**
@@ -676,7 +676,7 @@ public final class MathUtils {
         double[] normalized = new double[array.length];
 
         for (int i = 0; i < array.length; i++)
-            normalized[i] = Math.pow(10.0, array[i] - maxValue);
+            normalized[i] = StrictMath.pow(10.0, array[i] - maxValue);
 
         // normalize
         double sum = 0.0;
@@ -685,7 +685,7 @@ public final class MathUtils {
         for (int i = 0; i < array.length; i++) {
             double x = normalized[i] / sum;
             if (takeLog10OfOutput) {
-                x = Math.log10(x);
+                x = StrictMath.log10(x);
                 if ( x < LOG10_P_OF_ZERO || Double.isInfinite(x) )
                     x = array[i] - maxValue;
             }
@@ -843,7 +843,7 @@ public final class MathUtils {
     public static double[] toLog10(final double[] prRealSpace) {
         final double[] log10s = new double[prRealSpace.length];
         for (int i = 0; i < prRealSpace.length; i++) {
-            log10s[i] = Math.log10(prRealSpace[i]);
+            log10s[i] = StrictMath.log10(prRealSpace[i]);
         }
         return log10s;
     }
@@ -893,7 +893,7 @@ public final class MathUtils {
         else if ( x == 0.0 )
             return 0.0;
         else {
-            final double d = Math.log10(1 / x - 1) + Math.log10(x);
+            final double d = StrictMath.log10(1 / x - 1) + StrictMath.log10(x);
             return Double.isInfinite(d) || d > 0.0 ? 0.0 : d;
         }
     }
@@ -940,7 +940,7 @@ public final class MathUtils {
 
         //replace D (in-place) by its logarithm
         for (int i = 0; i < M.getColumnDimension(); i++) {
-            D.setEntry(i, i, Math.log(D.getEntry(i, i)));
+            D.setEntry(i, i, StrictMath.log(D.getEntry(i, i)));
         }
 
         return V.multiply(D).multiply(V.transpose());   //reverse the change of basis
@@ -1044,7 +1044,7 @@ public final class MathUtils {
             total += (in[i] * in[i]);
         }
 
-        return Math.sqrt((total / (stop - start)) - (mean * mean));
+        return StrictMath.sqrt((total / (stop - start)) - (mean * mean));
     }
 
     /** "Promotes" an int[] into a double array with the same values (or as close as precision allows). */
@@ -1080,8 +1080,8 @@ public final class MathUtils {
             throw new IllegalArgumentException("cannot round to " + n + " decimal places");
         }
 
-         final double mult = Math.pow(10,n);
-         return Math.round( (in+Math.ulp(in))*mult )/mult;
+         final double mult = StrictMath.pow(10,n);
+         return StrictMath.round( (in+StrictMath.ulp(in))*mult )/mult;
     }
 
     public static boolean wellFormedDouble(final double val) {
@@ -1100,8 +1100,8 @@ public final class MathUtils {
         Utils.validateArg(wellFormedDouble(mean) && wellFormedDouble(sd) && wellFormedDouble(x),
                           "mean, sd, or, x : Normal parameters must be well formatted (non-INF, non-NAN)");
 
-        double a = 1.0 / (sd * Math.sqrt(2.0 * Math.PI));
-        double b = Math.exp(-1.0 * (Math.pow(x - mean, 2.0) / (2.0 * sd * sd)));
+        double a = 1.0 / (sd * StrictMath.sqrt(2.0 * StrictMath.PI));
+        double b = StrictMath.exp(-1.0 * (StrictMath.pow(x - mean, 2.0) / (2.0 * sd * sd)));
         return a * b;
     }
 

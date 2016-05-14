@@ -197,7 +197,7 @@ final class StateTracker {
         log10LikelihoodsForAFGt0Sum = null;
         allelesUsedInGenotyping = null;
         if (alleleCountsOfMAP.length < ensureAltAlleleCapacity) {
-            final int newCapacity = Math.max(ensureAltAlleleCapacity, alleleCountsOfMAP.length << 1);
+            final int newCapacity = StrictMath.max(ensureAltAlleleCapacity, alleleCountsOfMAP.length << 1);
             alleleCountsOfMAP = new int[newCapacity];
             alleleCountsOfMLE = new int[newCapacity];
         } else {

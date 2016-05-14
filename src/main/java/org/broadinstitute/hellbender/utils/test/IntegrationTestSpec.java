@@ -205,7 +205,7 @@ public final class IntegrationTestSpec {
         final List<String> expectedLines = new XReadLines(expectedFile).readLines().stream().filter(startsWithComment.negate()).collect(Collectors.toList());
 
         //For ease of debugging, we look at the lines first and only then check their counts
-        final int minLen = Math.min(actualLines.size(), expectedLines.size());
+        final int minLen = StrictMath.min(actualLines.size(), expectedLines.size());
         for (int i = 0; i < minLen; i++) {
             Assert.assertEquals(actualLines.get(i).toString(), expectedLines.get(i).toString(), "Line number " + i + " (not counting comments)");
         }

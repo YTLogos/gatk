@@ -94,7 +94,7 @@ public final class PossibleDeNovo extends InfoFieldAnnotation {
         }
 
         final double percentNumberOfSamplesCutoff = vc.getNSamples()*percentOfSamplesCutoff;
-        final double AFcutoff = Math.max(flatNumberOfSamplesCutoff, percentNumberOfSamplesCutoff);
+        final double AFcutoff = StrictMath.max(flatNumberOfSamplesCutoff, percentNumberOfSamplesCutoff);
         final int deNovoAlleleCount = vc.getCalledChrCount(vc.getAlternateAllele(0)); //we assume we're biallelic above so use the first alt
 
         final Map<String,Object> attributeMap = new HashMap<>(2);

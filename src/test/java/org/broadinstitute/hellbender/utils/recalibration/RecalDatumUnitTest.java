@@ -78,8 +78,8 @@ public final class RecalDatumUnitTest extends BaseTest {
         assertEqualsDoubleSmart(datum.getEmpiricalErrorRate(), cfg.getErrorRate());
 
         final double e = datum.getEmpiricalQuality();
-        Assert.assertTrue(datum.getEmpiricalQualityAsByte() >= Math.floor(e));
-        Assert.assertTrue(datum.getEmpiricalQualityAsByte() <= Math.ceil(e));
+        Assert.assertTrue(datum.getEmpiricalQualityAsByte() >= StrictMath.floor(e));
+        Assert.assertTrue(datum.getEmpiricalQualityAsByte() <= StrictMath.ceil(e));
         Assert.assertNotNull(datum.toString());
     }
 

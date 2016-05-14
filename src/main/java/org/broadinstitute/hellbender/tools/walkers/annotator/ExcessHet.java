@@ -58,10 +58,10 @@ public final class ExcessHet extends InfoFieldAnnotation implements StandardAnno
         final double pval = exactTest(hetCount, refCount, homCount);
 
         //If the actual phredPval would be infinity we will probably still filter out just a very large number
-        if (Math.abs(pval - 0.0) < 10e-60) {
+        if (StrictMath.abs(pval - 0.0) < 10e-60) {
             return Pair.of(Integer.MAX_VALUE, Double.POSITIVE_INFINITY);
         }
-        final double phredPval = -10.0 * Math.log10(pval);
+        final double phredPval = -10.0 * StrictMath.log10(pval);
 
         return Pair.of(sampleCount, phredPval);
     }
@@ -106,7 +106,7 @@ public final class ExcessHet extends InfoFieldAnnotation implements StandardAnno
         final double[] probs = new double[rareCopies + 1];
 
         //Find (something close to the) mode for the midpoint
-        int mid = (int) Math.floor(rareCopies * (2.0 * N - rareCopies) / (2.0 * N - 1.0));
+        int mid = (int) StrictMath.floor(rareCopies * (2.0 * N - rareCopies) / (2.0 * N - 1.0));
         if ((mid % 2) != (rareCopies % 2)) {
             mid++;
         }

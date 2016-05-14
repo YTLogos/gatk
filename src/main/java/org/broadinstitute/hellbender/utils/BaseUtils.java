@@ -287,7 +287,7 @@ public final class BaseUtils {
     {
             Utils.nonNull(o1, "o1");
             Utils.nonNull(o2, "o2");
-            final int minLength = Math.min(o1.length,o2.length);
+            final int minLength = StrictMath.min(o1.length,o2.length);
             for (int i = 0; i < minLength; i++) {
                 final int cmp = Byte.compare(o1[i],o2[i]);
                 if (cmp != 0) {

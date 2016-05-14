@@ -49,10 +49,10 @@ public final class AlleleBiasedDownsamplingUtils {
 
                 // split these cases so we don't lose on the floor (since we divided by 2)
                 if ( i == j ) {
-                    newCounts[i] = Math.max(0, newCounts[i] - numReadsToRemove);
+                    newCounts[i] = StrictMath.max(0, newCounts[i] - numReadsToRemove);
                 } else {
-                    newCounts[i] = Math.max(0, newCounts[i] - numReadsToRemovePerAllele);
-                    newCounts[j] = Math.max(0, newCounts[j] - numReadsToRemovePerAllele);
+                    newCounts[i] = StrictMath.max(0, newCounts[i] - numReadsToRemovePerAllele);
+                    newCounts[j] = StrictMath.max(0, newCounts[j] - numReadsToRemovePerAllele);
                 }
 
                 final int score = scoreAlleleCounts(newCounts);
@@ -82,7 +82,7 @@ public final class AlleleBiasedDownsamplingUtils {
         // try to get the best score:
         //    - in the het case the counts should be equal with nothing else
         //    - in the hom case the non-max should be zero
-        return Math.min(maxCount - nextBestCount + remainderCount, Math.abs(nextBestCount + remainderCount));
+        return StrictMath.min(maxCount - nextBestCount + remainderCount, StrictMath.abs(nextBestCount + remainderCount));
     }
 
    /**

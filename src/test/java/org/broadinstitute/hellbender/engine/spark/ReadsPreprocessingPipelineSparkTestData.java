@@ -186,7 +186,7 @@ public class ReadsPreprocessingPipelineSparkTestData {
     @Test
     public static void verifyDivisibilityWithRefShard() {
         // We want the ratio between the two shard types to be an int so we can use them more easily for testing.
-        Assert.assertEquals(Math.floorMod(ReferenceShard.REFERENCE_SHARD_SIZE, VariantShard.VARIANT_SHARDSIZE), 0);
+        Assert.assertEquals(StrictMath.floorMod(ReferenceShard.REFERENCE_SHARD_SIZE, VariantShard.VARIANT_SHARDSIZE), 0);
     }
 
     public List<KV<GATKRead, Iterable<GATKVariant>>> getKvReadiVariant() {

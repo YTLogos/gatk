@@ -27,7 +27,7 @@ import java.util.Set;
 
 import static htsjdk.samtools.util.CodeUtil.getOrElse;
 import static htsjdk.samtools.util.SequenceUtil.generateAllKmers;
-import static java.lang.Math.log10;
+import static java.lang.StrictMath.log10;
 
 /**
  * Class for trying to quantify the CpCG->CpCA error rate.
@@ -368,7 +368,7 @@ public final class CollectOxoGMetrics extends PicardCommandLineProgram {
              * with respect to read1/read2, then we should see as many in the 8-oxo-G consistent state as not.  So we
              * assume that controlA is half the story, and remove the other half from oxidatedA.
              */
-            m.OXIDATION_ERROR_RATE = Math.max(m.ALT_OXO_BASES - m.ALT_NONOXO_BASES, 1) / (double) m.TOTAL_BASES;
+            m.OXIDATION_ERROR_RATE = StrictMath.max(m.ALT_OXO_BASES - m.ALT_NONOXO_BASES, 1) / (double) m.TOTAL_BASES;
             m.OXIDATION_Q = -10 * log10(m.OXIDATION_ERROR_RATE);
 
             /** Now look for things that have a reference base bias! */
@@ -380,8 +380,8 @@ public final class CollectOxoGMetrics extends PicardCommandLineProgram {
             final double cRefErrorRate = m.C_REF_ALT_BASES / (double) (m.C_REF_ALT_BASES + m.C_REF_REF_BASES);
             final double gRefErrorRate = m.G_REF_ALT_BASES / (double) (m.G_REF_ALT_BASES + m.G_REF_REF_BASES);
 
-            m.C_REF_OXO_ERROR_RATE = Math.max(cRefErrorRate - gRefErrorRate, 1e-10);
-            m.G_REF_OXO_ERROR_RATE = Math.max(gRefErrorRate - cRefErrorRate, 1e-10);
+            m.C_REF_OXO_ERROR_RATE = StrictMath.max(cRefErrorRate - gRefErrorRate, 1e-10);
+            m.G_REF_OXO_ERROR_RATE = StrictMath.max(gRefErrorRate - cRefErrorRate, 1e-10);
             m.C_REF_OXO_Q = -10 * log10(m.C_REF_OXO_ERROR_RATE);
             m.G_REF_OXO_Q = -10 * log10(m.G_REF_OXO_ERROR_RATE);
 

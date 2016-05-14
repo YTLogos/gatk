@@ -269,13 +269,13 @@ public final class TargetCollectionUnitTest extends BaseTest {
 
             int nextBasePos = 0;
             for (int i = 0; i < numberOfTargets; i++) {
-                final int slotLength = (int) Math.max(1,Math.min(3 * avgSlotSize,(rdn.nextGaussian() * avgSlotSize * .5) + avgSlotSize));
-                final int targetLength = (int) Math.max(1,slotLength * rdn.nextDouble());
-                final int start = Math.max(nextBasePos,1 + nextBasePos + ((slotLength - targetLength) >> 1));
+                final int slotLength = (int) StrictMath.max(1,StrictMath.min(3 * avgSlotSize,(rdn.nextGaussian() * avgSlotSize * .5) + avgSlotSize));
+                final int targetLength = (int) StrictMath.max(1,slotLength * rdn.nextDouble());
+                final int start = StrictMath.max(nextBasePos,1 + nextBasePos + ((slotLength - targetLength) >> 1));
                 final int stop = start + targetLength;
                 intervals.add(new SimpleInterval(contig,start,stop));
                 nextBasePos += slotLength;
-                nextBasePos = Math.max(nextBasePos,stop + 1);
+                nextBasePos = StrictMath.max(nextBasePos,stop + 1);
             }
             this.intervals = Collections.unmodifiableList(intervals);
         }

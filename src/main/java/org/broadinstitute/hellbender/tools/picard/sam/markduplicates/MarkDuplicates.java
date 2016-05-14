@@ -349,7 +349,7 @@ public final class MarkDuplicates extends AbstractMarkDuplicatesCommandLineProgr
      */
     private void generateDuplicateIndexes() {
         // Keep this number from getting too large even if there is a huge heap.
-        final int maxInMemory = (int) Math.min((Runtime.getRuntime().maxMemory() * 0.25) / SortingLongCollection.SIZEOF,
+        final int maxInMemory = (int) StrictMath.min((Runtime.getRuntime().maxMemory() * 0.25) / SortingLongCollection.SIZEOF,
                 (double) (Integer.MAX_VALUE - 5));
         logger.info("Will retain up to " + maxInMemory + " duplicate indices before spilling to disk.");
         this.duplicateIndexes = new SortingLongCollection(maxInMemory, TMP_DIR.toArray(new File[TMP_DIR.size()]));

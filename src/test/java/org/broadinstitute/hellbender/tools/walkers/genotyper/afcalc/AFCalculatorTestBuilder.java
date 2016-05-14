@@ -118,7 +118,7 @@ public final class AFCalculatorTestBuilder {
 
         for ( int i = 0; i < ACs.length; i++ ) {
             final double p = ACs[i] / (1.0 * nChrom);
-            nhomvar[i] = (int) Math.floor((nSamples - nNonInformative) * p * p);
+            nhomvar[i] = (int) StrictMath.floor((nSamples - nNonInformative) * p * p);
             nhet[i] = ACs[i] - 2 * nhomvar[i];
 
             if ( nhet[i] < 0 )
@@ -145,7 +145,7 @@ public final class AFCalculatorTestBuilder {
         final Genotype nonInformative = makeNonInformative();
         samples.addAll(Collections.nCopies(nNonInformative, nonInformative));
 
-        final int nRef = Math.max((int) (nSamples - nNonInformative - MathUtils.sum(nhet) - MathUtils.sum(nhomvar)), 0);
+        final int nRef = StrictMath.max((int) (nSamples - nNonInformative - MathUtils.sum(nhet) - MathUtils.sum(nhomvar)), 0);
         samples.addAll(Collections.nCopies(nRef, makePL(GenotypeType.HOM_REF, nonTypePL, 0)));
 
         samples = samples.subList(0, nSamples);

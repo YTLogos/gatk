@@ -129,7 +129,7 @@ public final class ClippingOp {
     }
 
     private void overwriteFromStartToStop(final byte[] arr, final byte newVal){
-        Arrays.fill(arr, start, Math.min(arr.length, stop+1), newVal);
+        Arrays.fill(arr, start, StrictMath.min(arr.length, stop+1), newVal);
     }
 
     private GATKRead applyREVERT_SOFTCLIPPED_BASES(final GATKRead read) {

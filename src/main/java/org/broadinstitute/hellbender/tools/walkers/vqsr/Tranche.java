@@ -255,8 +255,8 @@ final class Tranche {
             }
         }
 
-        double knownTiTv = knownTi / Math.max(1.0 * knownTv, 1.0);
-        double novelTiTv = novelTi / Math.max(1.0 * novelTv, 1.0);
+        double knownTiTv = knownTi / StrictMath.max(1.0 * knownTv, 1.0);
+        double novelTiTv = novelTi / StrictMath.max(1.0 * novelTv, 1.0);
 
         int accessibleTruthSites = VariantDatum.countCallsAtTruth(data, Double.NEGATIVE_INFINITY);
         int nCallsAtTruth = VariantDatum.countCallsAtTruth(data, minLod);

@@ -100,7 +100,7 @@ public final class DuplicationMetrics extends MetricBase implements Serializable
 
     /** Method that is used in the computation of estimated library size. */
     private static double f(double x, double c, double n) {
-        return c/x - 1 + Math.exp(-n/x);
+        return c/x - 1 + StrictMath.exp(-n/x);
     }
 
     /**
@@ -115,7 +115,7 @@ public final class DuplicationMetrics extends MetricBase implements Serializable
      *         would observe uniquePairs*z unique pairs.
      */
     public static double estimateRoi(long estimatedLibrarySize, double x, long pairs, long uniquePairs) {
-        return estimatedLibrarySize * ( 1 - Math.exp(-(x*pairs)/estimatedLibrarySize) ) / uniquePairs;
+        return estimatedLibrarySize * ( 1 - StrictMath.exp(-(x*pairs)/estimatedLibrarySize) ) / uniquePairs;
     }
 
     /**

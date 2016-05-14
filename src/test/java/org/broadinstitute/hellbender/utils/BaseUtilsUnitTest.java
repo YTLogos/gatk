@@ -152,10 +152,10 @@ public final class BaseUtilsUnitTest extends BaseTest {
         final Random rnd = Utils.getRandomGenerator();
 
         for (int i = 0; i < testCount; i++) {
-            final int size = (int) Math.max(0,rnd.nextDouble() * testSizeDeviation + testSizeAverage);
+            final int size = (int) StrictMath.max(0,rnd.nextDouble() * testSizeDeviation + testSizeAverage);
             final ArrayList<byte[]> bases = new ArrayList<>(size);
             for (int j = 0; j < size; j++) {
-                final int jSize = (int) Math.max(0,rnd.nextDouble() * haplotypeSizeDeviation + haplotypeSizeAverage);
+                final int jSize = (int) StrictMath.max(0,rnd.nextDouble() * haplotypeSizeDeviation + haplotypeSizeAverage);
                 final byte[] b = new byte[jSize];
                 for (int k = 0; k < jSize; k++)
                     b[k] = BaseUtils.baseIndexToSimpleBase(rnd.nextInt(4));

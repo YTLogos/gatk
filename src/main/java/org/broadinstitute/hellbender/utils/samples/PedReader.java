@@ -214,8 +214,8 @@ public final class PedReader {
         final int samplePos = familyPos + 1;
         final int paternalPos = missingFields.contains(MissingPedField.NO_PARENTS) ? -1 : samplePos + 1;
         final int maternalPos = missingFields.contains(MissingPedField.NO_PARENTS) ? -1 : paternalPos + 1;
-        final int sexPos = missingFields.contains(MissingPedField.NO_SEX) ? -1 : Math.max(maternalPos, samplePos) + 1;
-        final int phenotypePos = missingFields.contains(MissingPedField.NO_PHENOTYPE) ? -1 : Math.max(sexPos, Math.max(maternalPos, samplePos)) + 1;
+        final int sexPos = missingFields.contains(MissingPedField.NO_SEX) ? -1 : StrictMath.max(maternalPos, samplePos) + 1;
+        final int phenotypePos = missingFields.contains(MissingPedField.NO_PHENOTYPE) ? -1 : StrictMath.max(sexPos, StrictMath.max(maternalPos, samplePos)) + 1;
         final int nExpectedFields = IntStream.of(samplePos, paternalPos, maternalPos, sexPos, phenotypePos).max().getAsInt() + 1;
 
         List<String> lines;

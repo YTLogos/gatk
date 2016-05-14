@@ -27,7 +27,7 @@ public final class NestedIntegerArray<T extends Serializable> implements Seriali
             throw new IllegalArgumentException("There must be at least one dimension to an NestedIntegerArray");
         this.dimensions = Arrays.copyOf(dimensions, dimensions.length);
 
-        final int dimensionsToPreallocate = Math.min(dimensions.length, NUM_DIMENSIONS_TO_PREALLOCATE);
+        final int dimensionsToPreallocate = StrictMath.min(dimensions.length, NUM_DIMENSIONS_TO_PREALLOCATE);
 
         if ( logger.isDebugEnabled() ) logger.debug(String.format("Creating NestedIntegerArray with dimensions %s", Arrays.toString(dimensions)));
         if ( logger.isDebugEnabled() ) logger.debug(String.format("Pre-allocating first %d dimensions", dimensionsToPreallocate));

@@ -95,13 +95,13 @@ public final class ReadClipperUnitTest extends BaseTest {
             for (int i = start; i <= stop; i++) {
                 GATKRead clipLeft = (new ReadClipper(read)).hardClipByReferenceCoordinates(-1, i);
                 if (!clipLeft.isEmpty()) {
-                    Assert.assertTrue(clipLeft.getStart() >= Math.min(read.getEnd(), i + 1), String.format("Clipped alignment start (%d) is less the expected (%d): %s -> %s", clipLeft.getStart(), i + 1, read.getCigar().toString(), clipLeft.getCigar().toString()));
+                    Assert.assertTrue(clipLeft.getStart() >= StrictMath.min(read.getEnd(), i + 1), String.format("Clipped alignment start (%d) is less the expected (%d): %s -> %s", clipLeft.getStart(), i + 1, read.getCigar().toString(), clipLeft.getCigar().toString()));
                     assertUnclippedLimits(read, clipLeft);
                 }
 
                 GATKRead clipRight = (new ReadClipper(read)).hardClipByReferenceCoordinates(i, -1);
                 if (!clipRight.isEmpty() && clipRight.getStart() <= clipRight.getEnd()) {             // alnStart > alnEnd if the entire read is a soft clip now. We can't test those.
-                    Assert.assertTrue(clipRight.getEnd() <= Math.max(read.getStart(), i - 1), String.format("Clipped alignment end (%d) is greater than expected (%d): %s -> %s", clipRight.getEnd(), i - 1, read.getCigar().toString(), clipRight.getCigar().toString()));
+                    Assert.assertTrue(clipRight.getEnd() <= StrictMath.max(read.getStart(), i - 1), String.format("Clipped alignment end (%d) is greater than expected (%d): %s -> %s", clipRight.getEnd(), i - 1, read.getCigar().toString(), clipRight.getCigar().toString()));
                     assertUnclippedLimits(read, clipRight);
                 }
             }

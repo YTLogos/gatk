@@ -203,7 +203,7 @@ public final class GenotypeAlleleCountsUnitTest {
                     current.minimumAlleleIndex() == 0 ? current.alleleCountAt(0) - 1 : 0);
 
             int totalCountSum = 0;
-            final int[] expectedAlleleCountsByIndex = new int[Math.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex()) + 1];
+            final int[] expectedAlleleCountsByIndex = new int[StrictMath.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex()) + 1];
             for (int i = 0; i < next.distinctAlleleCount(); i++) {
                 final int count = next.alleleCountAt(i);
                 final int index = next.alleleIndexAt(i);
@@ -215,7 +215,7 @@ public final class GenotypeAlleleCountsUnitTest {
                 if (index > current.minimumAlleleIndex() + 1)
                     Assert.assertEquals(next.alleleCountFor(index), current.alleleCountFor(index));
             }
-            Assert.assertTrue(Arrays.equals(next.alleleCountsByIndex(Math.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex())), expectedAlleleCountsByIndex));
+            Assert.assertTrue(Arrays.equals(next.alleleCountsByIndex(StrictMath.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex())), expectedAlleleCountsByIndex));
             Assert.assertEquals(totalCountSum, ploidy);
 
             Assert.assertTrue(next.compareTo(current) > 0);
@@ -320,7 +320,7 @@ public final class GenotypeAlleleCountsUnitTest {
                     current.minimumAlleleIndex() == 0 ? current.alleleCountAt(0) - 1 : 0);
 
             int totalCountSum = 0;
-            final int[] expectedAlleleCountsByIndex = new int[Math.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex()) + 1];
+            final int[] expectedAlleleCountsByIndex = new int[StrictMath.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex()) + 1];
             for (int i = 0; i < next.distinctAlleleCount(); i++) {
                 final int count = next.alleleCountAt(i);
                 final int index = next.alleleIndexAt(i);
@@ -332,7 +332,7 @@ public final class GenotypeAlleleCountsUnitTest {
                 if (index > current.minimumAlleleIndex() + 1)
                     Assert.assertEquals(next.alleleCountFor(index), current.alleleCountFor(index));
             }
-            Assert.assertTrue(Arrays.equals(next.alleleCountsByIndex(Math.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex())), expectedAlleleCountsByIndex));
+            Assert.assertTrue(Arrays.equals(next.alleleCountsByIndex(StrictMath.max(MAXIMUM_ALLELE_INDEX, next.maximumAlleleIndex())), expectedAlleleCountsByIndex));
             Assert.assertEquals(totalCountSum, ploidy);
 
             Assert.assertTrue(next.compareTo(current) > 0);

@@ -37,7 +37,7 @@ public final class IntervalListScatterer {
     public IntervalListScatterer(final Mode mode) {this.mode = mode;}
 
     private int deduceIdealSplitLength(final IntervalList uniquedList, final int scatterCount) {
-        final int splitWidth = Math.max((int) Math.floor(uniquedList.getBaseCount() / (1.0 * scatterCount)), 1);
+        final int splitWidth = StrictMath.max((int) StrictMath.floor(uniquedList.getBaseCount() / (1.0 * scatterCount)), 1);
         switch (mode) {
             case INTERVAL_SUBDIVISION:
                 return splitWidth;
@@ -50,7 +50,7 @@ public final class IntervalListScatterer {
                 }).length();
 
                 // There is no purpose to splitting more granularly than the widest interval, so do not.
-                return Math.max(widestIntervalLength, splitWidth);
+                return StrictMath.max(widestIntervalLength, splitWidth);
             default:
                 throw new IllegalStateException();
         }

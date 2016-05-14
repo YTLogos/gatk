@@ -516,7 +516,7 @@ public final class FeatureDataSource<T extends Feature> implements GATKDataSourc
         // Note that it doesn't matter if we go off the end of the contig in the process, since
         // our reader's query operation is not aware of (and does not care about) contig boundaries.
         // Note: we use addExact to blow up on overflow rather than propagate negative results downstream
-        final SimpleInterval queryInterval = new SimpleInterval(interval.getContig(), interval.getStart(), Math.addExact(interval.getEnd(), queryLookaheadBases));
+        final SimpleInterval queryInterval = new SimpleInterval(interval.getContig(), interval.getStart(), StrictMath.addExact(interval.getEnd(), queryLookaheadBases));
 
         // Query iterator over our reader will be immediately closed after re-populating our cache
         try ( CloseableTribbleIterator<T> queryIter = featureReader.query(queryInterval.getContig(), queryInterval.getStart(), queryInterval.getEnd()) ) {

@@ -37,7 +37,7 @@ public final class BQSRReadTransformerUnitTest extends BaseTest{
     }
 
     private static  RecalDatum makeRecalDatum(final long count, final double qual){
-        return new RecalDatum(count, count * 1.0 / (Math.pow(10.0, qual / 10.0)), (byte)qual);
+        return new RecalDatum(count, count * 1.0 / (StrictMath.pow(10.0, qual / 10.0)), (byte)qual);
     }
 
     @Test

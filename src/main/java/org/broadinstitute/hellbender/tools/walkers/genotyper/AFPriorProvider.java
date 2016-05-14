@@ -51,7 +51,7 @@ public abstract class AFPriorProvider {
         if (priorByTotalPloidy == null) {
             priorByTotalPloidy = new double[totalPloidy + 1][];  // just enough for those cases in where we have a fix total-ploidy.
         } else if (priorByTotalPloidy.length - 1 < totalPloidy) {
-            priorByTotalPloidy = Arrays.copyOf(priorByTotalPloidy, Math.max(priorByTotalPloidy.length << 1, totalPloidy + 1));
+            priorByTotalPloidy = Arrays.copyOf(priorByTotalPloidy, StrictMath.max(priorByTotalPloidy.length << 1, totalPloidy + 1));
         }
     }
 

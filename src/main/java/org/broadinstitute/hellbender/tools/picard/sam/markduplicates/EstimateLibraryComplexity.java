@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.Math.pow;
+import static java.lang.StrictMath.pow;
 
 /**
  * <p>Attempts to estimate library complexity from sequence alone. Does so by sorting all reads
@@ -313,7 +313,7 @@ public final class EstimateLibraryComplexity extends AbstractOpticalDuplicateFin
 
             int groupsProcessed = 0;
             long lastLogTime = System.currentTimeMillis();
-            final int meanGroupSize = Math.max(1, (recordsRead / 2) / (int) pow(4.0, (double) MIN_IDENTICAL_BASES * 2));
+            final int meanGroupSize = StrictMath.max(1, (recordsRead / 2) / (int) pow(4.0, (double) MIN_IDENTICAL_BASES * 2));
 
             while (iterator.hasNext()) {
                 // Get the next group and split it apart by library
@@ -418,9 +418,9 @@ public final class EstimateLibraryComplexity extends AbstractOpticalDuplicateFin
      * errors/diffs as dictated by the maxDiffRate.
      */
     private boolean matches(final PairedReadSequence lhs, final PairedReadSequence rhs, final double maxDiffRate) {
-        final int read1Length = Math.min(lhs.read1.length, rhs.read1.length);
-        final int read2Length = Math.min(lhs.read2.length, rhs.read2.length);
-        final int maxErrors = (int) Math.floor((read1Length + read2Length) * maxDiffRate);
+        final int read1Length = StrictMath.min(lhs.read1.length, rhs.read1.length);
+        final int read2Length = StrictMath.min(lhs.read2.length, rhs.read2.length);
+        final int maxErrors = (int) StrictMath.floor((read1Length + read2Length) * maxDiffRate);
         int errors = 0;
 
         // The loop can start from MIN_IDENTICAL_BASES because we've already confirmed that

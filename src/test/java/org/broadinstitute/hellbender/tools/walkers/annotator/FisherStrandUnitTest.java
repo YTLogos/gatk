@@ -70,7 +70,7 @@ public final class FisherStrandUnitTest {
         Assert.assertEquals(pvalue, expectedPvalue, DELTA_PRECISION, "Pvalues");
 
         final double actualPhredPval = Double.parseDouble((String) new FisherStrand().annotationForOneTable(pvalue).get(GATKVCFConstants.FISHER_STRAND_KEY));
-        final double expectedPhredPvalue =  QualityUtils.phredScaleErrorRate(Math.max(expectedPvalue, FisherStrand.MIN_PVALUE));
+        final double expectedPhredPvalue =  QualityUtils.phredScaleErrorRate(StrictMath.max(expectedPvalue, FisherStrand.MIN_PVALUE));
         Assert.assertEquals(actualPhredPval, expectedPhredPvalue, DELTA_PRECISION_FOR_PHRED, "phred pvalues");
 
         Assert.assertEquals(new FisherStrand().getKeyNames(), Collections.singletonList(GATKVCFConstants.FISHER_STRAND_KEY));
@@ -122,10 +122,10 @@ public final class FisherStrandUnitTest {
         final double actualPhredPval = Double.parseDouble(pPhredStr);
 
         final double expectedPvalue = FisherStrand.pValueForContingencyTable(table);
-        final double expectedPhredPvalue =  QualityUtils.phredScaleErrorRate(Math.max(expectedPvalue, FisherStrand.MIN_PVALUE));
+        final double expectedPhredPvalue =  QualityUtils.phredScaleErrorRate(StrictMath.max(expectedPvalue, FisherStrand.MIN_PVALUE));
         Assert.assertEquals(actualPhredPval, expectedPhredPvalue, DELTA_PRECISION_FOR_PHRED, "phred pvalues");
 
-        Assert.assertEquals(Math.pow(10, actualPhredPval/-10.0), expectedPvalue, DELTA_PRECISION);
+        Assert.assertEquals(StrictMath.pow(10, actualPhredPval/-10.0), expectedPvalue, DELTA_PRECISION);
     }
 
     private GATKRead makeRead(final boolean forward) {
@@ -185,10 +185,10 @@ public final class FisherStrandUnitTest {
         final double actualPhredPval = Double.parseDouble(pPhredStr);
 
         final double expectedPvalue = FisherStrand.pValueForContingencyTable(table);
-        final double expectedPhredPvalue =  QualityUtils.phredScaleErrorRate(Math.max(expectedPvalue, FisherStrand.MIN_PVALUE));
+        final double expectedPhredPvalue =  QualityUtils.phredScaleErrorRate(StrictMath.max(expectedPvalue, FisherStrand.MIN_PVALUE));
         Assert.assertEquals(actualPhredPval, expectedPhredPvalue, DELTA_PRECISION_FOR_PHRED, "phred pvalues");
 
-        Assert.assertEquals(Math.pow(10, actualPhredPval / -10.0), expectedPvalue, DELTA_PRECISION);
+        Assert.assertEquals(StrictMath.pow(10, actualPhredPval / -10.0), expectedPvalue, DELTA_PRECISION);
     }
 
     @Test

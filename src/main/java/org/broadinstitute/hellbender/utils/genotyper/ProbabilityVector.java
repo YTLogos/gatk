@@ -119,8 +119,8 @@ public final class ProbabilityVector {
     public double logDotProduct(final ProbabilityVector other) {
         Utils.nonNull(other);
         // find overlap in range
-        final int minRange = Math.max(this.minVal, other.getMinVal());
-        final int maxRange = Math.min(this.maxVal, other.getMaxVal());
+        final int minRange = StrictMath.max(this.minVal, other.getMinVal());
+        final int maxRange = StrictMath.min(this.maxVal, other.getMaxVal());
         if (minRange > maxRange) {
             return Double.NEGATIVE_INFINITY;
         }

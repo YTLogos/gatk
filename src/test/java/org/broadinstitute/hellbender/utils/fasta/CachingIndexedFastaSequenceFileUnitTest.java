@@ -85,7 +85,7 @@ public final class CachingIndexedFastaSequenceFileUnitTest extends BaseTest {
         // we expect to hit the cache each time range falls within X.  We expect a hit
         // on the cache if range is within X.  Which should happen at least (X - query_size * 2) / STEP_SIZE
         // times.
-        final int minExpectedHits = (int)Math.floor((Math.min(caching.getCacheSize(), contig.getSequenceLength()) - querySize * 2.0) / STEP_SIZE);
+        final int minExpectedHits = (int)StrictMath.floor((StrictMath.min(caching.getCacheSize(), contig.getSequenceLength()) - querySize * 2.0) / STEP_SIZE);
         caching.printEfficiency(Level.WARN);
         Assert.assertTrue(caching.getCacheHits() >= minExpectedHits, "Expected at least " + minExpectedHits + " cache hits but only got " + caching.getCacheHits());
 

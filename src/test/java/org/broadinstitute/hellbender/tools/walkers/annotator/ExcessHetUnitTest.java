@@ -121,7 +121,7 @@ public final class ExcessHetUnitTest extends BaseTest {
         final VariantContext common = makeVC("common", Arrays.asList(Aref, T), allGTs.toArray(new Genotype[allGTs.size()]));
         final double EHcommon = new ExcessHet().calculateEH(common, common.getGenotypes()).getValue();
 
-        Assert.assertTrue(Math.abs(singletonValue) < Math.abs(EHcommon), String.format("singleton=%f common=%f", singletonValue, EHcommon));
+        Assert.assertTrue(StrictMath.abs(singletonValue) < StrictMath.abs(EHcommon), String.format("singleton=%f common=%f", singletonValue, EHcommon));
     }
 
     @Test
@@ -147,7 +147,7 @@ public final class ExcessHetUnitTest extends BaseTest {
         final VariantContext hundredton = makeVC("hundredton", Arrays.asList(Aref, T), allGTs.toArray(new Genotype[allGTs.size()]));
         final double hundredtonValue = new ExcessHet().calculateEH(hundredton, hundredton.getGenotypes()).getValue();
 
-        Assert.assertTrue(Math.abs(singletonValue) < Math.abs(hundredtonValue), String.format("singleton=%f hundredton=%f", singletonValue, hundredtonValue));
+        Assert.assertTrue(StrictMath.abs(singletonValue) < StrictMath.abs(hundredtonValue), String.format("singleton=%f hundredton=%f", singletonValue, hundredtonValue));
 
         for (int i = numHetGTs; i < numHomRefGTs; i++)
             allGTs.add(makeG("het" + i, Aref, T, hetPLs));
@@ -155,7 +155,7 @@ public final class ExcessHetUnitTest extends BaseTest {
         final VariantContext common = makeVC("common", Arrays.asList(Aref, T), allGTs.toArray(new Genotype[allGTs.size()]));
         final double commonValue = new ExcessHet().calculateEH(common, common.getGenotypes()).getValue();
 
-        Assert.assertTrue(Math.abs(hundredtonValue) < Math.abs(commonValue), String.format("hundredton=%f common=%f", hundredtonValue, commonValue));
+        Assert.assertTrue(StrictMath.abs(hundredtonValue) < StrictMath.abs(commonValue), String.format("hundredton=%f common=%f", hundredtonValue, commonValue));
     }
 
     @Test
@@ -181,7 +181,7 @@ public final class ExcessHetUnitTest extends BaseTest {
         final VariantContext allHet = makeVC("allHet", Arrays.asList(Aref, T), allHetGTs.toArray(new Genotype[allHetGTs.size()]));
         final double hetsValue = new ExcessHet().calculateEH(allHet, allHet.getGenotypes()).getValue();
 
-        Assert.assertTrue(Math.abs(singletonValue) < Math.abs(hetsValue), String.format("singleton=%f allHets=%f", singletonValue, hetsValue));
+        Assert.assertTrue(StrictMath.abs(singletonValue) < StrictMath.abs(hetsValue), String.format("singleton=%f allHets=%f", singletonValue, hetsValue));
     }
 
     @DataProvider(name = "smallSets")

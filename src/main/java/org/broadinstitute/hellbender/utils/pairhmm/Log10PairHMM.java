@@ -18,7 +18,7 @@ public final class Log10PairHMM extends N2MemoryPairHMM {
 
 
     // we divide e by 3 because the observed base could have come from any of the non-observed alleles
-    private static final double log10_3 = Math.log10(3.0);
+    private static final double log10_3 = StrictMath.log10(3.0);
 
     /**
      * Create an uninitialized PairHMM
@@ -89,7 +89,7 @@ public final class Log10PairHMM extends N2MemoryPairHMM {
     }
 
     private void initializeMatrixValues(final byte[] haplotypeBases) {
-        final double initialValue = Math.log10(1.0 / haplotypeBases.length);
+        final double initialValue = StrictMath.log10(1.0 / haplotypeBases.length);
         for( int j = 0; j < paddedHaplotypeLength; j++ ) {
             deletionMatrix[0][j] = initialValue;
         }

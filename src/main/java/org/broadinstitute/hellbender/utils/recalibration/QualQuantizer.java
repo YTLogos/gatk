@@ -199,7 +199,7 @@ public final class QualQuantizer {
             final long nCombinedObs = left.nObservations + right.nObservations;
             final long nCombinedErr = left.nErrors + right.nErrors;
 
-            final int level = Math.max(left.level, right.level) + 1;
+            final int level = StrictMath.max(left.level, right.level) + 1;
             final Set<QualInterval> subIntervals = new HashSet<>(Arrays.asList(left, right));
             QualInterval merged = new QualInterval(left.qStart, right.qEnd, nCombinedObs, nCombinedErr, level, subIntervals);
 
@@ -234,7 +234,7 @@ public final class QualQuantizer {
                     // It's free to merge up quality scores below the smallest interesting one
                     return 0;
                 else {
-                    return (Math.abs(Math.log10(getErrorRate()) - Math.log10(globalErrorRate))) * nObservations;
+                    return (StrictMath.abs(StrictMath.log10(getErrorRate()) - StrictMath.log10(globalErrorRate))) * nObservations;
                 }
             } else {
                 double sum = 0;
@@ -264,7 +264,7 @@ public final class QualQuantizer {
             final long nObs = nObservationsPerQual.get(qStart);
             final double errorRate = QualityUtils.qualToErrorProb((byte)qStart);
             final double nErrors = nObs * errorRate;
-            final QualInterval qi = new QualInterval(qStart, qStart, nObs, (int) Math.floor(nErrors), 0, (byte)qStart);
+            final QualInterval qi = new QualInterval(qStart, qStart, nObs, (int) StrictMath.floor(nErrors), 0, (byte)qStart);
             intervals.add(qi);
         }
 
@@ -297,7 +297,7 @@ public final class QualQuantizer {
             final QualInterval left = it1.next();
             final QualInterval right = it1p.next();
             final QualInterval merged = left.merge(right);
-            lastMergeOrder = Math.max(Math.max(lastMergeOrder, left.mergeOrder), right.mergeOrder);
+            lastMergeOrder = StrictMath.max(StrictMath.max(lastMergeOrder, left.mergeOrder), right.mergeOrder);
             if ( minMerge == null || (merged.getPenalty() < minMerge.getPenalty() ) ) {
                 if ( logger.isDebugEnabled() ) logger.debug("  Updating merge " + minMerge);
                 minMerge = merged;

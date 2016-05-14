@@ -275,7 +275,7 @@ public final class AFCalculationUnitTest extends BaseTest {
         public PNonRefData scale(final int scaleFactor) {
             if ( canScale ) {
                 final int[] PLs = new int[g.getPL().length];
-                for ( int i = 0; i < PLs.length; i++ ) PLs[i] = g.getPL()[i] * ((int) Math.log10(scaleFactor)+1);
+                for ( int i = 0; i < PLs.length; i++ ) PLs[i] = g.getPL()[i] * ((int) StrictMath.log10(scaleFactor)+1);
                 final Genotype scaledG = new GenotypeBuilder(g).PL(PLs).make();
                 final double scaledPNonRef = pNonRef < 0.5 ? pNonRef / scaleFactor : 1 - ((1-pNonRef) / scaleFactor);
                 return new PNonRefData(vc, scaledG, scaledPNonRef, tolerance, true);
@@ -352,7 +352,7 @@ public final class AFCalculationUnitTest extends BaseTest {
 
         final AFCalculationResult resultTracker = testBuilder.makeModel().getLog10PNonRef(vcb.make(), PLOIDY, MAX_ALT_ALLELES, testBuilder.makePriors());
 
-        Assert.assertEquals(resultTracker.getLog10PosteriorOfAFGT0(), Math.log10(expectedPNonRef), tolerance,
+        Assert.assertEquals(resultTracker.getLog10PosteriorOfAFGT0(), StrictMath.log10(expectedPNonRef), tolerance,
                 "Actual pNonRef not within tolerance " + tolerance + " of expected");
     }
 
@@ -483,9 +483,9 @@ public final class AFCalculationUnitTest extends BaseTest {
             final AFCalculationResult resultTrackerNoPrior = cfgNoPrior.execute();
 
             final double pRefWithNoPrior = AB.getLikelihoods().getAsVector()[0];
-            final double pHetWithNoPrior = AB.getLikelihoods().getAsVector()[1]  - Math.log10(0.5);
-            final double nonRefPost = Math.pow(10, pHetWithNoPrior) / (Math.pow(10, pRefWithNoPrior) + Math.pow(10, pHetWithNoPrior));
-            final double log10NonRefPost = Math.log10(nonRefPost);
+            final double pHetWithNoPrior = AB.getLikelihoods().getAsVector()[1]  - StrictMath.log10(0.5);
+            final double nonRefPost = StrictMath.pow(10, pHetWithNoPrior) / (StrictMath.pow(10, pRefWithNoPrior) + StrictMath.pow(10, pHetWithNoPrior));
+            final double log10NonRefPost = StrictMath.log10(nonRefPost);
 
             if ( ! Double.isInfinite(log10NonRefPost) ) {
                 // check that the no-prior and flat-prior constructions yield same result
@@ -511,9 +511,9 @@ public final class AFCalculationUnitTest extends BaseTest {
                     final int actualAC = resultTracker.getAlleleCountsOfMLE()[0];
 
                     final double pRefWithPrior = AB.getLikelihoods().getAsVector()[0] + priors[0];
-                    final double pHetWithPrior = AB.getLikelihoods().getAsVector()[1] + priors[1] - Math.log10(0.5);
-                    final double nonRefPost = Math.pow(10, pHetWithPrior) / (Math.pow(10, pRefWithPrior) + Math.pow(10, pHetWithPrior));
-                    final double log10NonRefPost = Math.log10(nonRefPost);
+                    final double pHetWithPrior = AB.getLikelihoods().getAsVector()[1] + priors[1] - StrictMath.log10(0.5);
+                    final double nonRefPost = StrictMath.pow(10, pHetWithPrior) / (StrictMath.pow(10, pRefWithPrior) + StrictMath.pow(10, pHetWithPrior));
+                    final double log10NonRefPost = StrictMath.log10(nonRefPost);
 
                     if ( ! Double.isInfinite(log10NonRefPost) )
                         Assert.assertEquals(resultTracker.getLog10PosteriorOfAFGT0(), log10NonRefPost, 1e-2);
@@ -559,7 +559,7 @@ public final class AFCalculationUnitTest extends BaseTest {
 //                    for ( final int nSamples : Arrays.asList(1000) ) {
                         if ( nSamples < allele1AC ) continue;
 
-                        final double pPerSample = Math.pow(10, nonTypePLs / -10.0);
+                        final double pPerSample = StrictMath.pow(10, nonTypePLs / -10.0);
                         final double errorFreq = pPerSample * nSamples;
                         final boolean poly1 = allele1AC > errorFreq && (nonTypePLs * allele1AC) > 30;
 

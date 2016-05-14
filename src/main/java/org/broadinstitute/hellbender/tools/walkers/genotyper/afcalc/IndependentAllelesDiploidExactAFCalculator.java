@@ -310,7 +310,7 @@ import java.util.*;
             }
 
                 final double log10PriorAFGt0 = (i + 1) * log10SingleAllelePriorOfAFGt0;
-            final double log10PriorAFEq0 = Math.log10(1 - Math.pow(10, log10PriorAFGt0));
+            final double log10PriorAFEq0 = StrictMath.log10(1 - StrictMath.pow(10, log10PriorAFGt0));
             final double[] thetaTONPriors = new double[] { log10PriorAFEq0, log10PriorAFGt0 };
 
             // bind pNonRef for allele to the posterior value of the AF > 0 with the new adjusted prior

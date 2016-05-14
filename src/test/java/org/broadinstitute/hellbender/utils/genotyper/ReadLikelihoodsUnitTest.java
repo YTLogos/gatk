@@ -52,7 +52,7 @@ public final class ReadLikelihoodsUnitTest {
             for (int a = 0; a < likelihoods[s].length; a++) {
                 likelihoods[s][a] = new double[result.sampleReadCount(s)];
                 for (int r = 0; r < likelihoods[s][a].length; r++)
-                    sampleLikelihoods.set(a,r,likelihoods[s][a][r] = -Math.abs(rnd.nextGaussian()));
+                    sampleLikelihoods.set(a,r,likelihoods[s][a][r] = -StrictMath.abs(rnd.nextGaussian()));
             }
         }
         return likelihoods;
@@ -212,7 +212,7 @@ public final class ReadLikelihoodsUnitTest {
                 for (int r = 0; r < sampleReadCount; r++) {
                     double oldBestLk = Double.NEGATIVE_INFINITY;
                     for (final Allele oldAllele : oldAlleles) {
-                        oldBestLk = Math.max(oldSmapleLikelihoods.get(original.indexOfAllele(oldAllele), r << 1), oldBestLk);
+                        oldBestLk = StrictMath.max(oldSmapleLikelihoods.get(original.indexOfAllele(oldAllele), r << 1), oldBestLk);
                     }
                     Assert.assertEquals(sampleLikelihoods.get(a, r), oldBestLk);
                 }
@@ -239,7 +239,7 @@ public final class ReadLikelihoodsUnitTest {
                 for (int r = 0; r < sampleReadCount; r++) {
                     double oldBestLk = Double.NEGATIVE_INFINITY;
                     for (final Allele oldAllele : oldAlleles) {
-                        oldBestLk = Math.max(oldSmapleLikelihoods.get(original.indexOfAllele(oldAllele), r), oldBestLk);
+                        oldBestLk = StrictMath.max(oldSmapleLikelihoods.get(original.indexOfAllele(oldAllele), r), oldBestLk);
                     }
                     Assert.assertEquals(sampleLikelihoods.get(a, r), oldBestLk);
                 }
@@ -263,7 +263,7 @@ public final class ReadLikelihoodsUnitTest {
             for (int r = 0; r < sampleReadCount; r++) {
                 double bestLk = originalLikelihoods[s][0][r];
                 for (int a = 1; a < numberOfAlleles; a++) {
-                    bestLk = Math.max(bestLk, originalLikelihoods[s][a][r]);
+                    bestLk = StrictMath.max(bestLk, originalLikelihoods[s][a][r]);
                 }
                 for (int a = 0; a < numberOfAlleles; a++) {
                     newLikelihoods[s][a][r] = originalLikelihoods[s][a][r] - bestLk;
@@ -291,7 +291,7 @@ public final class ReadLikelihoodsUnitTest {
                 for (int a = 0; a < numberOfAlleles; a++) {
                     if (alleles[a].isReference())
                         continue;
-                    bestAltLk = Math.max(bestAltLk, originalLikelihoods[s][a][r]);
+                    bestAltLk = StrictMath.max(bestAltLk, originalLikelihoods[s][a][r]);
                 }
                 if (bestAltLk == Double.NEGATIVE_INFINITY)
                     for (int a = 0; a < numberOfAlleles; a++) {
@@ -299,7 +299,7 @@ public final class ReadLikelihoodsUnitTest {
                     }
                 else
                     for (int a = 0; a < numberOfAlleles; a++) {
-                        newLikelihoods[s][a][r] = Math.max(originalLikelihoods[s][a][r], bestAltLk - 0.001);
+                        newLikelihoods[s][a][r] = StrictMath.max(originalLikelihoods[s][a][r], bestAltLk - 0.001);
                     }
             }
         }
@@ -323,10 +323,10 @@ public final class ReadLikelihoodsUnitTest {
                 double bestAltLk = Double.NEGATIVE_INFINITY;
                 double bestLk = Double.NEGATIVE_INFINITY;
                 for (int a = 0; a < numberOfAlleles; a++) {
-                    bestLk = Math.max(bestLk, originalLikelihoods[s][a][r]);
+                    bestLk = StrictMath.max(bestLk, originalLikelihoods[s][a][r]);
                     if (alleles[a].isReference())
                         continue;
-                    bestAltLk = Math.max(bestAltLk, originalLikelihoods[s][a][r]);
+                    bestAltLk = StrictMath.max(bestAltLk, originalLikelihoods[s][a][r]);
                 }
                 if (bestAltLk == Double.NEGATIVE_INFINITY)
                     for (int a = 0; a < numberOfAlleles; a++) {
@@ -334,7 +334,7 @@ public final class ReadLikelihoodsUnitTest {
                     }
                 else
                     for (int a = 0; a < numberOfAlleles; a++) {
-                        newLikelihoods[s][a][r] = Math.max(originalLikelihoods[s][a][r], bestAltLk - 0.001) - bestLk;
+                        newLikelihoods[s][a][r] = StrictMath.max(originalLikelihoods[s][a][r], bestAltLk - 0.001) - bestLk;
                     }
             }
         }
@@ -697,7 +697,7 @@ public final class ReadLikelihoodsUnitTest {
     }
 
     private double testLikelihood(final int indexOfSample, final int indexOfAllele, final int readIndex) {
-        return - Math.abs(31 * (indexOfSample + 1) + 101 * indexOfAllele + 1009 * readIndex);
+        return - StrictMath.abs(31 * (indexOfSample + 1) + 101 * indexOfAllele + 1009 * readIndex);
     }
 
 

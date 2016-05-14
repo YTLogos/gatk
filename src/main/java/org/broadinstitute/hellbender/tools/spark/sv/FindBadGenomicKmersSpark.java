@@ -122,7 +122,7 @@ public final class FindBadGenomicKmersSpark extends GATKSparkTool {
             try {
                 final byte[] bases = ref.getReferenceBases(options, interval).getBases();
                 for ( int start = 0; start < seqLen; start += effectiveRecLen ) {
-                    sequenceChunks.add(Arrays.copyOfRange(bases, start, Math.min(start+REF_RECORD_LEN, seqLen)));
+                    sequenceChunks.add(Arrays.copyOfRange(bases, start, StrictMath.min(start+REF_RECORD_LEN, seqLen)));
                 }
             }
             catch ( final IOException ioe ) {

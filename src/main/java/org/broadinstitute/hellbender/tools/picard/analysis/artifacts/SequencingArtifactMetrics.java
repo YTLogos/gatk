@@ -175,7 +175,7 @@ public final class SequencingArtifactMetrics {
             final long totalBases = this.PRO_REF_BASES + this.PRO_ALT_BASES + this.CON_REF_BASES + this.CON_ALT_BASES;
             if (totalBases > 0) {
                 final double rawErrorRate = (this.PRO_ALT_BASES - this.CON_ALT_BASES) / (double) totalBases;
-                this.ERROR_RATE = Math.max(MIN_ERROR, rawErrorRate);
+                this.ERROR_RATE = StrictMath.max(MIN_ERROR, rawErrorRate);
             }
             this.QSCORE = QualityUtil.getPhredScoreFromErrorProbability(this.ERROR_RATE);
         }
@@ -226,17 +226,17 @@ public final class SequencingArtifactMetrics {
             final long fwdBases = this.FWD_CXT_REF_BASES + this.FWD_CXT_ALT_BASES;
             if (fwdBases > 0) {
                 final double fwdErr = this.FWD_CXT_ALT_BASES / (double) fwdBases;
-                this.FWD_ERROR_RATE = Math.max(MIN_ERROR, fwdErr);
+                this.FWD_ERROR_RATE = StrictMath.max(MIN_ERROR, fwdErr);
             }
 
             this.REV_ERROR_RATE = MIN_ERROR;
             final long revBases = this.REV_CXT_REF_BASES + this.REV_CXT_ALT_BASES;
             if (revBases > 0) {
                 final double revErr = this.REV_CXT_ALT_BASES / (double) revBases;
-                this.REV_ERROR_RATE = Math.max(MIN_ERROR, revErr);
+                this.REV_ERROR_RATE = StrictMath.max(MIN_ERROR, revErr);
             }
 
-            this.ERROR_RATE = Math.max(MIN_ERROR, this.FWD_ERROR_RATE - this.REV_ERROR_RATE);
+            this.ERROR_RATE = StrictMath.max(MIN_ERROR, this.FWD_ERROR_RATE - this.REV_ERROR_RATE);
             this.QSCORE = QualityUtil.getPhredScoreFromErrorProbability(this.ERROR_RATE);
         }
     }

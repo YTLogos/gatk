@@ -442,8 +442,8 @@ public final class RecalUtils {
         // now, update the dimensions based on the optional covariate tables as needed
         for ( final NestedIntegerArray<RecalDatum> covTable : recalibrationTables.getAdditionalTables()) {
             final int[] dimensionsOfCovTable = covTable.getDimensions();
-            dimensionsForDeltaTable[2] = Math.max(dimensionsForDeltaTable[2], dimensionsOfCovTable[2]);
-            dimensionsForDeltaTable[3] = Math.max(dimensionsForDeltaTable[3], dimensionsOfCovTable[3]);
+            dimensionsForDeltaTable[2] = StrictMath.max(dimensionsForDeltaTable[2], dimensionsOfCovTable[2]);
+            dimensionsForDeltaTable[3] = StrictMath.max(dimensionsForDeltaTable[3], dimensionsOfCovTable[3]);
         }
 
         return new NestedIntegerArray<>(dimensionsForDeltaTable);

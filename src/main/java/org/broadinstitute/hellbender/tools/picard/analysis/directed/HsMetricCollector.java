@@ -74,7 +74,7 @@ public final class HsMetricCollector extends TargetMetricsCollector<HsMetrics> {
         for (int i=0; i<10000; ++i) {
             final double uniquePairMultiplier = DuplicationMetrics.estimateRoi(librarySize, pairMultiplier, pairs, uniquePairs);
 
-            if (Math.abs(uniquePairMultiplier - uniquePairGoalMultiplier) / uniquePairGoalMultiplier <= 0.001) {
+            if (StrictMath.abs(uniquePairMultiplier - uniquePairGoalMultiplier) / uniquePairGoalMultiplier <= 0.001) {
                 finalPairMultiplier  = pairMultiplier;
                 break;
             }

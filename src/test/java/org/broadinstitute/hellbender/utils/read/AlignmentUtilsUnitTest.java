@@ -762,7 +762,7 @@ public final class AlignmentUtilsUnitTest {
         final GATKRead read = ArtificialReadUtils.createArtificialRead(header, "myRead", 0, 1, readLength);
 
         if ( indelOp == 'I' && (indelSize == 1 || indelSize == 3) && indelStart % 2 == 1 )
-            read.setCigar(buildTestCigarString(indelOp, 0, Math.max(indelStart - indelSize, 16), indelSize, readLength));
+            read.setCigar(buildTestCigarString(indelOp, 0, StrictMath.max(indelStart - indelSize, 16), indelSize, readLength));
         else if ( (indelSize == 2 || indelSize == 4) && (indelOp == 'D' || indelStart % 2 == 0) )
             read.setCigar(buildTestCigarString(indelOp, 0, 16, indelSize, readLength));
         else
@@ -782,7 +782,7 @@ public final class AlignmentUtilsUnitTest {
         else if ( (indelOp == 'I' && indelSize == 4 && indelStart % 3 == 2) ||
                 (indelOp == 'I' && indelSize == 2 && indelStart % 3 == 0) ||
                 (indelOp == 'I' && indelSize == 1 && indelStart < 28 && indelStart % 3 == 2) )
-            read.setCigar(buildTestCigarString(indelOp, 0, Math.max(indelStart - indelSize, 16), indelSize, readLength));
+            read.setCigar(buildTestCigarString(indelOp, 0, StrictMath.max(indelStart - indelSize, 16), indelSize, readLength));
         else
             return originalCigar;
 

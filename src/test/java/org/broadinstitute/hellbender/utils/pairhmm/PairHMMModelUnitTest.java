@@ -31,7 +31,7 @@ public final class PairHMMModelUnitTest extends BaseTest {
     public void testQualToProbsLog10(final int insQuals, final int delQual, final int gcp, final double[] expected) {
         final double[] logExpected = new double[expected.length];
         for (int i = 0; i < logExpected.length; i++)
-            logExpected[i] = Math.log10(expected[i]);
+            logExpected[i] = StrictMath.log10(expected[i]);
         final double[] actual = PairHMMModel.qualToTransProbsLog10((byte) insQuals, (byte) delQual, (byte) gcp);
         Assert.assertNotNull(actual);
         Assert.assertEquals(actual.length, PairHMMModel.TRANS_PROB_ARRAY_LENGTH);
@@ -62,7 +62,7 @@ public final class PairHMMModelUnitTest extends BaseTest {
         final double[][] logExpected = new double[expected.length][expected[0].length];
         for (int i = 1; i < expected.length; i++)
             for (int j = 0; j < expected[0].length; j++)
-                logExpected[i][j] = Math.log10(expected[i][j]);
+                logExpected[i][j] = StrictMath.log10(expected[i][j]);
         Assert.assertNotNull(actual);
         Assert.assertEquals(actual.length, logExpected.length);
         Assert.assertNotNull(actual[0]);
@@ -78,7 +78,7 @@ public final class PairHMMModelUnitTest extends BaseTest {
         final double[][] logExpected = new double[expected.length][expected[0].length];
         for (int i = 1; i < expected.length; i++)
             for (int j = 0; j < expected[0].length; j++)
-                logExpected[i][j] = Math.log10(expected[i][j]);
+                logExpected[i][j] = StrictMath.log10(expected[i][j]);
         Assert.assertNotNull(actual);
         Assert.assertEquals(actual.length, logExpected.length);
         Assert.assertNotNull(actual[0]);
@@ -102,7 +102,7 @@ public final class PairHMMModelUnitTest extends BaseTest {
     public void testQualToProbsLog10Fill(final int insQuals, final int delQual, final int gcp, final double[] expected) {
         final double[] logExpected = new double[expected.length];
         for (int i = 0; i < logExpected.length; i++)
-            logExpected[i] = Math.log10(expected[i]);
+            logExpected[i] = StrictMath.log10(expected[i]);
         final double[] actual = new double[PairHMMModel.TRANS_PROB_ARRAY_LENGTH];
         PairHMMModel.qualToTransProbsLog10(actual, (byte) insQuals, (byte) delQual, (byte) gcp);
         assertEqualsDoubleArray(actual,logExpected,TOLERANCE);
@@ -258,13 +258,13 @@ public final class PairHMMModelUnitTest extends BaseTest {
                 final int qual1 =  testQuals[i];
                 final int qual2 =  testQuals[j];
 
-                final double errorProb1 = Math.pow(10, -0.1 * qual1);
-                final double errorProb2 = Math.pow(10, -0.1 * qual2);
+                final double errorProb1 = StrictMath.pow(10, -0.1 * qual1);
+                final double errorProb2 = StrictMath.pow(10, -0.1 * qual2);
 
                 //Note: matchToMatchProb assumes that insertion and deletion never coincide, so the probability that neither occurs
                 // is 1 - errorProb1 - errorProb2, without the correction + errorProb1*errorProb2
-                final double expected = Math.max(0, (1 - (errorProb1 + errorProb2)));
-                final Object[] result = new Object[] { qual1, qual2, Math.log10(Math.min(1, expected)), Math.min(1, expected)};
+                final double expected = StrictMath.max(0, (1 - (errorProb1 + errorProb2)));
+                final Object[] result = new Object[] { qual1, qual2, StrictMath.log10(StrictMath.min(1, expected)), StrictMath.min(1, expected)};
 
                 if (++j >= testQuals.length) {
                     i++;

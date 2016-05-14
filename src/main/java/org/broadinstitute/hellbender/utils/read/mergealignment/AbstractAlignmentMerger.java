@@ -455,12 +455,12 @@ public abstract class AbstractAlignmentMerger {
                     final int negDiff = pos.getAlignmentStart() - neg.getAlignmentStart();
 
                     if (posDiff > 0) {
-                        CigarUtil.softClip3PrimeEndOfRead(pos, Math.min(pos.getReadLength(),
+                        CigarUtil.softClip3PrimeEndOfRead(pos, StrictMath.min(pos.getReadLength(),
                                 pos.getReadLength() - posDiff + 1));
                     }
 
                     if (negDiff > 0) {
-                        CigarUtil.softClip3PrimeEndOfRead(neg, Math.min(neg.getReadLength(),
+                        CigarUtil.softClip3PrimeEndOfRead(neg, StrictMath.min(neg.getReadLength(),
                                 neg.getReadLength() - negDiff + 1));
                     }
 

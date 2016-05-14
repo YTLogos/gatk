@@ -191,7 +191,7 @@ public class FeatureContext {
      * @return The start of the expanded window.
      */
     private int windowStart(final SimpleInterval locus, final int windowLeadingBases) {
-        return Math.max(locus.getStart() - windowLeadingBases, 1);
+        return StrictMath.max(locus.getStart() - windowLeadingBases, 1);
     }
 
     /**
@@ -204,7 +204,7 @@ public class FeatureContext {
     private int windowStop(final SimpleInterval locus, final int windowTrailingBases) {
         //Note: queries past the end of contig are handled but overflow
         // blows up too late so we change it here to blow up early.
-        return Math.addExact(locus.getEnd(), windowTrailingBases);//blow up on overflow
+        return StrictMath.addExact(locus.getEnd(), windowTrailingBases);//blow up on overflow
     }
 
     /**

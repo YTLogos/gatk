@@ -28,7 +28,7 @@ public final class HeterozygosityAFPriorProvider extends AFPriorProvider {
             throw new IllegalArgumentException("the heterozygosity cannot be a NaN");
         }
         this.heterozygosity = heterozygosity;
-        this.log10Heterozygosity = Math.log10(heterozygosity);
+        this.log10Heterozygosity = StrictMath.log10(heterozygosity);
     }
 
     @Override

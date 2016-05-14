@@ -417,7 +417,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultiLevelMetri
             // line, which is actually at 20% into the array now
             Arrays.sort(depths);
             // Note.  basesConsidered can be between 0 and depths.length inclusive.  indexOf80thPercentile will be -1 in the latter case
-            final int indexOf80thPercentile = Math.max((depths.length - 1 - basesConsidered) + (int) (basesConsidered * 0.2), 0);
+            final int indexOf80thPercentile = StrictMath.max((depths.length - 1 - basesConsidered) + (int) (basesConsidered * 0.2), 0);
             final int coverageAt80thPercentile = depths[indexOf80thPercentile];
             this.metrics.FOLD_80_BASE_PENALTY = this.metrics.MEAN_TARGET_COVERAGE / coverageAt80thPercentile;
             this.metrics.ZERO_CVG_TARGETS_PCT = zeroCoverageTargets / (double) allTargets.getIntervals().size();
@@ -496,7 +496,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultiLevelMetri
                     final Coverage cov = entry.getValue();
 
                     final double gcDouble = this.intervalToGc.get(interval);
-                    final int gc = (int) Math.round(gcDouble * 100);
+                    final int gc = (int) StrictMath.round(gcDouble * 100);
 
                     targetBasesByGc[gc]  += interval.length();
                     alignedBasesByGc[gc] += cov.getTotal();
@@ -533,7 +533,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultiLevelMetri
 
                     double dropout = (alignedPct - targetPct) * 100d;
                     if (dropout < 0) {
-                        dropout = Math.abs(dropout);
+                        dropout = StrictMath.abs(dropout);
 
                         if (i <=50) this.metrics.AT_DROPOUT += dropout;
                         if (i >=50) this.metrics.GC_DROPOUT += dropout;

@@ -385,7 +385,7 @@ public final class ReadUtils {
         } else if ( read.isReverseStrand() ) {
             return read.getMateStart() - 1;           // case 1 (see header)
         } else {
-            final int insertSize = Math.abs(read.getFragmentLength());    // the inferred insert size can be negative if the mate is mapped before the read (so we take the absolute value)
+            final int insertSize = StrictMath.abs(read.getFragmentLength());    // the inferred insert size can be negative if the mate is mapped before the read (so we take the absolute value)
             return read.getStart() + insertSize + 1;  // case 2 (see header)
         }
     }
@@ -523,7 +523,7 @@ public final class ReadUtils {
     }
 
     public static int getReadCoordinateForReferenceCoordinateUpToEndOfRead(final GATKRead read, final int refCoord, final ClippingTail tail) {
-        final int leftmostSafeVariantPosition = Math.max(getSoftStart(read), refCoord);
+        final int leftmostSafeVariantPosition = StrictMath.max(getSoftStart(read), refCoord);
         return getReadCoordinateForReferenceCoordinate(getSoftStart(read), read.getCigar(), leftmostSafeVariantPosition, tail, false);
     }
 
@@ -581,7 +581,7 @@ public final class ReadUtils {
         // end of the read if there is no next element.
         final CigarElement firstElementIsInsertion = readStartsWithInsertion(cigar);
         if (readCoord == 0 && tail == ClippingTail.LEFT_TAIL && firstElementIsInsertion != null) {
-            readCoord = Math.min(firstElementIsInsertion.getLength(), cigar.getReadLength() - 1);
+            readCoord = StrictMath.min(firstElementIsInsertion.getLength(), cigar.getReadLength() - 1);
         }
 
         return readCoord;
@@ -770,7 +770,7 @@ public final class ReadUtils {
 
         int maxReadLength = 0;
         for( final GATKRead read : reads ) {
-            maxReadLength = Math.max(maxReadLength, read.getLength());
+            maxReadLength = StrictMath.max(maxReadLength, read.getLength());
         }
         return maxReadLength;
     }

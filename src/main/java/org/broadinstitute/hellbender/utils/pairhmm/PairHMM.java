@@ -323,7 +323,7 @@ public abstract class PairHMM implements Closeable{
             }
         }
 
-        return Math.min(haplotype1.length, haplotype2.length);
+        return StrictMath.min(haplotype1.length, haplotype2.length);
     }
 
     /**

@@ -8,7 +8,7 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
-import static java.lang.Math.*;
+import static java.lang.StrictMath.*;
 import static org.apache.commons.math3.util.MathArrays.ebeAdd;
 import static org.broadinstitute.hellbender.utils.MathUtils.arrayMax;
 import static org.broadinstitute.hellbender.utils.MathUtils.promote;

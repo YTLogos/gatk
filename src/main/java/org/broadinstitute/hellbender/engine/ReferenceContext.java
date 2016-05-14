@@ -282,7 +282,7 @@ public final class ReferenceContext implements Iterable<Byte> {
      * @return The start, potentially trimmed to the contig's start
      */
     private int trimToContigStart(final int start) {
-        return Math.max(start, 1);
+        return StrictMath.max(start, 1);
     }
 
     /**
@@ -305,7 +305,7 @@ public final class ReferenceContext implements Iterable<Byte> {
      */
     private int trimToContigLength(final String contig, final int end){
         final int sequenceLength = dataSource.getSequenceDictionary().getSequence(contig).getSequenceLength();
-        return Math.min(end, sequenceLength);
+        return StrictMath.min(end, sequenceLength);
     }
 
     /**

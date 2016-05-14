@@ -79,7 +79,7 @@ public final class RrbsMetricsCollector extends SAMRecordAndReferenceMultiLevelC
 			if (samRecord.getReadLength() < minReadLength) {
 				smallReadCount++;
 				return;
-			} else if (SequenceUtil.countMismatches(samRecord, refBases, true) > Math.round(samRecord.getReadLength() * maxMismatchRate)) {
+			} else if (SequenceUtil.countMismatches(samRecord, refBases, true) > StrictMath.round(samRecord.getReadLength() * maxMismatchRate)) {
 				mismatchCount++;
 				return;
 			}

@@ -358,7 +358,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         final double referenceLikelihood = referenceAlleleIndex == MISSING_REF ? Double.NEGATIVE_INFINITY :
                 sampleValues[referenceAlleleIndex][readIndex];
 
-        final double bestAbsoluteLikelihood = Math.max(bestAlternativeAllele.likelihood, referenceLikelihood);
+        final double bestAbsoluteLikelihood = StrictMath.max(bestAlternativeAllele.likelihood, referenceLikelihood);
 
         final int alleleCount = alleles.numberOfAlleles();
         if (bestToZero) {
@@ -689,7 +689,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         }
 
         final int readEnd = sampleRead.isUnmapped() ? sampleRead.getUnclippedEnd()
-                : Math.max(sampleRead.getUnclippedEnd(), sampleRead.getUnclippedStart());
+                : StrictMath.max(sampleRead.getUnclippedEnd(), sampleRead.getUnclippedStart());
         return readEnd >= start;
     }
 
@@ -835,7 +835,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     }
 
     private boolean readIsPoorlyModelled(final int sampleIndex, final int readIndex, final GATKRead read, final double maxErrorRatePerBase) {
-        final double maxErrorsForRead = Math.min(2.0, Math.ceil(read.getLength() * maxErrorRatePerBase));
+        final double maxErrorsForRead = StrictMath.min(2.0, StrictMath.ceil(read.getLength() * maxErrorRatePerBase));
         final double log10QualPerBase = -4.0;
         final double log10MaxLikelihoodForTrueAllele = maxErrorsForRead * log10QualPerBase;
 

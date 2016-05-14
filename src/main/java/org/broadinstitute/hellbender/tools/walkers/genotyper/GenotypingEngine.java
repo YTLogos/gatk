@@ -102,7 +102,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
                 if (prior < 0.0) {
                     throw new UserException.BadArgumentValue("Bad argument: negative values not allowed", "inputPrior");
                 }
-                priors[idx++] = Math.log10(prior);
+                priors[idx++] = StrictMath.log10(prior);
                 sum += prior;
             }
         }
@@ -110,7 +110,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             // for each i
             for (int i = 1; i <= N; i++) {
                 final double value = heterozygosity / (double)i;
-                priors[i] = Math.log10(value);
+                priors[i] = StrictMath.log10(value);
                 sum += value;
             }
         }
@@ -120,7 +120,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             throw new UserException.BadArgumentValue("heterozygosity","The heterozygosity value is set too high relative to the number of samples to be processed, or invalid values specified if input priors were provided - try reducing heterozygosity value or correct input priors.");
         }
         // null frequency for AF=0 is (1 - sum(all other frequencies))
-        priors[0] = Math.log10(1.0 - sum);
+        priors[0] = StrictMath.log10(1.0 - sum);
     }
 
     /**
@@ -249,7 +249,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
 
         final OutputAlleleSubset outputAlternativeAlleles = calculateOutputAlleleSubset(AFresult);
 
-        final double PoFGT0 = Math.pow(10, AFresult.getLog10PosteriorOfAFGT0());
+        final double PoFGT0 = StrictMath.pow(10, AFresult.getLog10PosteriorOfAFGT0());
 
         // note the math.abs is necessary because -10 * 0.0 => -0.0 which isn't nice
         final double log10Confidence =
@@ -501,7 +501,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
             return null;
         }
 
-        double log10POfRef = Math.log10(initialPofRef);
+        double log10POfRef = StrictMath.log10(initialPofRef);
 
         // for each sample that we haven't examined yet
         final int sampleCount = samples.numberOfSamples();
@@ -554,7 +554,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
      */
     protected final double estimateLog10ReferenceConfidenceForOneSample(final int depth, final double log10OfTheta) {
         final double log10PofNonRef = log10OfTheta + getRefBinomialProbLog10(depth);
-        return MathUtils.log10OneMinusX(Math.pow(10.0, log10PofNonRef));
+        return MathUtils.log10OneMinusX(StrictMath.pow(10.0, log10PofNonRef));
     }
 
     /**
@@ -575,7 +575,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
 
     protected final boolean passesEmitThreshold(final double conf, final boolean bestGuessIsRef) {
         return (configuration.outputMode == OutputMode.EMIT_ALL_CONFIDENT_SITES || !bestGuessIsRef) &&
-                conf >= Math.min(configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING,
+                conf >= StrictMath.min(configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING,
                         configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_EMITTING);
     }
 
@@ -628,7 +628,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final ArrayList<Double> MLEfrequencies = new ArrayList<>(alleleCountsofMLE.size());
         // the MLEAC is allowed to be larger than the AN (e.g. in the case of all PLs being 0, the GT is ./. but the exact model may arbitrarily choose an AC>1)
         for (final int AC : alleleCountsofMLE ) {
-            MLEfrequencies.add(Math.min(1.0, (double) AC / (double) AN));
+            MLEfrequencies.add(StrictMath.min(1.0, (double) AC / (double) AN));
         }
         return MLEfrequencies;
     }
@@ -679,7 +679,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
                 return 0.0;
             }
 
-            return 1.0 - Math.pow(10.0, normalizedLog10ACeq0Posterior);
+            return 1.0 - StrictMath.pow(10.0, normalizedLog10ACeq0Posterior);
         }
     }
 }

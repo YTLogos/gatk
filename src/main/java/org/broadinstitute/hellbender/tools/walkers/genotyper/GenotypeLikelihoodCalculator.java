@@ -158,7 +158,7 @@ public final class GenotypeLikelihoodCalculator {
         alleleHeap = new PriorityQueue<>(ploidy, Comparator.<Integer>naturalOrder().reversed());
         readLikelihoodsByGenotypeIndex = new double[genotypeCount][];
         // The number of possible components is limited by distinct allele count and ploidy.
-        maximumDistinctAllelesInGenotype = Math.min(ploidy, alleleCount);
+        maximumDistinctAllelesInGenotype = StrictMath.min(ploidy, alleleCount);
         genotypeAllelesAndCounts = new int[maximumDistinctAllelesInGenotype << 1];
     }
 
@@ -171,7 +171,7 @@ public final class GenotypeLikelihoodCalculator {
             throw new IllegalArgumentException("illegal capacity value");
         }
         if (readCapacity == -1) { // first time call.
-            final int minimumCapacity = Math.max(requestedCapacity, 10); // Never go too small, 10 is the minimum.
+            final int minimumCapacity = StrictMath.max(requestedCapacity, 10); // Never go too small, 10 is the minimum.
             readAlleleLikelihoodByAlleleCount = new double[minimumCapacity * alleleCount * (ploidy+1)];
             for (int i = 0; i < genotypeCount; i++) {
                 readLikelihoodsByGenotypeIndex[i] = new double[minimumCapacity];
@@ -554,7 +554,7 @@ public final class GenotypeLikelihoodCalculator {
                 ? genotypeCount : new GenotypeLikelihoodCalculators().genotypeCount(ploidy,resultAlleleCount);
 
         final int[] result = new int[resultLength];
-        final int[] sortedAlleleCounts = new int[Math.max(ploidy, alleleCount) << 1];
+        final int[] sortedAlleleCounts = new int[StrictMath.max(ploidy, alleleCount) << 1];
         alleleHeap.clear();
         GenotypeAlleleCounts alleleCounts = genotypeAlleleCounts[0];
         for (int i = 0; i < resultLength; i++) {

@@ -27,7 +27,7 @@ public final class ReservoirDownsamplerUnitTest extends BaseTest {
             this.reservoirSize = reservoirSize;
             this.totalReads = totalReads;
 
-            expectedNumReadsAfterDownsampling = Math.min(reservoirSize, totalReads);
+            expectedNumReadsAfterDownsampling = StrictMath.min(reservoirSize, totalReads);
             expectedNumDiscardedItems = totalReads <= reservoirSize ? 0 : totalReads - reservoirSize;
 
             setName(String.format("%s: reservoirSize=%d totalReads=%d expectedNumReadsAfterDownsampling=%d expectedNumDiscardedItems=%d",

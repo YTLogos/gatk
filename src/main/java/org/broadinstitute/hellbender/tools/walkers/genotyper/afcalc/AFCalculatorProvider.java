@@ -43,7 +43,7 @@ public abstract class AFCalculatorProvider {
                 break;
             }
         }
-        return getInstance(ploidy, Math.min(variantContext.getNAlleles() - 1, maximumAltAlleles));
+        return getInstance(ploidy, StrictMath.min(variantContext.getNAlleles() - 1, maximumAltAlleles));
     }
 
     /**

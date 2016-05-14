@@ -76,7 +76,7 @@ public final class CachingIndexedFastaSequenceFile extends IndexedFastaSequenceF
         super(fasta, index);
         if ( cacheSize < 0 ) throw new IllegalArgumentException("cacheSize must be > 0");
         this.cacheSize = cacheSize;
-        this.cacheMissBackup = Math.max(cacheSize / 1000, 1);
+        this.cacheMissBackup = StrictMath.max(cacheSize / 1000, 1);
         this.preserveCase = preserveCase;
         this.preserveIUPAC = preserveIUPAC;
     }
@@ -95,7 +95,7 @@ public final class CachingIndexedFastaSequenceFile extends IndexedFastaSequenceF
         super(fasta);
         if ( cacheSize < 0 ) throw new IllegalArgumentException("cacheSize must be > 0");
         this.cacheSize = cacheSize;
-        this.cacheMissBackup = Math.max(cacheSize / 1000, 1);
+        this.cacheMissBackup = StrictMath.max(cacheSize / 1000, 1);
         this.preserveCase = preserveCase;
         this.preserveIUPAC = preserveIUPAC;
     }
@@ -273,8 +273,8 @@ public final class CachingIndexedFastaSequenceFile extends IndexedFastaSequenceF
 
             if ( start < cache.start || stop > cache.stop || cache.seq == null || cache.seq.getContigIndex() != contigInfo.getSequenceIndex() ) {
                 cacheMisses++;
-                cache.start = Math.max(start - cacheMissBackup, 0);
-                cache.stop  = Math.min(start + cacheSize + cacheMissBackup, contigInfo.getSequenceLength());
+                cache.start = StrictMath.max(start - cacheMissBackup, 0);
+                cache.stop  = StrictMath.min(start + cacheSize + cacheMissBackup, contigInfo.getSequenceLength());
                 cache.seq   = super.getSubsequenceAt(contig, cache.start, cache.stop);
 
                 // convert all of the bases in the sequence to upper case if we aren't preserving cases

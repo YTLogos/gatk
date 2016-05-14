@@ -53,7 +53,7 @@ public final class PairHMMModel {
     /**
       * Convenient ln10 constant.
       */
-    private static final double LN10 = Math.log(10);
+    private static final double LN10 = StrictMath.log(10);
 
     /**
       * Convenient (ln10)^-1 constant.
@@ -88,8 +88,8 @@ public final class PairHMMModel {
             for (int j = 0; j <= i; j++) {
                 final double log10Sum = MathUtils.approximateLog10SumLog10(-0.1 * i, -0.1 * j);
                 matchToMatchLog10[offset + j] =
-                        Math.log1p(-Math.min(1, Math.pow(10, log10Sum))) * INV_LN10;
-                matchToMatchProb[offset + j] = Math.pow(10, matchToMatchLog10[offset + j]);
+                        StrictMath.log1p(-StrictMath.min(1, StrictMath.pow(10, log10Sum))) * INV_LN10;
+                matchToMatchProb[offset + j] = StrictMath.pow(10, matchToMatchLog10[offset + j]);
             }
     }
 
@@ -383,7 +383,7 @@ public final class PairHMMModel {
 
         if (minQual < 0) throw new IllegalArgumentException("quality cannot be negative: " + minQual + " and " + maxQual);
 
-        return (QualityUtils.MAX_QUAL < maxQual) ?  1.0 - Math.pow(10, MathUtils.approximateLog10SumLog10(-0.1 * minQual, -0.1 * maxQual)) :
+        return (QualityUtils.MAX_QUAL < maxQual) ?  1.0 - StrictMath.pow(10, MathUtils.approximateLog10SumLog10(-0.1 * minQual, -0.1 * maxQual)) :
                 matchToMatchProb[((maxQual * (maxQual + 1)) >> 1) + minQual];
     }
 
@@ -411,8 +411,8 @@ public final class PairHMMModel {
             minQual = delQual;
             maxQual = insQual;
         }
-        return (QualityUtils.MAX_QUAL < maxQual) ? Math.log1p (
-                -Math.min(1, Math.pow(10,
+        return (QualityUtils.MAX_QUAL < maxQual) ? StrictMath.log1p (
+                -StrictMath.min(1, StrictMath.pow(10,
                         MathUtils.approximateLog10SumLog10(-.1 * minQual, -.1 * maxQual)))) * INV_LN10 :
                 matchToMatchLog10[((maxQual * (maxQual + 1)) >> 1) + minQual];
     }

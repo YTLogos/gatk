@@ -275,7 +275,7 @@ public final class ContextCovariate implements Covariate {
     @Override
     public int maximumKeyValue() {
         // the maximum value is T (11 in binary) for each base in the context
-        final int length = Math.max(mismatchesContextSize, indelsContextSize);  // the length of the context
+        final int length = StrictMath.max(mismatchesContextSize, indelsContextSize);  // the length of the context
         int key = length;
         int bitOffset = LENGTH_BITS;
         for (int i = 0; i <length ; i++) {

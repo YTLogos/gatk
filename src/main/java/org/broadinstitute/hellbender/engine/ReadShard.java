@@ -205,7 +205,7 @@ public final class ReadShard implements Iterable<GATKRead>, Locatable {
         int start = interval.getStart();
 
         while ( start <= interval.getEnd() ) {
-            int end = Math.min(start + shardSize - 1, interval.getEnd());
+            int end = StrictMath.min(start + shardSize - 1, interval.getEnd());
 
             final SimpleInterval nextShardInterval = new SimpleInterval(interval.getContig(), start, end);
             final SimpleInterval nextShardIntervalPadded = nextShardInterval.expandWithinContig(shardPadding, dictionary);

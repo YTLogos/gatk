@@ -18,6 +18,6 @@ public final class FragmentLengthReadFilter implements ReadFilter {
             return true;
         }
         //Note fragment length is negative if mate maps to lower position than read so we take absolute value.
-        return Math.abs(read.getFragmentLength()) <= maxFragmentLength;
+        return StrictMath.abs(read.getFragmentLength()) <= maxFragmentLength;
     }
 }

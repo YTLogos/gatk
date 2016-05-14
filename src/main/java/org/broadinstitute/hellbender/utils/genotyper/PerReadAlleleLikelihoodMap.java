@@ -325,7 +325,7 @@ public final class PerReadAlleleLikelihoodMap {
      */
     @VisibleForTesting
     static boolean readIsPoorlyModelled(final GATKRead read, final Collection<Double> log10Likelihoods, final double maxErrorRatePerBase) {
-        final double maxErrorsForRead = Math.min(2.0, Math.ceil(read.getLength() * maxErrorRatePerBase));
+        final double maxErrorsForRead = StrictMath.min(2.0, StrictMath.ceil(read.getLength() * maxErrorRatePerBase));
         final double log10QualPerBase = -4.0;
         final double log10MaxLikelihoodForTrueAllele = maxErrorsForRead * log10QualPerBase;
 

@@ -66,7 +66,7 @@ public final class BAQ implements Serializable {
     private static final double[] qual2prob = new double[256];
     static {
         for (int i = 0; i < 256; ++i)
-            qual2prob[i] = Math.pow(10, -i / 10.);
+            qual2prob[i] = StrictMath.pow(10, -i / 10.);
     }
 
     // Phred scaled now (changed 1/10/2011)
@@ -82,7 +82,7 @@ public final class BAQ implements Serializable {
      *  @param x phred scaled score
      *  @return probability of incorrect base call
      */
-    private static double convertFromPhredScale(double x) { return (Math.pow(10, (-x) / 10.));}
+    private static double convertFromPhredScale(double x) { return (StrictMath.pow(10, (-x) / 10.));}
 
     public double cd = -1;      // gap open probability [1e-3]
     private double ce = 0.1;    // gap extension probability [0.1]
@@ -190,14 +190,14 @@ public final class BAQ implements Serializable {
 
 		// set band width
 		int bw2, bw = l_ref > l_query? l_ref : l_query;
-        if (cb < Math.abs(l_ref - l_query)) {
-            bw = Math.abs(l_ref - l_query) + 3;
+        if (cb < StrictMath.abs(l_ref - l_query)) {
+            bw = StrictMath.abs(l_ref - l_query) + 3;
             //System.out.printf("SC  cb=%d, bw=%d%n", cb, bw);
         }
         if (bw > cb) bw = cb;
-		if (bw < Math.abs(l_ref - l_query)) {
+		if (bw < StrictMath.abs(l_ref - l_query)) {
             //int bwOld = bw;
-            bw = Math.abs(l_ref - l_query);
+            bw = StrictMath.abs(l_ref - l_query);
             //System.out.printf("old bw is %d, new is %d%n", bwOld, bw);
         }
         //System.out.printf("c->bw = %d, bw = %d, l_ref = %d, l_query = %d\n", cb, bw, l_ref, l_query);
@@ -331,7 +331,7 @@ public final class BAQ implements Serializable {
 			max /= sum; sum *= s[i]; // if everything works as is expected, sum == 1.0
 			if (state != null) state[qstart+i-1] = max_k;
 			if (q != null) {
-				k = (int)(-4.343 * Math.log(1. - max) + .499); // = 10*log10(1-max)
+				k = (int)(-4.343 * StrictMath.log(1. - max) + .499); // = 10*log10(1-max)
 				q[qstart+i-1] = (byte)(k > 100? 99 : (k < minBaseQual ? minBaseQual : k));
 			}
 			//System.out.println("("+pb+","+sum+")"+" ("+(i-1)+","+(max_k>>2)+","+(max_k&3)+","+max+")");
@@ -502,7 +502,7 @@ public final class BAQ implements Serializable {
         // start is alignment start - band width / 2 - size of first I element, if there is one.  Stop is similar
         final int offset = bandWidth / 2;
         final int readStart = read.getStart();
-        final int start = Math.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
+        final int start = StrictMath.max(readStart - offset - ReadUtils.getFirstInsertionOffset(read), 1);
         final int stop = read.getEnd() + offset + ReadUtils.getLastInsertionOffset(read);
 
         return new SimpleInterval(read.getContig(), start, stop);
