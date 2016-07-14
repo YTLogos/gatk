@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.utils.haplotype;
 
+import com.google.common.annotations.VisibleForTesting;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.util.Locatable;
@@ -48,7 +49,8 @@ public final class EventMap extends TreeMap<Integer, VariantContext> {
      * For testing.  Let's you set up a explicit configuration without having to process a haplotype and reference
      * @param stateForTesting
      */
-    public EventMap(final Collection<VariantContext> stateForTesting) {
+    @VisibleForTesting
+    EventMap(final Collection<VariantContext> stateForTesting) {
         haplotype = null;
         ref = null;
         refLoc = null;

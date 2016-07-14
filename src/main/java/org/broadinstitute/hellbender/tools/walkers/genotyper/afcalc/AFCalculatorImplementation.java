@@ -16,6 +16,9 @@ import java.util.function.Supplier;
  */
 public enum AFCalculatorImplementation {
 
+    // ---------------------------------------------------------------------------
+    // enum values
+    // ---------------------------------------------------------------------------
     /** default implementation */
     EXACT_INDEPENDENT(IndependentAllelesDiploidExactAFCalculator::new, 2),
 
@@ -28,6 +31,9 @@ public enum AFCalculatorImplementation {
     /** implementation that supports any sample ploidy.  Currently not available for the HaplotypeCaller */
     EXACT_GENERAL_PLOIDY(GeneralPloidyExactAFCalculator::new);
 
+    // ---------------------------------------------------------------------------
+    // tool heuristics
+    // ---------------------------------------------------------------------------
     /**
      * Special max alt allele count indicating that this maximum is in fact unbound (can be anything).
      */
@@ -38,6 +44,14 @@ public enum AFCalculatorImplementation {
      */
     public static final int UNBOUND_PLOIDY = -1;
 
+    /**
+     * Reference to the default implementation.
+     */
+    public static final AFCalculatorImplementation DEFAULT = EXACT_INDEPENDENT;
+
+    // ---------------------------------------------------------------------------
+    // states
+    // ---------------------------------------------------------------------------
     /**
      * Maximum number of supported alternative alleles.
      */
@@ -50,13 +64,12 @@ public enum AFCalculatorImplementation {
      */
     private final int requiredPloidy;
 
-    /**
-     * Reference to the default implementation.
-     */
-    public static final AFCalculatorImplementation DEFAULT = EXACT_INDEPENDENT;
 
     private final Supplier<AFCalculator> afCalculatorSupplier;
 
+    // ---------------------------------------------------------------------------
+    // public methods
+    // ---------------------------------------------------------------------------
     /**
      * Constructs a new instance given all its properties
      * @param afCalculatorSupplier the calculator class that realizes this implementation.
@@ -86,6 +99,8 @@ public enum AFCalculatorImplementation {
         this(afCalculatorSupplier,requiredPloidy,UNBOUND_PLOIDY);
     }
 
+    public AFCalculator newInstance() { return this.afCalculatorSupplier.get(); }
+
     /**
      * Checks whether a given ploidy and max alternative alleles combination is supported or not.
      * @param requestedPloidy the targeted ploidy.
@@ -96,8 +111,6 @@ public enum AFCalculatorImplementation {
         return (requiredPloidy == UNBOUND_PLOIDY || requiredPloidy == requestedPloidy)
                 && (maxAltAlleles == UNBOUND_ALTERNATIVE_ALLELE_COUNT || maxAltAlleles >= requestedMaxAltAlleles);
     }
-
-    public AFCalculator newInstance() { return this.afCalculatorSupplier.get(); }
 
     /**
      * Returns the best (fastest) model give the required ploidy and alternative allele count.

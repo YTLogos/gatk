@@ -23,8 +23,8 @@ public abstract class AFCalculator {
     /**
      * Compute the probability of the alleles segregating given the genotype likelihoods of the samples in vc
      *
-     * @param vc the VariantContext holding the alleles and sample information.  The VariantContext
-     *           must have at least 1 alternative allele
+     * @param vc the {@link VariantContext} holding the alleles and sample information.
+     *           The {@link VariantContext} must have at least 1 alternative allele
      * @param log10AlleleFrequencyPriors a prior vector nSamples x 2 in length indicating the Pr(AF = i)
      * @return result (for programming convenience)
      */
@@ -44,13 +44,13 @@ public abstract class AFCalculator {
     }
 
     /**
-     * Convert the final state of the state tracker into our result as an AFCalculationResult
+     * Convert the final state of the state tracker into our result as an {@link AFCalculationResult}
      *
      * Assumes that stateTracker has been updated accordingly
      *
-     * @param vcWorking the VariantContext we actually used as input to the calc model (after reduction)
+     * @param vcWorking the {@link VariantContext} we actually used as input to the calc model (after reduction)
      * @param log10AlleleFrequencyPriors the priors by AC vector
-     * @return a AFCalculationResult describing the result of this calculation
+     * @return a {@link AFCalculationResult} describing the result of this calculation
      */
     protected AFCalculationResult getResultFromFinalState(final VariantContext vcWorking, final double[] log10AlleleFrequencyPriors, final StateTracker stateTracker) {
         Utils.nonNull(vcWorking, "vcWorking cannot be null");
@@ -70,7 +70,7 @@ public abstract class AFCalculator {
     /**
      * Look at VC and perhaps return a new one of reduced complexity, if that's necessary
      *
-     * Used before the call to computeLog10PNonRef to simply the calculation job at hand,
+     * Used before the call to {@link #computeLog10PNonRef(VariantContext, int, double[], StateTracker)} to simply the calculation job at hand,
      * if vc exceeds bounds.  For example, if VC has 100 alt alleles this function
      * may decide to only genotype the best 2 of them.
      *
@@ -87,8 +87,10 @@ public abstract class AFCalculator {
      * @param log10AlleleFrequencyPriors        priors
      * @return a AFCalcResult object describing the results of this calculation
      */
-    protected abstract AFCalculationResult computeLog10PNonRef(final VariantContext vc, final int defaultPloidy,
-                                                        final double[] log10AlleleFrequencyPriors, final StateTracker stateTracker);
+    protected abstract AFCalculationResult computeLog10PNonRef(final VariantContext vc,
+                                                               final int defaultPloidy,
+                                                               final double[] log10AlleleFrequencyPriors,
+                                                               final StateTracker stateTracker);
 
     /**
      * Subset VC to the just allelesToUse, updating genotype likelihoods

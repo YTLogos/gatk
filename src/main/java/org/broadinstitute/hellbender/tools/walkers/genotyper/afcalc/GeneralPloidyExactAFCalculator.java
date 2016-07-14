@@ -119,9 +119,9 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
      */
     @VisibleForTesting
     void combineSinglePools(final GenotypesContext GLs,
-                                    final int defaultPloidy,
-                                    final int numAlleles,
-                                    final double[] log10AlleleFrequencyPriors) {
+                            final int defaultPloidy,
+                            final int numAlleles,
+                            final double[] log10AlleleFrequencyPriors) {
 
         // Combine each pool incrementally - likelihoods will be renormalized at each step
 
@@ -158,12 +158,12 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
     }
 
     private CombinedPoolLikelihoods fastCombineMultiallelicPool(final CombinedPoolLikelihoods originalPool,
-                                                               final double[] newGL,
-                                                               final int originalPloidy,
-                                                               final int newGLPloidy,
-                                                               final int numAlleles,
-                                                               final double[] log10AlleleFrequencyPriors,
-                                                               final StateTracker stateTracker) {
+                                                                final double[] newGL,
+                                                                final int originalPloidy,
+                                                                final int newGLPloidy,
+                                                                final int numAlleles,
+                                                                final double[] log10AlleleFrequencyPriors,
+                                                                final StateTracker stateTracker) {
         final Deque<ExactACset> ACqueue = new LinkedList<>();
         // mapping of ExactACset indexes to the objects
         final Map<ExactACcounts, ExactACset> indexesToACset = new LinkedHashMap<>();
@@ -464,9 +464,9 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
      * @param numChromosomes        Number of chromosomes per pool
      */
     private void assignGenotype(final GenotypeBuilder gb,
-                                       final double[] newLikelihoods,
-                                       final List<Allele> allelesToUse,
-                                       final int numChromosomes) {
+                                final double[] newLikelihoods,
+                                final List<Allele> allelesToUse,
+                                final int numChromosomes) {
         final int numNewAltAlleles = allelesToUse.size() - 1;
 
         // find the genotype with maximum likelihoods
@@ -612,8 +612,10 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
      * @param allelesToSubset       Alleles to subset
      * @return                      Vector of new PL's, ordered accorrding to SumIterator's ordering
      */
-    private static double[] subsetToAlleles(final double[] oldLikelihoods, final int numChromosomes,
-                                           final List<Allele> originalAlleles, final List<Allele> allelesToSubset) {
+    private static double[] subsetToAlleles(final double[] oldLikelihoods,
+                                            final int numChromosomes,
+                                            final List<Allele> originalAlleles,
+                                            final List<Allele> allelesToSubset) {
 
         final int newPLSize = getNumLikelihoodElements(allelesToSubset.size(), numChromosomes);
         final double[] newPLs = new double[newPLSize];
@@ -747,8 +749,8 @@ public final class GeneralPloidyExactAFCalculator extends ExactAFCalculator {
     }
 
     private static void updateACset(final int[] newSetCounts,
-                                   final Deque<ExactACset> ACqueue,
-                                   final Map<ExactACcounts, ExactACset> indexesToACset) {
+                                    final Deque<ExactACset> ACqueue,
+                                    final Map<ExactACcounts, ExactACset> indexesToACset) {
 
         final ExactACcounts index = new ExactACcounts(newSetCounts);
         if ( !indexesToACset.containsKey(index) ) {

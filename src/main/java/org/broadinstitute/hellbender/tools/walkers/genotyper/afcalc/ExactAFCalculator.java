@@ -13,6 +13,9 @@ import java.util.*;
  */
 abstract class ExactAFCalculator extends AFCalculator {
 
+    // ---------------------------------------------------------------------------
+    // inheritable helper structs
+    // ---------------------------------------------------------------------------
     protected static final int HOM_REF_INDEX = 0;  // AA likelihoods are always first
     protected static final int PL_INDEX_OF_HOM_REF = 0;
 
@@ -56,6 +59,9 @@ abstract class ExactAFCalculator extends AFCalculator {
         }
     }
 
+    // ---------------------------------------------------------------------------
+    // inheritable workers
+    // ---------------------------------------------------------------------------
     /**
      * Unpack GenotypesContext into arraylist of doubel values
      * @param GLs            Input genotype context

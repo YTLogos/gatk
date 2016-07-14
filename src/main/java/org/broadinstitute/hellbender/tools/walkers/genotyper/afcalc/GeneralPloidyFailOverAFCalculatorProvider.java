@@ -11,8 +11,8 @@ import org.broadinstitute.hellbender.utils.Utils;
  */
 public final class GeneralPloidyFailOverAFCalculatorProvider extends AFCalculatorProvider {
 
-    private final AFCalculator preferred;
     private final AFCalculatorImplementation preferredImplementation;
+    private final AFCalculator preferred;
     private final AFCalculator failOver;
 
     /**
@@ -22,7 +22,7 @@ public final class GeneralPloidyFailOverAFCalculatorProvider extends AFCalculato
      */
     public GeneralPloidyFailOverAFCalculatorProvider(final GenotypeCalculationArgumentCollection genotypeArgs) {
         Utils.nonNull(genotypeArgs);
-        preferredImplementation = AFCalculatorImplementation.bestValue(genotypeArgs.samplePloidy,genotypeArgs.MAX_ALTERNATE_ALLELES, null);
+        preferredImplementation = AFCalculatorImplementation.bestValue(genotypeArgs.samplePloidy, genotypeArgs.MAX_ALTERNATE_ALLELES, null);
         preferred = preferredImplementation.newInstance();
         failOver = AFCalculatorImplementation.EXACT_GENERAL_PLOIDY.newInstance();
     }

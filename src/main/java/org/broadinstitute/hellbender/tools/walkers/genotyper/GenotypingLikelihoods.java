@@ -35,11 +35,32 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
      *  does not correspond with the number of likelihoods arrays in {@code likelihoods}
      */
     GenotypingLikelihoods(final AlleleList<A> alleles, final PloidyModel ploidyModel, final List<GenotypeLikelihoods> likelihoods) {
+        Utils.nonNull(alleles, "allele list cannot be null");
+        Utils.nonNull(ploidyModel, "the ploidy model cannot be null");
+        Utils.nonNull(likelihoods, "the likelihood collection cannot be null");
+
+        Utils.containsNoNull(alleles.asListOfAlleles(), "no alleles is allowed to be null");
         Utils.validateArg (ploidyModel.numberOfSamples() ==  likelihoods.size(), "there must be exactly one likelihood set for each sample");
-        this.likelihoods = Utils.nonNull(likelihoods, "the likelihood collection cannot be null").toArray(new GenotypeLikelihoods[likelihoods.size()]);
         Utils.containsNoNull(likelihoods, "no genotype likelihood is allowed to be null");
-        this.alleles = Utils.nonNull(alleles, "allele list cannot be null");
-        this.ploidyModel = Utils.nonNull(ploidyModel, "the ploidy model cannot be null");
+
+        this.likelihoods = likelihoods.toArray(new GenotypeLikelihoods[likelihoods.size()]);
+        this.ploidyModel = ploidyModel;
+        this.alleles = alleles;
+    }
+
+    /**
+     * Returns the genotype-likelihoods of the sample given its index in the collection.
+     *
+     * @param sampleIndex the query sample index.
+     *
+     * @throws IllegalArgumentException if {@code sampleIndex} is not a valid index for this collection:
+     *   [0,{@link #numberOfSamples()).
+     *
+     * @return never {@code null}.
+     */
+    public GenotypeLikelihoods sampleLikelihoods(final int sampleIndex) {
+        Utils.validIndex(sampleIndex, numberOfSamples());
+        return likelihoods[sampleIndex];
     }
 
     @Override
@@ -70,21 +91,6 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
     public int samplePloidy(final int sampleIndex) {
         Utils.validIndex(sampleIndex, numberOfSamples());
         return ploidyModel.samplePloidy(sampleIndex);
-    }
-
-    /**
-     * Returns the genotype-likelihoods of the sample given its index in the collection.
-     *
-     * @param sampleIndex the query sample index.
-     *
-     * @throws IllegalArgumentException if {@code sampleIndex} is not a valid index for this collection:
-     *   [0,{@link #numberOfSamples()).
-     *
-     * @return never {@code null}.
-     */
-    public GenotypeLikelihoods sampleLikelihoods(final int sampleIndex) {
-        Utils.validIndex(sampleIndex, numberOfSamples());
-        return likelihoods[sampleIndex];
     }
 
     @Override

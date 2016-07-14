@@ -36,7 +36,7 @@ public final class Haplotype extends Allele {
      * @param bases a non-null array of bases
      * @param isRef is this the reference haplotype?
      */
-    public Haplotype( final byte[] bases, final boolean isRef ) {
+    public Haplotype(final byte[] bases, final boolean isRef ) {
         super(Arrays.copyOf(bases, bases.length), isRef);
     }
 
@@ -45,42 +45,92 @@ public final class Haplotype extends Allele {
      *
      * @param bases a non-null array of bases
      */
-    public Haplotype( final byte[] bases ) {
+    public Haplotype(final byte[] bases ) {
         this(bases, false);
     }
 
     /**
-     * Create a new haplotype with bases
-     *
-     * Requires bases.length == cigar.getReadLength()
-     *
-     * @param bases a non-null array of bases
-     * @param isRef is this the reference haplotype?
-     * @param alignmentStartHapwrtRef offset of this haplotype w.r.t. the reference
-     * @param cigar the cigar that maps this haplotype to the reference sequence
+     * Creates a new non-ref haplotype with {@code bases}, and sets its genomic location to {@code loc}.
      */
-    public Haplotype( final byte[] bases, final boolean isRef, final int alignmentStartHapwrtRef, final Cigar cigar) {
-        this(bases, isRef);
-        this.alignmentStartHapwrtRef = alignmentStartHapwrtRef;
-        setCigar(cigar);
-    }
-
     public Haplotype( final byte[] bases, final Locatable loc ) {
         this(bases, false);
         this.genomeLocation = loc;
     }
 
     /**
-     * Create a new Haplotype derived from this one that exactly spans the provided location
+     * Create a new haplotype with bases.
      *
-     * Note that this haplotype must have a contain a genome loc for this operation to be successful.  If no
-     * GenomeLoc is contained than @throws an IllegalStateException
+     * Requires {@code bases.length == cigar.getReadLength()}
      *
-     * Also loc must be fully contained within this Haplotype's genomeLoc.  If not an IllegalArgumentException is
-     * thrown.
+     * @param bases                     a non-null array of bases
+     * @param isRef                     is this the reference haplotype?
+     * @param alignmentStartHapwrtRef   offset of this haplotype w.r.t. the reference
+     * @param cigar                     the cigar that maps this haplotype to the reference sequence
+     */
+    public Haplotype(final byte[] bases, final boolean isRef, final int alignmentStartHapwrtRef, final Cigar cigar) {
+        this(bases, isRef);
+        this.alignmentStartHapwrtRef = alignmentStartHapwrtRef;
+        setCigar(cigar);
+    }
+
+    @Override
+    public boolean equals( final Object h ) {
+        return h instanceof Haplotype && Arrays.equals(getBases(), ((Haplotype) h).getBases());
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(getBases());
+    }
+
+    @Override
+    public String toString() {
+        return getDisplayString();
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // non-trivial accessors and modifiers
+    // -----------------------------------------------------------------------------------------------
+    /**
+     * HYQ_doc_log: these documentation is added by me. seems more like a replace refAllele in the current bases with the provided altAllele
+     * Insert a provided {@code altAllele} at the desired {@code refInsertLocation}
+     * @param refAllele                 ?
+     * @param altAllele                 alternative allele to be inserted
+     * @param refInsertLocation         ref haplotype offset coordinates (NOT genomic coordinates) of insertion
+     * @param genomicInsertLocation     ?
+     * @return a new {@code Haplotype} or null if
+     */
+    public Haplotype insertAllele( final Allele refAllele, final Allele altAllele, final int refInsertLocation, final int genomicInsertLocation ) {
+        // refInsertLocation is in ref haplotype offset coordinates NOT genomic coordinates
+        final int haplotypeInsertLocation = ReadUtils.getReadCoordinateForReferenceCoordinate(alignmentStartHapwrtRef, cigar, refInsertLocation, ReadUtils.ClippingTail.RIGHT_TAIL, true);
+        final byte[] myBases = this.getBases();
+        if( haplotypeInsertLocation == -1 || haplotypeInsertLocation + refAllele.length() >= myBases.length ) { // desired change falls inside deletion so don't bother creating a new haplotype
+            return null;
+        }
+
+        byte[] newHaplotypeBases = {};
+        newHaplotypeBases = ArrayUtils.addAll(newHaplotypeBases, ArrayUtils.subarray(myBases, 0, haplotypeInsertLocation)); // bases before the variant
+        newHaplotypeBases = ArrayUtils.addAll(newHaplotypeBases, altAllele.getBases()); // the alt allele of the variant
+        newHaplotypeBases = ArrayUtils.addAll(newHaplotypeBases, ArrayUtils.subarray(myBases, haplotypeInsertLocation + refAllele.length(), myBases.length)); // bases after the variant
+        return new Haplotype(newHaplotypeBases);
+    }
+
+    /**
+     * Create a new Haplotype derived from this one that exactly spans the provided location.
+     *
+     * Note that this haplotype must have a contain a genome loc for this operation to be successful.
+     * If no GenomeLoc is contained then @throws an {@link IllegalStateException}
+     *
+     * Also loc must be fully contained within this Haplotype's genomeLoc.
+     * If not an {@link IllegalArgumentException} is thrown.
      *
      * @param loc a location completely contained within this Haplotype's location
+     * HYQ_doc_log: if what? sentence seems broken
      * @return a new Haplotype within only the bases spanning the provided location, or null for some reason the haplotype would be malformed if
+     * @throws IllegalArgumentException if 1) {@code loc} is {@code null},
+     *                                     2) cigar of this haplotype is {@code null}
+     *                                     3) {@code genomeLocation} of this haplotype is {@code null} or
+     *                                     4) the provided {@code loc} is not fully contained within this haplotype's genomeLoc
      */
     public Haplotype trim(final Locatable loc) {
         Utils.nonNull( loc, "Loc cannot be null");
@@ -107,15 +157,26 @@ public final class Haplotype extends Allele {
         return ret;
     }
 
-    @Override
-    public boolean equals( final Object h ) {
-        return h instanceof Haplotype && Arrays.equals(getBases(), ((Haplotype) h).getBases());
+    /**
+     * Get the haplotype cigar extended by {@code padSize} M at the tail, consolidated into a clean cigar
+     *
+     * @param padSize how many additional Ms should be appended to the end of this cigar.  Must be >= 0
+     * @return a newly allocated Cigar that consolidate(getCigar + padSize + M)
+     */
+    public Cigar getConsolidatedPaddedCigar(final int padSize) {
+        if ( padSize < 0 ) {
+            throw new IllegalArgumentException("padSize must be >= 0 but got " + padSize);
+        }
+        final Cigar extendedHaplotypeCigar = new Cigar(getCigar().getCigarElements());
+        if ( padSize > 0 ) {
+            extendedHaplotypeCigar.add(new CigarElement(padSize, CigarOperator.M));
+        }
+        return AlignmentUtils.consolidateCigar(extendedHaplotypeCigar);
     }
 
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(getBases());
-    }
+    // -----------------------------------------------------------------------------------------------
+    // accessors and modifiers
+    // -----------------------------------------------------------------------------------------------
 
     public EventMap getEventMap() {
         return eventMap;
@@ -125,17 +186,22 @@ public final class Haplotype extends Allele {
         this.eventMap = eventMap;
     }
 
-    @Override
-    public String toString() {
-        return getDisplayString();
-    }
-
     /**
+     * HYQ_doc_log: the following is a duplicate of {@link #getGenomeLocation()} and should be deleted
      * Get the span of this haplotype (may be null)
      * @return a potentially null genome loc
      */
     public Locatable getLocation() {
         return this.genomeLocation;
+    }
+
+    /**
+     * HYQ_doc_log: the following is a duplicate of {@link #getGenomeLocation()} and should be deleted
+     * Get the span of this haplotype (may be null)
+     * @return a potentially null genome loc
+     */
+    public Locatable getGenomeLocation() {
+        return genomeLocation;
     }
 
     public void setGenomeLocation(final Locatable genomeLocation) {
@@ -168,21 +234,6 @@ public final class Haplotype extends Allele {
     }
 
     /**
-     * Get the haplotype cigar extended by padSize M at the tail, consolidated into a clean cigar
-     *
-     * @param padSize how many additional Ms should be appended to the end of this cigar.  Must be >= 0
-     * @return a newly allocated Cigar that consolidate(getCigar + padSize + M)
-     */
-    public Cigar getConsolidatedPaddedCigar(final int padSize) {
-        Utils.validateArg( padSize >= 0, () -> "padSize must be >= 0 but got " + padSize);
-        final Cigar extendedHaplotypeCigar = new Cigar(getCigar().getCigarElements());
-        if ( padSize > 0 ) {
-            extendedHaplotypeCigar.add(new CigarElement(padSize, CigarOperator.M));
-        }
-        return AlignmentUtils.consolidateCigar(extendedHaplotypeCigar);
-    }
-
-    /**
      * Set the cigar of this haplotype to cigar.
      *
      * Note that this function consolidates the cigar, so that 1M1M1I1M1M => 2M1I2M
@@ -192,21 +243,6 @@ public final class Haplotype extends Allele {
     public void setCigar( final Cigar cigar ) {
         this.cigar = AlignmentUtils.consolidateCigar(cigar);
         Utils.validateArg( this.cigar.getReadLength() == length(), () -> "Read length " + length() + " not equal to the read length of the cigar " + cigar.getReadLength() + " " + this.cigar);
-    }
-
-    public Haplotype insertAllele( final Allele refAllele, final Allele altAllele, final int refInsertLocation, final int genomicInsertLocation ) {
-        // refInsertLocation is in ref haplotype offset coordinates NOT genomic coordinates
-        final int haplotypeInsertLocation = ReadUtils.getReadCoordinateForReferenceCoordinate(alignmentStartHapwrtRef, cigar, refInsertLocation, ReadUtils.ClippingTail.RIGHT_TAIL, true);
-        final byte[] myBases = this.getBases();
-        if( haplotypeInsertLocation == -1 || haplotypeInsertLocation + refAllele.length() >= myBases.length ) { // desired change falls inside deletion so don't bother creating a new haplotype
-            return null;
-        }
-
-        byte[] newHaplotypeBases = {};
-        newHaplotypeBases = ArrayUtils.addAll(newHaplotypeBases, ArrayUtils.subarray(myBases, 0, haplotypeInsertLocation)); // bases before the variant
-        newHaplotypeBases = ArrayUtils.addAll(newHaplotypeBases, altAllele.getBases()); // the alt allele of the variant
-        newHaplotypeBases = ArrayUtils.addAll(newHaplotypeBases, ArrayUtils.subarray(myBases, haplotypeInsertLocation + refAllele.length(), myBases.length)); // bases after the variant
-        return new Haplotype(newHaplotypeBases);
     }
 
     /**
@@ -227,14 +263,4 @@ public final class Haplotype extends Allele {
     public void setScore(final double score) {
         this.score = score;
     }
-
-    /**
-     * Get the span of this haplotype (may be null)
-     * @return a potentially null genome loc
-     */
-    public Locatable getGenomeLocation() {
-        return genomeLocation;
-    }
-
-
 }

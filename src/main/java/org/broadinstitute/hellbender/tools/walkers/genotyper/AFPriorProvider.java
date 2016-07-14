@@ -59,8 +59,8 @@ public abstract class AFPriorProvider {
      * Given a total ploidy construct the allele prior probabilities array.
      * @param totalPloidy the target total-ploidy. Code can assume that is a non-negative number.
      *
-     * @return never {@code null}, an array of exactly {@code totalPloidy + 1} positions that satisifed the
-     *  contract {@link #forTotalPloidy(int) forTotalPloidy(totalPloidy)}.
+     * @return never {@code null}, an array of exactly {@code totalPloidy + 1} positions that satisfies the
+     *  contract {@link #forTotalPloidy(int)}.
      */
     protected abstract double[] buildPriors(final int totalPloidy);
 

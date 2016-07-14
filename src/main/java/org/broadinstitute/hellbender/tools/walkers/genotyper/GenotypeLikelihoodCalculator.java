@@ -137,6 +137,10 @@ public final class GenotypeLikelihoodCalculator {
      */
     private double[] readGenotypeLikelihoodComponents;
 
+    // -----------------------------------------------------------------------------------------------
+    // Initializers and transformers
+    // -----------------------------------------------------------------------------------------------
+
     /**
      * Creates a new calculator providing its ploidy and number of genotyping alleles.
      */
@@ -154,6 +158,30 @@ public final class GenotypeLikelihoodCalculator {
         // The number of possible components is limited by distinct allele count and ploidy.
         maximumDistinctAllelesInGenotype = Math.min(ploidy, alleleCount);
         genotypeAllelesAndCounts = new int[maximumDistinctAllelesInGenotype * 2];
+    }
+
+    /**
+     * Returns the number of possible genotypes given ploidy and the maximum allele index.
+     * @return never {@code null}.
+     */
+    public int genotypeCount()  {
+        return genotypeCount;
+    }
+
+    /**
+     * Returns the ploidy for this genotype likelihood calculator.
+     * @return 0 or greater.
+     */
+    public int ploidy() {
+        return ploidy;
+    }
+
+    /**
+     * Returns the total number of alleles for this genotype calculator.
+     * @return the number of alleles considered by this calculator.
+     */
+    public int alleleCount() {
+        return alleleCount;
     }
 
     /**
@@ -179,35 +207,6 @@ public final class GenotypeLikelihoodCalculator {
             readGenotypeLikelihoodComponents = new double[maximumDistinctAllelesInGenotype * doubleCapacity];
             readCapacity = doubleCapacity;
         }
-    }
-
-    /**
-     * Give a list of alleles, returns the likelihood array index.
-     * @param alleleIndices the indices of the alleles in the genotype, there should be as many repetition of an
-     *                      index as copies of that allele in the genotype. Allele indices do not need to be sorted in
-     *                      any particular way.
-     *
-     * @return never {@code null}.
-     */
-    public int allelesToIndex(final int... alleleIndices) {
-        // Special case ploidy == 0.
-        if (ploidy == 0) {
-            return 0;
-        }
-
-        alleleHeap.clear();
-        for (int i = 0; i < alleleIndices.length; i++) {
-            alleleHeap.add(alleleIndices[i]);
-        }
-        return alleleHeapToIndex();
-    }
-
-    /**
-     * Returns the number of possible genotypes given ploidy and the maximum allele index.
-     * @return never {@code null}.
-     */
-    public int genotypeCount()  {
-        return genotypeCount;
     }
 
     /**
@@ -241,6 +240,97 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     /**
+     * Give a list of alleles, returns the likelihood array index.
+     * @param alleleIndices the indices of the alleles in the genotype, there should be as many repetition of an
+     *                      index as copies of that allele in the genotype. Allele indices do not need to be sorted in
+     *                      any particular way.
+     *
+     * @return never {@code null}.
+     */
+    public int allelesToIndex(final int... alleleIndices) {
+        // Special case ploidy == 0.
+        if (ploidy == 0) {
+            return 0;
+        }
+
+        alleleHeap.clear();
+        for (int i = 0; i < alleleIndices.length; i++) {
+            alleleHeap.add(alleleIndices[i]);
+        }
+        return alleleHeapToIndex();
+    }
+
+    /**
+     * Returns the likelihood index given the allele counts.
+     *
+     * @param alleleCountArray the query allele counts. This must follow the format returned by
+     *  {@link GenotypeAlleleCounts#copyAlleleCounts} with 0 offset.
+     *
+     * @throws IllegalArgumentException if {@code alleleCountArray} is not a valid {@code allele count array}:
+     *  <ul>
+     *      <li>is {@code null},</li>
+     *      <li>or its length is not even,</li>
+     *      <li>or it contains any negatives,
+     *      <li>or the count sum does not match the calculator ploidy,</li>
+     *      <li>or any of the alleles therein is negative or greater than the maximum allele index.</li>
+     *  </ul>
+     *
+     * @return 0 or greater but less than {@link #genotypeCount}.
+     */
+    public int alleleCountsToIndex(final int ... alleleCountArray) {
+        Utils.nonNull(alleleCountArray);
+
+        Utils.validateArg((alleleCountArray.length & 1) == 0, "the allele counts array cannot have odd length");
+        alleleHeap.clear();
+        for (int i = 0; i < alleleCountArray.length; i += 2) {
+            final int index = alleleCountArray[i];
+            final int count = alleleCountArray[i+1];
+            Utils.validateArg(count >= 0, "no allele count can be less than 0");
+            for (int j = 0; j < count; j++) {
+                alleleHeap.add(index);
+            }
+        }
+        return alleleHeapToIndex();
+    }
+
+    /**
+     * Composes a genotype index map given a allele index recoding.
+     *
+     * @param oldToNewAlleleIndexMap allele recoding. The ith entry indicates the index of the allele in original encoding
+     *                               that corresponds to the ith allele index in the final encoding.
+     *
+     * @throws IllegalArgumentException if this calculator cannot handle the recoding provided. This is
+     * the case when either {@code oldToNewAlleleIndexMap}'s length or any of its element (+ 1 as they are 0-based) is larger
+     * this calculator's {@link #alleleCount()}. Also if any {@code oldToNewAllelesIndexMap} element is negative.
+     *
+     * @return never {@code null}.
+     */
+    public int[] genotypeIndexMap(final int[] oldToNewAlleleIndexMap, final GenotypeLikelihoodCalculators calculators) {
+        Utils.nonNull(oldToNewAlleleIndexMap);
+        final int resultAlleleCount = oldToNewAlleleIndexMap.length;
+        Utils.validateArg(resultAlleleCount <= alleleCount, () -> "this calculator does not have enough capacity for handling "
+                                                                  + resultAlleleCount + " alleles ");
+        final int resultLength = resultAlleleCount == alleleCount ? genotypeCount
+                                                                  : calculators.genotypeCount(ploidy,resultAlleleCount);
+
+        final int[] result = new int[resultLength];
+        final int[] sortedAlleleCounts = new int[Math.max(ploidy, alleleCount) << 1];
+        alleleHeap.clear();
+        GenotypeAlleleCounts alleleCounts = genotypeAlleleCounts[0];
+        for (int i = 0; i < resultLength; i++) {
+            genotypeIndexMapPerGenotypeIndex(i,alleleCounts, oldToNewAlleleIndexMap, result, sortedAlleleCounts);
+            if (i < resultLength - 1) {
+                alleleCounts = nextGenotypeAlleleCounts(alleleCounts);
+            }
+        }
+        return result;
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // CORE
+    // -----------------------------------------------------------------------------------------------
+
+    /**
      * Calculate the likelihoods given the list of alleles and the likelihood map.
      *
      * @param likelihoods the likelihood matrix all alleles vs all reads.
@@ -266,6 +356,10 @@ public final class GenotypeLikelihoodCalculator {
         return GenotypeLikelihoods.fromLog10Likelihoods(readLikelihoodsByGenotypeIndex);
     }
 
+    // -----------------------------------------------------------------------------------------------
+    //
+    // -----------------------------------------------------------------------------------------------
+
     /**
      * Calculates the final genotype likelihood array out of the likelihoods for each genotype per read.
      *
@@ -288,8 +382,8 @@ public final class GenotypeLikelihoodCalculator {
     /**
      * Calculates the likelihood component of each read on each genotype.
      *
-     * @param readLikelihoodComponentsByAlleleCount [a][f][r] likelihood stratified by allele <i>a</i>, frequency in genotype <i>f</i> and
-     *                                              read <i>r</i>.
+     * @param readLikelihoodComponentsByAlleleCount [a][f][r] likelihood stratified by allele <i>a</i>,
+     *                                              frequency in genotype <i>f</i> and read <i>r</i>.
      * @param readCount number of reads in {@code readLikelihoodComponentsByAlleleCount}.
      * @return never {@code null}.
      */
@@ -317,22 +411,6 @@ public final class GenotypeLikelihoodCalculator {
             }
         }
         return readLikelihoodsByGenotypeIndex;
-    }
-
-    private GenotypeAlleleCounts nextGenotypeAlleleCounts(final GenotypeAlleleCounts alleleCounts) {
-        final int index = alleleCounts.index();
-        final GenotypeAlleleCounts result;
-        final int cmp = index - GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY + 1;
-        if (cmp < 0) {
-            result = genotypeAlleleCounts[index + 1];
-        } else if (cmp == 0) {
-            result = genotypeAlleleCounts[index].copy();
-            result.increase();
-        } else {
-            alleleCounts.increase();
-            result = alleleCounts;
-        }
-        return result;
     }
 
     /**
@@ -391,7 +469,9 @@ public final class GenotypeLikelihoodCalculator {
      * exactly one allele present in the genotype.
      */
     private void singleComponentGenotypeLikelihoodByRead(final GenotypeAlleleCounts genotypeAlleleCounts,
-                                                         final double[] likelihoodByRead, final double[] readLikelihoodComponentsByAlleleCount, final int readCount) {
+                                                         final double[] likelihoodByRead,
+                                                         final double[] readLikelihoodComponentsByAlleleCount,
+                                                         final int readCount) {
         final int allele = genotypeAlleleCounts.alleleIndexAt(0);
         // the count of the only component must be = ploidy.
         int offset = (allele * (ploidy + 1) + ploidy) * readCount;
@@ -400,7 +480,6 @@ public final class GenotypeLikelihoodCalculator {
                     readLikelihoodComponentsByAlleleCount[offset++];
         }
     }
-
     /**
      * Returns a 3rd matrix with the likelihood components.
      *
@@ -432,55 +511,6 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     /**
-     * Returns the ploidy for this genotype likelihood calculator.
-     * @return 0 or greater.
-     */
-    public int ploidy() {
-        return ploidy;
-    }
-
-    /**
-     * Returns the total number of alleles for this genotype calculator.
-     * @return the number of alleles considered by this calculator.
-     */
-    public int alleleCount() {
-        return alleleCount;
-    }
-
-    /**
-     * Returns the likelihood index given the allele counts.
-     *
-     * @param alleleCountArray the query allele counts. This must follow the format returned by
-     *  {@link GenotypeAlleleCounts#copyAlleleCounts} with 0 offset.
-     *
-     * @throws IllegalArgumentException if {@code alleleCountArray} is not a valid {@code allele count array}:
-     *  <ul>
-     *      <li>is {@code null},</li>
-     *      <li>or its length is not even,</li>
-     *      <li>or it contains any negatives,
-     *      <li>or the count sum does not match the calculator ploidy,</li>
-     *      <li>or any of the alleles therein is negative or greater than the maximum allele index.</li>
-     *  </ul>
-     *
-     * @return 0 or greater but less than {@link #genotypeCount}.
-     */
-    public int alleleCountsToIndex(final int ... alleleCountArray) {
-        Utils.nonNull(alleleCountArray);
-
-        Utils.validateArg((alleleCountArray.length & 1) == 0, "the allele counts array cannot have odd length");
-        alleleHeap.clear();
-        for (int i = 0; i < alleleCountArray.length; i += 2) {
-            final int index = alleleCountArray[i];
-            final int count = alleleCountArray[i+1];
-            Utils.validateArg(count >= 0, "no allele count can be less than 0");
-            for (int j = 0; j < count; j++) {
-                alleleHeap.add(index);
-            }
-        }
-        return alleleHeapToIndex();
-    }
-
-    /**
      * Transforms the content of the heap into an index.
      *
      * <p>
@@ -502,39 +532,6 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     /**
-     * Composes a genotype index map given a allele index recoding.
-     *
-     * @param oldToNewAlleleIndexMap allele recoding. The ith entry indicates the index of the allele in original encoding
-     *                               that corresponds to the ith allele index in the final encoding.
-     *
-     * @throws IllegalArgumentException if this calculator cannot handle the recoding provided. This is
-     * the case when either {@code oldToNewAlleleIndexMap}'s length or any of its element (+ 1 as they are 0-based) is larger
-     * this calculator's {@link #alleleCount()}. Also if any {@code oldToNewAllelesIndexMap} element is negative.
-     *
-     * @return never {@code null}.
-     */
-    public int[] genotypeIndexMap(final int[] oldToNewAlleleIndexMap, final GenotypeLikelihoodCalculators calculators) {
-        Utils.nonNull(oldToNewAlleleIndexMap);
-        final int resultAlleleCount = oldToNewAlleleIndexMap.length;
-        Utils.validateArg(resultAlleleCount <= alleleCount, () -> "this calculator does not have enough capacity for handling "
-                    + resultAlleleCount + " alleles ");
-        final int resultLength = resultAlleleCount == alleleCount
-                ? genotypeCount : calculators.genotypeCount(ploidy,resultAlleleCount);
-
-        final int[] result = new int[resultLength];
-        final int[] sortedAlleleCounts = new int[Math.max(ploidy, alleleCount) << 1];
-        alleleHeap.clear();
-        GenotypeAlleleCounts alleleCounts = genotypeAlleleCounts[0];
-        for (int i = 0; i < resultLength; i++) {
-            genotypeIndexMapPerGenotypeIndex(i,alleleCounts, oldToNewAlleleIndexMap, result, sortedAlleleCounts);
-            if (i < resultLength - 1) {
-                alleleCounts = nextGenotypeAlleleCounts(alleleCounts);
-            }
-        }
-        return result;
-    }
-
-    /**
      * Performs the genotype mapping per new genotype index.
      *
      * @param newGenotypeIndex the target new genotype index.
@@ -543,7 +540,11 @@ public final class GenotypeLikelihoodCalculator {
      * @param destination where to store the new genotype index mapping to old.
      * @param sortedAlleleCountsBuffer a buffer to re-use to get the genotype-allele-count's sorted allele counts.
      */
-    private void genotypeIndexMapPerGenotypeIndex(final int newGenotypeIndex, final GenotypeAlleleCounts alleleCounts, final int[] oldToNewAlleleIndexMap, final int[] destination, final int[] sortedAlleleCountsBuffer) {
+    private void genotypeIndexMapPerGenotypeIndex(final int newGenotypeIndex,
+                                                  final GenotypeAlleleCounts alleleCounts,
+                                                  final int[] oldToNewAlleleIndexMap,
+                                                  final int[] destination,
+                                                  final int[] sortedAlleleCountsBuffer) {
         final int distinctAlleleCount = alleleCounts.distinctAlleleCount();
         alleleCounts.copyAlleleCounts(sortedAlleleCountsBuffer,0);
         for (int j = 0, jj = 0; j < distinctAlleleCount; j++) {
@@ -561,4 +562,19 @@ public final class GenotypeLikelihoodCalculator {
         destination[newGenotypeIndex] = genotypeIndex;
     }
 
+    private GenotypeAlleleCounts nextGenotypeAlleleCounts(final GenotypeAlleleCounts alleleCounts) {
+        final int index = alleleCounts.index();
+        final GenotypeAlleleCounts result;
+        final int cmp = index - GenotypeLikelihoodCalculators.MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY + 1;
+        if (cmp < 0) {
+            result = genotypeAlleleCounts[index + 1];
+        } else if (cmp == 0) {
+            result = genotypeAlleleCounts[index].copy();
+            result.increase();
+        } else {
+            alleleCounts.increase();
+            result = alleleCounts;
+        }
+        return result;
+    }
 }

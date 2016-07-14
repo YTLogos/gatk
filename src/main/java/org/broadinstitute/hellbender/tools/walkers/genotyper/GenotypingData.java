@@ -7,7 +7,7 @@ import org.broadinstitute.hellbender.utils.genotyper.ReadLikelihoods;
 import org.broadinstitute.hellbender.utils.genotyper.SampleList;
 
 /**
- * Encapsulates the data use to make the genotype calls.
+ * Encapsulates the data used to make the genotype calls.
  */
 public final class GenotypingData<A extends Allele> implements SampleList, AlleleList<A> {
 
@@ -36,6 +36,14 @@ public final class GenotypingData<A extends Allele> implements SampleList, Allel
     }
 
     /**
+     * Returns read-likelihoods to use for genotyping.
+     * @return never {@code null}.
+     */
+    public ReadLikelihoods<A> readLikelihoods() {
+        return likelihoods;
+    }
+
+    /**
      * Returns the ploidy model that corresponds to the data provided.
      * @return never {@code null}.
      */
@@ -58,14 +66,6 @@ public final class GenotypingData<A extends Allele> implements SampleList, Allel
     public String getSample(final int sampleIndex) {
         Utils.validateArg(sampleIndex >= 0, "sampleIndex");
         return ploidyModel.getSample(sampleIndex);
-    }
-
-    /**
-     * Returns read-likelihoods to use for genotyping.
-     * @return never {@code null}.
-     */
-    public ReadLikelihoods<A> readLikelihoods() {
-        return likelihoods;
     }
 
     @Override

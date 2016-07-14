@@ -9,10 +9,10 @@ import java.util.List;
 
 /**
  * Minimal interface for random access to a collection of Alleles.
+ * Note: Names in this interface are unusual because of name clash in a subclass -- {@link ReadLikelihoods}.
+ * For example the name of AlleleList.alleleCount() cannot be simply {@code size()}, as would be usual, because
+ * {@link ReadLikelihoods} implements {@link AlleleList} and {@link SampleList} and then {@code size()} would be ambiguous.
  */
-//Note: Names in this interface are unusual because of name clash in a subclass.
-// For example the name of AlleleList.alleleCount() cannot be simply size(), as would be usual,
-// because {@link ReadLikelohoods} implements AlleleList and SampleList and then size() would be ambiguous.
 public interface AlleleList<A extends Allele>{
 
     /**
@@ -38,7 +38,7 @@ public interface AlleleList<A extends Allele>{
      * Returns <code>true</code> if this AlleleList contains the specified allele
      * and <code>false</code> otherwise.
      */
-    public default boolean containsAllele(final A allele){
+    default public boolean containsAllele(final A allele){
         return indexOfAllele(allele) >= 0;
     }
 
@@ -109,9 +109,6 @@ public interface AlleleList<A extends Allele>{
      *     If there is no reference allele, it returns -1. If there is more than one reference allele,
      *     it returns the first occurrence (lowest index).
      * </p>
-     *
-     * @param list the search allele-list.
-     * @param <A> allele component type.
      *
      * @throws IllegalArgumentException if {@code list} is {@code null}.
      *
@@ -231,7 +228,7 @@ public interface AlleleList<A extends Allele>{
         }
     }
 
-     static final class ActualPermutation<A extends Allele> implements AlleleListPermutation<A> {
+    static final class ActualPermutation<A extends Allele> implements AlleleListPermutation<A> {
 
         private final AlleleList<A> from;
 

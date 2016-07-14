@@ -12,8 +12,10 @@ import java.util.*;
 
 public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
 
-    protected abstract AFCalculationResult computeLog10PNonRef(final VariantContext vc, final int defaultPloidy,
-                                                      final double[] log10AlleleFrequencyPriors, final StateTracker stateTracker);
+    protected abstract AFCalculationResult computeLog10PNonRef(final VariantContext vc,
+                                                               final int defaultPloidy,
+                                                               final double[] log10AlleleFrequencyPriors,
+                                                               final StateTracker stateTracker);
 
     @Override
     protected final GenotypesContext reduceScopeGenotypes(final VariantContext vc, final int defaultPloidy, final List<Allele> allelesToUse) {
@@ -46,15 +48,13 @@ public abstract class DiploidExactAFCalculator extends ExactAFCalculator {
 
     @Override
     public final GenotypesContext subsetAlleles(final VariantContext vc,
-                                          final int defaultPloidy,
-                                          final List<Allele> allelesToUse,
-                                          final boolean assignGenotypes) {
+                                                final int defaultPloidy,
+                                                final List<Allele> allelesToUse,
+                                                final boolean assignGenotypes) {
         Utils.nonNull(vc, "vc is null");
         Utils.nonNull(allelesToUse, "allelesToUse is null");
 
-        return allelesToUse.size() == 1
-                ? GATKVariantContextUtils.subsetToRefOnly(vc, defaultPloidy)
-                : GATKVariantContextUtils.subsetAlleles(vc, allelesToUse,
-                     assignGenotypes ? GATKVariantContextUtils.GenotypeAssignmentMethod.USE_PLS_TO_ASSIGN : GATKVariantContextUtils.GenotypeAssignmentMethod.SET_TO_NO_CALL);
+        return allelesToUse.size() == 1 ? GATKVariantContextUtils.subsetToRefOnly(vc, defaultPloidy)
+                                        : GATKVariantContextUtils.subsetAlleles(vc, allelesToUse, assignGenotypes ? GATKVariantContextUtils.GenotypeAssignmentMethod.USE_PLS_TO_ASSIGN : GATKVariantContextUtils.GenotypeAssignmentMethod.SET_TO_NO_CALL);
     }
 }
