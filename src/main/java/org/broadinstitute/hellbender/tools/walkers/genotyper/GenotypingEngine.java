@@ -123,10 +123,10 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     /**
      * Function that fills vector with allele frequency priors.
      * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
-     * @param N                                Number of chromosomes
-     * @param priors                           (output) array to be filled with priors
-     * @param heterozygosity                   default heterozygosity to use, if {@code inputPriors} is empty
-     * @param inputPriors                      Input priors to use (in which case {@code heterozygosity} is ignored)
+     * @param N                 Number of chromosomes
+     * @param priors            (output) array to be filled with priors
+     * @param heterozygosity    default heterozygosity to use, if {@code inputPriors} is empty
+     * @param inputPriors       Input priors to use (in which case {@code heterozygosity} is ignored)
      */
     public static void computeAlleleFrequencyPriors(final int N, final double[] priors, final double heterozygosity, final List<Double> inputPriors) {
         double sum = 0.0;
@@ -166,9 +166,9 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     /**
      * Function that fills vector with allele frequency priors.
      * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
-     * @param N                                Number of chromosomes
-     * @param heterozygosity                   default heterozygosity to use, if {@code inputPriors} is empty
-     * @param inputPriors                      Input priors to use (in which case heterozygosity is ignored)
+     * @param N                 Number of chromosomes
+     * @param heterozygosity    default heterozygosity to use, if {@code inputPriors} is empty
+     * @param inputPriors       Input priors to use (in which case heterozygosity is ignored)
      *
      * @throws IllegalArgumentException if {@code inputPriors} has size != {@code N} or any entry in {@code inputPriors} is not in the (0,1) range.
      *

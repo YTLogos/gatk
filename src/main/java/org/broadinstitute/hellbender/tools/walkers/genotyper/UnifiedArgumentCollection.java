@@ -10,7 +10,9 @@ import org.broadinstitute.hellbender.utils.pairhmm.PairHMM;
 public final class UnifiedArgumentCollection extends StandardCallerArgumentCollection {
     private static final long serialVersionUID = 1L;
 
-    @Argument(fullName = "genotype_likelihoods_model", shortName = "glm", doc = "Genotype likelihoods calculation model to employ -- SNP is the default option, while INDEL is also available for calling indels and BOTH is available for calling both together", optional = true)
+    @Argument(fullName = "genotype_likelihoods_model", shortName = "glm",
+              doc = "Genotype likelihoods calculation model to employ -- SNP is the default option, while INDEL is also available for calling indels and BOTH is available for calling both together",
+              optional = true)
     public GenotypeLikelihoodsCalculationModel GLmodel = GenotypeLikelihoodsCalculationModel.SNP;
 
     /**
@@ -48,7 +50,9 @@ public final class UnifiedArgumentCollection extends StandardCallerArgumentColle
     @Argument(fullName = "max_deletion_fraction", shortName = "deletions", doc = "Maximum fraction of reads with deletions spanning this locus for it to be callable", optional = true)
     public Double MAX_DELETION_FRACTION = 0.05;
 
+    // -----------------------------------------------------------------------------------------------
     // indel-related arguments
+    // -----------------------------------------------------------------------------------------------
     /**
      * A candidate indel is genotyped (and potentially called) if there are this number of reads with a consensus indel at a site.
      * Decreasing this value will increase sensitivity but at the cost of larger calling time and a larger number of false positives.
