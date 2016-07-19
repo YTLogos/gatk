@@ -20,6 +20,8 @@ import java.util.Map;
 public class StandardCallerArgumentCollection implements ArgumentCollectionDefinition {
     private static final long serialVersionUID = 1L;
 
+    private DefaultedMap<String,Double> sampleContamination;
+
     /**
      * Copies the values from other into this StandardCallerArgumentCollection
      *
@@ -42,34 +44,84 @@ public class StandardCallerArgumentCollection implements ArgumentCollectionDefin
         this.annotateAllSitesWithPLs = other.annotateAllSitesWithPLs;
     }
 
+    // -----------------------------------------------------------------------------------------------
+    // Arguments exposed to users
+    // -----------------------------------------------------------------------------------------------
+
     @ArgumentCollection
     public GenotypeCalculationArgumentCollection genotypeArgs = new GenotypeCalculationArgumentCollection();
 
-    @Argument(fullName = "genotyping_mode", shortName = "gt_mode", doc = "Specifies how to determine the alternate alleles to use for genotyping", optional=true)
+    @Argument(fullName = "genotyping_mode", shortName = "gt_mode",
+              doc = "Specifies how to determine the alternate alleles to use for genotyping",
+              optional=true)
     public GenotypingOutputMode genotypingOutputMode = GenotypingOutputMode.DISCOVERY;
 
     /**
-     * When the caller is put into GENOTYPE_GIVEN_ALLELES mode it will genotype the samples using only the alleles provide in this rod binding
+     * When the caller is put into {@link GenotypingOutputMode#GENOTYPE_GIVEN_ALLELES} mode it will genotype the samples
+     * using only the alleles provide in this rod binding.
      */
-    @Argument(fullName="alleles", shortName = "alleles", doc="The set of alleles at which to genotype when --genotyping_mode is GENOTYPE_GIVEN_ALLELES", optional=true)
+    @Argument(fullName="alleles", shortName = "alleles",
+              doc="The set of alleles at which to genotype when --genotyping_mode is GENOTYPE_GIVEN_ALLELES",
+              optional=true)
     public FeatureInput<VariantContext> alleles;
 
     /**
      * If this fraction is greater is than zero, the caller will aggressively attempt to remove contamination through biased down-sampling of reads.
-     * Basically, it will ignore the contamination fraction of reads for each alternate allele.  So if the pileup contains N total bases, then we
-     * will try to remove (N * contamination fraction) bases for each alternate allele.
+     * Basically, it will ignore the contamination fraction of reads for each alternate allele.
+     * So if the pileup contains N total bases, then we will try to remove (N * contamination fraction) bases for each alternate allele.
      */
-    @Argument(fullName = "contamination_fraction_to_filter", shortName = "contamination", doc = "Fraction of contamination in sequencing data (for all samples) to aggressively remove", optional=true)
+    @Argument(fullName = "contamination_fraction_to_filter", shortName = "contamination",
+              doc = "Fraction of contamination in sequencing data (for all samples) to aggressively remove",
+              optional=true)
     public double CONTAMINATION_FRACTION = DEFAULT_CONTAMINATION_FRACTION;
+
     public static final double DEFAULT_CONTAMINATION_FRACTION = 0.0;
 
     /**
-     *  This argument specifies a file with two columns "sample" and "contamination" specifying the contamination level for those samples.
-     *  Samples that do not appear in this file will be processed with CONTAMINATION_FRACTION.
+     * This argument specifies a file with two columns "sample" and "contamination" specifying the contamination level for those samples.
+     * Samples that do not appear in this file will be processed with {@link #CONTAMINATION_FRACTION}.
      **/
     @Advanced
-    @Argument(fullName = "contamination_fraction_per_sample_file", shortName = "contaminationFile", doc = "Tab-separated File containing fraction of contamination in sequencing data (per sample) to aggressively remove. Format should be \"<SampleID><TAB><Contamination>\" (Contamination is double) per line; No header.", optional = true)
+    @Argument(fullName = "contamination_fraction_per_sample_file", shortName = "contaminationFile",
+              doc = "Tab-separated File containing fraction of contamination in sequencing data (per sample) to aggressively remove. Format should be \"<SampleID><TAB><Contamination>\" (Contamination is double) per line; No header.",
+              optional = true)
     public File CONTAMINATION_FRACTION_FILE = null;
+
+    @Argument(fullName = "output_mode", shortName = "out_mode", doc = "Specifies which type of calls we should output", optional = true)
+    public OutputMode outputMode = OutputMode.EMIT_VARIANTS_ONLY;
+
+    // -----------------------------------------------------------------------------------------------
+    // Advanced and hidden arguments
+    // -----------------------------------------------------------------------------------------------
+
+    /**
+     * Advanced, experimental argument: if SNP likelihood model is specified, and if {@link OutputMode#EMIT_ALL_SITES}
+     * output mode is set, when we set this argument then we will also emit PLs at all sites.
+     * This will give a measure of reference confidence and a measure of which alt alleles are more plausible (if any).
+     *
+     * WARNINGS:
+     * - This feature will inflate VCF file size considerably.
+     * - All SNP ALT alleles will be emitted with corresponding 10 PL values.
+     * - An error will be emitted if {@link OutputMode#EMIT_ALL_SITES} is not set, or if anything other than diploid SNP model is used
+     */
+    @Advanced
+    @Argument(fullName = "allSitePLs", shortName = "allSitePLs", doc = "Annotate all sites with PLs", optional = true)
+    public boolean annotateAllSitesWithPLs = false;
+
+    /**
+     * Controls the model used to calculate the probability that a site is variant plus the various sample genotypes in the data at a given locus.
+     */
+    @Hidden
+    @Argument(fullName = "p_nonref_model", shortName = "pnrm", doc = "Non-reference probability calculation model to employ", optional = true)
+    public AFCalculatorImplementation requestedAlleleFrequencyCalculationModel;
+
+    @Hidden
+    @Argument(shortName = "logExactCalls", doc="x", optional=true)
+    public File exactCallsLog = null;
+
+    // -----------------------------------------------------------------------------------------------
+    // Sample contamination specific block
+    // -----------------------------------------------------------------------------------------------
 
     /**
      * Returns true if there is some sample contamination present, false otherwise.
@@ -79,8 +131,6 @@ public class StandardCallerArgumentCollection implements ArgumentCollectionDefin
         return (!Double.isNaN(CONTAMINATION_FRACTION) && CONTAMINATION_FRACTION > 0.0) || (sampleContamination != null && !sampleContamination.isEmpty());
     }
 
-    private DefaultedMap<String,Double> sampleContamination;
-
     /**
      * Returns an unmodifiable view of the map of SampleId -> contamination.
      */
@@ -89,7 +139,8 @@ public class StandardCallerArgumentCollection implements ArgumentCollectionDefin
     }
 
     /**
-     * Returns the sample contamination or CONTAMINATION_FRACTION if no contamination level was specified for this sample.
+     * Returns the sample contamination or {@link #CONTAMINATION_FRACTION} if no contamination level was specified for this sample.
+     * @throws IllegalArgumentException if {@code sampleId} is {@code null}.
      */
     public Double getSampleContamination(final String sampleId){
         Utils.nonNull(sampleId);
@@ -103,30 +154,4 @@ public class StandardCallerArgumentCollection implements ArgumentCollectionDefin
         this.sampleContamination = new DefaultedMap<>(CONTAMINATION_FRACTION);  //NOTE: a bit weird because it ignores the default from the argument and uses ours
         this.sampleContamination.putAll(sampleContamination);                   //make a copy to be safe
     }
-
-    /**
-     * Controls the model used to calculate the probability that a site is variant plus the various sample genotypes in the data at a given locus.
-     */
-    @Hidden
-    @Argument(fullName = "p_nonref_model", shortName = "pnrm", doc = "Non-reference probability calculation model to employ", optional = true)
-    public AFCalculatorImplementation requestedAlleleFrequencyCalculationModel;
-
-    @Hidden
-    @Argument(shortName = "logExactCalls", doc="x", optional=true)
-    public File exactCallsLog = null;
-
-    @Argument(fullName = "output_mode", shortName = "out_mode", doc = "Specifies which type of calls we should output", optional = true)
-    public OutputMode outputMode = OutputMode.EMIT_VARIANTS_ONLY;
-
-    /**
-     * Advanced, experimental argument: if SNP likelihood model is specified, and if EMIT_ALL_SITES output mode is set, when we set this argument then we will also emit PLs at all sites.
-     * This will give a measure of reference confidence and a measure of which alt alleles are more plausible (if any).
-     * WARNINGS:
-     * - This feature will inflate VCF file size considerably.
-     * - All SNP ALT alleles will be emitted with corresponding 10 PL values.
-     * - An error will be emitted if EMIT_ALL_SITES is not set, or if anything other than diploid SNP model is used
-     */
-    @Advanced
-    @Argument(fullName = "allSitePLs", shortName = "allSitePLs", doc = "Annotate all sites with PLs", optional = true)
-    public boolean annotateAllSitesWithPLs = false;
 }
