@@ -35,10 +35,12 @@ public final class GenotypeCalculationArgumentCollection {
     }
 
     /**
-     * Depending on the value of the --max_alternate_alleles argument, we may genotype only a fraction of the alleles being sent on for genotyping.
-     * Using this argument instructs the genotyper to annotate (in the INFO field) the number of alternate alleles that were originally discovered at the site.
+     * Depending on the value of the {@link #MAX_ALTERNATE_ALLELES}, we may genotype only a fraction of the alleles being sent on for genotyping.
+     * Using this argument instructs the genotyper to annotate (in the <pre>INFO</pre> field) the number of alternate alleles that were originally discovered at the site.
      */
-    @Argument(fullName = "annotateNDA", shortName = "nda", doc = "If provided, we will annotate records with the number of alternate alleles that were discovered (but not necessarily genotyped) at a given site", optional = true)
+    @Argument(fullName = "annotateNDA", shortName = "nda",
+              doc = "If provided, we will annotate records with the number of alternate alleles that were discovered (but not necessarily genotyped) at a given site",
+              optional = true)
     public boolean ANNOTATE_NUMBER_OF_ALLELES_DISCOVERED = false;
 
     /**
@@ -69,34 +71,43 @@ public final class GenotypeCalculationArgumentCollection {
      * The quantity that changes whether the GATK considers the possibility of a het genotype at all is the ploidy,
      * which determines how many chromosomes each individual in the species carries.
      */
-    @Argument(fullName = "heterozygosity", shortName = "hets", doc = "Heterozygosity value used to compute prior likelihoods for any locus.  See the GATKDocs for full details on the meaning of this population genetics concept", optional = true)
+    @Argument(fullName = "heterozygosity", shortName = "hets",
+              doc = "Heterozygosity value used to compute prior likelihoods for any locus.  See the GATKDocs for full details on the meaning of this population genetics concept",
+              optional = true)
     public Double snpHeterozygosity = HomoSapiensConstants.SNP_HETEROZYGOSITY;
 
     /**
      * This argument informs the prior probability of having an indel at a site.
      */
-    @Argument(fullName = "indel_heterozygosity", shortName = "indelHeterozygosity", doc = "Heterozygosity for indel calling.  See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept", optional = true)
+    @Argument(fullName = "indel_heterozygosity", shortName = "indelHeterozygosity",
+              doc = "Heterozygosity for indel calling.  See the GATKDocs for heterozygosity for full details on the meaning of this population genetics concept",
+              optional = true)
     public double indelHeterozygosity = HomoSapiensConstants.INDEL_HETEROZYGOSITY;
 
     /**
-     * The minimum phred-scaled Qscore threshold to separate high confidence from low confidence calls. Only genotypes with
+     * The minimum Phred-scaled Qscore threshold to separate high confidence from low confidence calls. Only genotypes with
      * confidence >= this threshold are emitted as called sites. A reasonable threshold is 30 for high-pass calling (this
      * is the default).
      */
-    @Argument(fullName = "standard_min_confidence_threshold_for_calling", shortName = "stand_call_conf", doc = "The minimum phred-scaled confidence threshold at which variants should be called", optional = true)
+    @Argument(fullName = "standard_min_confidence_threshold_for_calling", shortName = "stand_call_conf",
+              doc = "The minimum phred-scaled confidence threshold at which variants should be called",
+              optional = true)
     public double STANDARD_CONFIDENCE_FOR_CALLING = 30.0;
 
     /**
      * This argument allows you to emit low quality calls as filtered records.
      */
-    @Argument(fullName = "standard_min_confidence_threshold_for_emitting", shortName = "stand_emit_conf", doc = "The minimum phred-scaled confidence threshold at which variants should be emitted (and filtered with LowQual if less than the calling threshold)", optional = true)
+    @Argument(fullName = "standard_min_confidence_threshold_for_emitting", shortName = "stand_emit_conf",
+              doc = "The minimum phred-scaled confidence threshold at which variants should be emitted (and filtered with LowQual if less than the calling threshold)",
+              optional = true)
     public double STANDARD_CONFIDENCE_FOR_EMITTING = 30.0;
 
     /**
-     * If there are more than this number of alternate alleles presented to the genotyper (either through discovery or GENOTYPE_GIVEN ALLELES),
-     * then only this many alleles will be used.  Note that genotyping sites with many alternate alleles is both CPU and memory intensive and it
-     * scales exponentially based on the number of alternate alleles.  Unless there is a good reason to change the default value, we highly recommend
-     * that you not play around with this parameter.
+     * If there are more than this number of alternate alleles presented to the genotyper (either through {@link GenotypingOutputMode#DISCOVERY}
+     * or {@link GenotypingOutputMode#GENOTYPE_GIVEN_ALLELES}), then only this many alleles will be used.
+     * Note that genotyping sites with many alternate alleles is both CPU and memory intensive and it
+     * scales exponentially based on the number of alternate alleles.
+     * Unless there is a good reason to change the default value, we highly recommend that you not play around with this parameter.
      *
      * See also {@link #MAX_GENOTYPE_COUNT}.
      */
@@ -106,7 +117,7 @@ public final class GenotypeCalculationArgumentCollection {
 
     /**
      * If there are more than this number of genotypes at a locus presented to the genotyper, then only this many genotypes will be used.
-     * The possible genotypes are simply different ways of partitioning alleles given a specific ploidy asumption.
+     * The possible genotypes are simply different ways of partitioning alleles given a specific ploidy assumption.
      * Therefore, we remove genotypes from consideration by removing alternate alleles that are the least well supported.
      * The estimate of allele support is based on the ranking of the candidate haplotypes coming out of the graph building step.
      * Note that the reference allele is always kept.
@@ -125,13 +136,15 @@ public final class GenotypeCalculationArgumentCollection {
     public int MAX_GENOTYPE_COUNT = 1024;
 
     /**
-     * By default, the prior specified with the argument --heterozygosity/-hets is used for variant discovery at a particular locus, using an infinite sites model,
-     * see e.g. Waterson (1975) or Tajima (1996).
+     * HYQ_doc_log: the original documentation refers to the argument of sno heterozygosity, but now that there's indel heterozygosity,
+     *              should the documentation be updated?
+     * By default, the prior specified with the argument {@link #snpHeterozygosity} is used for variant discovery at a particular locus,
+     * using an infinite sites model, see e.g. Waterson (1975) or Tajima (1996).
      * This model asserts that the probability of having a population of k variant sites in N chromosomes is proportional to theta/k, for 1=1:N
      *
-     * There are instances where using this prior might not be desireable, e.g. for population studies where prior might not be appropriate,
+     * There are instances where using this prior might NOT be desirable, e.g. for population studies where prior might not be appropriate,
      * as for example when the ancestral status of the reference allele is not known.
-     * By using this argument, user can manually specify priors to be used for calling as a vector for doubles, with the following restriciotns:
+     * By using this argument, user can manually specify priors to be used for calling as a vector for doubles, with the following restrictions:
      * a) User must specify 2N values, where N is the number of samples.
      * b) Only diploid calls supported.
      * c) Probability values are specified in double format, in linear space.
@@ -148,8 +161,11 @@ public final class GenotypeCalculationArgumentCollection {
     public List<Double> inputPrior = Collections.emptyList();
 
     /**
-     *   Sample ploidy - equivalent to number of chromosomes per pool. In pooled experiments this should be = # of samples in pool * individual sample ploidy
+     * Sample ploidy - equivalent to number of chromosomes per pool.
+     * In pooled experiments this should be = # of samples in pool * individual sample ploidy
      */
-    @Argument(shortName="ploidy", fullName="sample_ploidy", doc="Ploidy (number of chromosomes) per sample. For pooled data, set to (Number of samples in each pool * Sample Ploidy).", optional=true)
+    @Argument(shortName="ploidy", fullName="sample_ploidy",
+              doc="Ploidy (number of chromosomes) per sample. For pooled data, set to (Number of samples in each pool * Sample Ploidy).",
+              optional=true)
     public int samplePloidy = HomoSapiensConstants.DEFAULT_PLOIDY;
 }
