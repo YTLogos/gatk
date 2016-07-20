@@ -41,6 +41,35 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     protected final AFCalculatorProvider afCalculatorProvider;
     protected VariantAnnotatorEngine annotationEngine;
 
+    /**
+     * Holds information about the alternative allele subsetting based on supporting evidence, genotyping and output modes.
+     */
+    private static final class OutputAlleleSubset {
+        private  final Allele[] alleles;
+        private  final boolean siteIsMonomorphic;
+        private  final int[] mleCounts;
+        private  final int count;
+
+        private OutputAlleleSubset(final int count, final Allele[] alleles, final int[] mleCounts, final boolean siteIsMonomorphic) {
+            Utils.validateArg(count >= 0, "count");
+            Utils.nonNull(alleles, "alleles");
+            Utils.nonNull(mleCounts, "mleCounts");
+            Utils.validateArg(count <= alleles.length, "alleles.length");
+            this.siteIsMonomorphic = siteIsMonomorphic;
+            this.count = count;
+            this.alleles = alleles;
+            this.mleCounts = mleCounts;
+        }
+
+        private List<Allele> outputAlleles(final Allele referenceAllele) {
+            return Stream.concat(Stream.of(referenceAllele), Arrays.stream(alleles, 0, count)).collect(Collectors.toList());
+        }
+
+        public List<Integer> alternativeAlleleMLECounts() {
+            return Arrays.stream(mleCounts, 0, count).boxed().collect(Collectors.toList());
+        }
+    }
+
     // -----------------------------------------------------------------------------------------------
     // sub classes should have their own
     // -----------------------------------------------------------------------------------------------
@@ -120,146 +149,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         return configuration;
     }
 
-    /**
-     * Function that fills vector with allele frequency priors.
-     * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
-     * @param N                 Number of chromosomes
-     * @param priors            (output) array to be filled with priors
-     * @param heterozygosity    default heterozygosity to use, if {@code inputPriors} is empty
-     * @param inputPriors       Input priors to use (in which case {@code heterozygosity} is ignored)
-     */
-    public static void computeAlleleFrequencyPriors(final int N, final double[] priors, final double heterozygosity, final List<Double> inputPriors) {
-        double sum = 0.0;
-
-        if (!inputPriors.isEmpty()) {
-            // user-specified priors
-            if (inputPriors.size() != N) {
-                throw new UserException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
-            }
-
-            int idx = 1;
-            for (final double prior: inputPriors) {
-                if (prior < 0.0) {
-                    throw new UserException.BadArgumentValue("Bad argument: negative values not allowed", "inputPrior");
-                }
-                priors[idx++] = Math.log10(prior);
-                sum += prior;
-            }
-        }
-        else {
-            // for each i
-            for (int i = 1; i <= N; i++) {
-                final double value = heterozygosity / (double)i;
-                priors[i] = Math.log10(value);
-                sum += value;
-            }
-        }
-
-        // protection against the case of heterozygosity too high or an excessive number of samples (which break population genetics assumptions)
-        if (sum > 1.0) {
-            throw new UserException.BadArgumentValue("heterozygosity","The heterozygosity value is set too high relative to the number of samples to be processed, or invalid values specified if input priors were provided - try reducing heterozygosity value or correct input priors.");
-        }
-        // null frequency for AF=0 is (1 - sum(all other frequencies))
-        priors[0] = Math.log10(1.0 - sum);
-    }
-
-    /**
-     * Function that fills vector with allele frequency priors.
-     * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
-     * @param N                 Number of chromosomes
-     * @param heterozygosity    default heterozygosity to use, if {@code inputPriors} is empty
-     * @param inputPriors       Input priors to use (in which case heterozygosity is ignored)
-     *
-     * @throws IllegalArgumentException if {@code inputPriors} has size != {@code N} or any entry in {@code inputPriors} is not in the (0,1) range.
-     *
-     * @return never {@code null}.
-     */
-    public static AFPriorProvider composeAlleleFrequencyPriorProvider(final int N, final double heterozygosity, final List<Double> inputPriors) {
-
-        if (!inputPriors.isEmpty()) {
-            // user-specified priors
-            if (inputPriors.size() != N) {
-                throw new UserException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
-            }
-            for (final Double prior : inputPriors) {
-                if (prior <= 0 || prior >= 1) {
-                    throw new UserException.BadArgumentValue("inputPrior", "inputPrior vector values must be greater than 0 and less than 1");
-                }
-            }
-            return new CustomAFPriorProvider(inputPriors);
-        }
-        else {
-            return new HeterozygosityAFPriorProvider(heterozygosity);
-        }
-    }
-
-    /**
-     * Completes a variant context with genotype calls and associated annotations given the genotype likelihoods and
-     *  the model that need to be applied.
-     *
-     * @param vc        variant-context to complete.
-     * @param model     model name.
-     *
-     * @throws IllegalArgumentException if {@code model} or {@code vc} is {@code null}.
-     *
-     * @return can be {@code null} indicating that genotyping it not possible with the information provided.
-     */
-    public VariantCallContext calculateGenotypes(final VariantContext vc,
-                                                 final GenotypeLikelihoodsCalculationModel model,
-                                                 final SAMFileHeader header) {
-        Utils.nonNull(vc, "vc cannot be null");
-        Utils.nonNull(model, "the model cannot be null");
-        return calculateGenotypes(null,null,null,null,vc,model,false,null,header);
-    }
-
-    /**
-     * Calculates the active state profile value for a single sample.
-     *
-     * @param log10GenotypeLikelihoods  the single sample genotype likelihoods.
-     * @return                          log10 probability from 0 to -Infinity.
-     */
-    public double calculateSingleSampleRefVsAnyActiveStateProfileValue(final double[] log10GenotypeLikelihoods) {
-        Utils.nonNull(log10GenotypeLikelihoods, "the input likelihoods cannot be null");
-        Utils.validateArg(log10GenotypeLikelihoods.length == configuration.genotypeArgs.samplePloidy + 1,
-                          () -> String.format("wrong likelihoods dimensions.  Expected %d, found %d.", configuration.genotypeArgs.samplePloidy + 1, log10GenotypeLikelihoods.length));
-
-        final double[] log10Priors = log10AlleleFrequencyPriorsSNPs.forTotalPloidy(this.configuration.genotypeArgs.samplePloidy);
-        final double log10ACeq0Likelihood = log10GenotypeLikelihoods[0];
-        final double log10ACeq0Prior = log10Priors[0];
-        final double log10ACeq0Posterior = log10ACeq0Likelihood + log10ACeq0Prior;
-
-        // If the Maximum a-posteriori AC is 0 then the profile value must be 0.0 as per existing code; it does
-        // not matter whether a AC > 0 is at all plausible.
-        boolean mapACeq0 = true;
-        for (int AC = 1; AC < log10Priors.length; AC++) {
-            if (log10Priors[AC] + log10GenotypeLikelihoods[AC] > log10ACeq0Posterior) {
-                mapACeq0 = false;
-                break;
-            }
-        }
-        if (mapACeq0) {
-            return 0.0;
-        }
-
-        //TODO bad way to calculate AC > 0 posterior that follows the current behaviour of ExactAFCalculator (StateTracker)
-        //TODO this is the lousy part... this code just adds up lks and priors of AC != 0 before as if
-        //TODO Sum(a_i * b_i) is equivalent to Sum(a_i) * Sum(b_i)
-        //TODO This has to be changed not just here but also in the AFCalculators (StateTracker).
-        final double log10ACgt0Likelihood = MathUtils.approximateLog10SumLog10(log10GenotypeLikelihoods, 1, log10GenotypeLikelihoods.length);
-        final double log10ACgt0Prior = MathUtils.approximateLog10SumLog10(log10Priors, 1, log10Priors.length);
-        final double log10ACgt0Posterior = log10ACgt0Likelihood + log10ACgt0Prior;
-        final double log10PosteriorNormalizationConstant = MathUtils.approximateLog10SumLog10(log10ACeq0Posterior, log10ACgt0Posterior);
-        //TODO End of lousy part.
-
-        final double normalizedLog10ACeq0Posterior = log10ACeq0Posterior - log10PosteriorNormalizationConstant;
-        // This is another condition to return a 0.0 also present in AFCalculator code as well.
-        if (normalizedLog10ACeq0Posterior >= QualityUtils.qualToErrorProbLog10(configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_EMITTING)) {
-            return 0.0;
-        }
-
-        return 1.0 - Math.pow(10.0, normalizedLog10ACeq0Posterior);
-    }
-
     public Set<VCFInfoHeaderLine> getAppropriateVCFInfoHeaders() {
         final Set<VCFInfoHeaderLine> headerInfo = new LinkedHashSet<>();
         if ( configuration.genotypeArgs.ANNOTATE_NUMBER_OF_ALLELES_DISCOVERED ) {
@@ -281,6 +170,28 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     // CORE
     // -----------------------------------------------------------------------------------------------
 
+    /**
+     * Completes a variant context with genotype calls and associated annotations given the genotype likelihoods and
+     *  the model that need to be applied.
+     *
+     * Delegates actual work to the protected version:
+     * {@link #calculateGenotypes(FeatureContext, ReferenceContext, AlignmentContext, Map, VariantContext, GenotypeLikelihoodsCalculationModel, boolean, Map, SAMFileHeader)}
+     * with missing arguments set to {@code null} or {@code false}.
+     *
+     * @param vc        variant-context to complete.
+     * @param model     model name.
+     *
+     * @throws IllegalArgumentException if {@code model} or {@code vc} is {@code null}.
+     *
+     * @return can be {@code null} indicating that genotyping it not possible with the information provided.
+     */
+    public VariantCallContext calculateGenotypes(final VariantContext vc,
+                                                 final GenotypeLikelihoodsCalculationModel model,
+                                                 final SAMFileHeader header) {
+        Utils.nonNull(vc, "vc cannot be null");
+        Utils.nonNull(model, "the model cannot be null");
+        return calculateGenotypes(null,null,null,null,vc,model,false,null,header);
+    }
     /**
      * Main entry function to calculate genotypes of a given VC with corresponding GL's that is shared across genotypers (namely UG and HC).
      *
@@ -320,11 +231,10 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final double probOfAtLeastOneAltAllele = Math.pow(10, AFresult.getLog10PosteriorOfAFGT0());
 
         // note the math.abs is necessary because -10 * 0.0 => -0.0 which isn't nice
-        final double log10Confidence =
-                ! outputAlternativeAlleles.siteIsMonomorphic ||
-                        configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES || configuration.annotateAllSitesWithPLs
-                        ? AFresult.getLog10PosteriorOfAFEq0() + 0.0
-                        : AFresult.getLog10PosteriorOfAFGT0() + 0.0 ;
+        final double log10Confidence =  ! outputAlternativeAlleles.siteIsMonomorphic                                        ||
+                                        configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES   ||
+                                        configuration.annotateAllSitesWithPLs ? AFresult.getLog10PosteriorOfAFEq0() + 0.0
+                                                                              : AFresult.getLog10PosteriorOfAFGT0() + 0.0 ;
 
 
         // Add 0.0 removes -0.0 occurrences.
@@ -387,6 +297,32 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         return new VariantCallContext(vcCall, confidentlyCalled(phredScaledConfidence, probOfAtLeastOneAltAllele));
     }
 
+    protected final VariantCallContext estimateReferenceConfidence(final VariantContext vc,
+                                                                   final Map<String, AlignmentContext> contexts,
+                                                                   final double log10OfTheta,
+                                                                   final boolean ignoreCoveredSamples,
+                                                                   final double initialPofRef) {
+        if ( contexts == null ) {
+            return null;
+        }
+
+        double log10POfRef = Math.log10(initialPofRef);
+
+        // for each sample that we haven't examined yet
+        final int sampleCount = samples.numberOfSamples();
+        for (int i = 0; i < sampleCount; i++) {
+            final String sample = samples.getSample(i);
+            final AlignmentContext context = contexts.get(sample);
+            if ( ignoreCoveredSamples && context != null ) {
+                continue;
+            }
+            final int depth = context == null ? 0 : context.getBasePileup().size();
+            log10POfRef += estimateLog10ReferenceConfidenceForOneSample(depth, log10OfTheta);
+        }
+
+        return new VariantCallContext(vc, QualityUtils.phredScaleLog10CorrectRate(log10POfRef) >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING, false);
+    }
+
     /**
      * HYQ_doc_log: documentation missing
      * @param inheritAttributesFromInputVC
@@ -444,6 +380,129 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         return attributes;
     }
 
+    /**
+     * Function that fills provided vector ({@code priors}) with allele frequency priors.
+     * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
+     * @param N                 Number of chromosomes
+     * @param priors            (output) array to be filled with priors
+     * @param heterozygosity    default heterozygosity to use, if {@code inputPriors} is empty
+     * @param inputPriors       Input priors to use (in which case {@code heterozygosity} is ignored)
+     */
+    public static void computeAlleleFrequencyPriors(final int N, final double[] priors, final double heterozygosity, final List<Double> inputPriors) {
+        double sum = 0.0;
+
+        if (!inputPriors.isEmpty()) {
+            // user-specified priors
+            if (inputPriors.size() != N) {
+                throw new UserException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
+            }
+
+            int idx = 1;
+            for (final double prior: inputPriors) {
+                if (prior < 0.0) {
+                    throw new UserException.BadArgumentValue("Bad argument: negative values not allowed", "inputPrior");
+                }
+                priors[idx++] = Math.log10(prior);
+                sum += prior;
+            }
+        }
+        else {
+            // for each i
+            for (int i = 1; i <= N; i++) {
+                final double value = heterozygosity / (double)i;
+                priors[i] = Math.log10(value);
+                sum += value;
+            }
+        }
+
+        // protection against the case of heterozygosity too high or an excessive number of samples (which break population genetics assumptions)
+        if (sum > 1.0) {
+            throw new UserException.BadArgumentValue("heterozygosity","The heterozygosity value is set too high relative to the number of samples to be processed, " +
+                    "or invalid values specified if input priors were provided - try reducing heterozygosity value or correct input priors.");
+        }
+        // null frequency for AF=0 is (1 - sum(all other frequencies))
+        priors[0] = Math.log10(1.0 - sum);
+    }
+
+    /**
+     * HYQ_doc_log: apparently a copy-paste error. No filling happens here. Instead a AFPriorProvider is returned, exact which type is determined by input.
+     * Function that fills vector with allele frequency priors.
+     * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
+     * @param N                 Number of chromosomes
+     * @param heterozygosity    default heterozygosity to use, if {@code inputPriors} is empty
+     * @param inputPriors       Input priors to use (in which case heterozygosity is ignored)
+     *
+     * @throws IllegalArgumentException if {@code inputPriors} has size != {@code N} or any entry in {@code inputPriors} is not in the (0,1) range.
+     *
+     * @return never {@code null}.
+     */
+    public static AFPriorProvider composeAlleleFrequencyPriorProvider(final int N, final double heterozygosity, final List<Double> inputPriors) {
+
+        if (!inputPriors.isEmpty()) {
+            // user-specified priors
+            if (inputPriors.size() != N) {
+                throw new UserException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
+            }
+            for (final Double prior : inputPriors) {
+                if (prior <= 0 || prior >= 1) {
+                    throw new UserException.BadArgumentValue("inputPrior", "inputPrior vector values must be greater than 0 and less than 1");
+                }
+            }
+            return new CustomAFPriorProvider(inputPriors);
+        }
+        else {
+            return new HeterozygosityAFPriorProvider(heterozygosity);
+        }
+    }
+
+    /**
+     * Calculates the active state profile value for a single sample.
+     *
+     * @param log10GenotypeLikelihoods  the single sample genotype likelihoods.
+     * @return                          log10 probability from 0 to -Infinity.
+     */
+    public double calculateSingleSampleRefVsAnyActiveStateProfileValue(final double[] log10GenotypeLikelihoods) {
+        Utils.nonNull(log10GenotypeLikelihoods, "the input likelihoods cannot be null");
+        Utils.validateArg(log10GenotypeLikelihoods.length == configuration.genotypeArgs.samplePloidy + 1,
+                () -> String.format("wrong likelihoods dimensions.  Expected %d, found %d.", configuration.genotypeArgs.samplePloidy + 1, log10GenotypeLikelihoods.length));
+
+        final double[] log10Priors = log10AlleleFrequencyPriorsSNPs.forTotalPloidy(this.configuration.genotypeArgs.samplePloidy);
+        final double log10ACeq0Likelihood = log10GenotypeLikelihoods[0];
+        final double log10ACeq0Prior = log10Priors[0];
+        final double log10ACeq0Posterior = log10ACeq0Likelihood + log10ACeq0Prior;
+
+        // If the Maximum a-posteriori AC is 0 then the profile value must be 0.0 as per existing code; it does
+        // not matter whether a AC > 0 is at all plausible.
+        boolean mapACeq0 = true;
+        for (int AC = 1; AC < log10Priors.length; AC++) {
+            if (log10Priors[AC] + log10GenotypeLikelihoods[AC] > log10ACeq0Posterior) {
+                mapACeq0 = false;
+                break;
+            }
+        }
+        if (mapACeq0) {
+            return 0.0;
+        }
+
+        //TODO bad way to calculate AC > 0 posterior that follows the current behaviour of ExactAFCalculator (StateTracker)
+        //TODO this is the lousy part... this code just adds up lks and priors of AC != 0 before as if
+        //TODO Sum(a_i * b_i) is equivalent to Sum(a_i) * Sum(b_i)
+        //TODO This has to be changed not just here but also in the AFCalculators (StateTracker).
+        final double log10ACgt0Likelihood = MathUtils.approximateLog10SumLog10(log10GenotypeLikelihoods, 1, log10GenotypeLikelihoods.length);
+        final double log10ACgt0Prior = MathUtils.approximateLog10SumLog10(log10Priors, 1, log10Priors.length);
+        final double log10ACgt0Posterior = log10ACgt0Likelihood + log10ACgt0Prior;
+        final double log10PosteriorNormalizationConstant = MathUtils.approximateLog10SumLog10(log10ACeq0Posterior, log10ACgt0Posterior);
+        //TODO End of lousy part.
+
+        final double normalizedLog10ACeq0Posterior = log10ACeq0Posterior - log10PosteriorNormalizationConstant;
+        // This is another condition to return a 0.0 also present in AFCalculator code as well.
+        if (normalizedLog10ACeq0Posterior >= QualityUtils.qualToErrorProbLog10(configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_EMITTING)) {
+            return 0.0;
+        }
+
+        return 1.0 - Math.pow(10.0, normalizedLog10ACeq0Posterior);
+    }
+
     // -----------------------------------------------------------------------------------------------
     // various utilities exposed to sub classes
     // -----------------------------------------------------------------------------------------------
@@ -461,7 +520,10 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
                         && QualityUtils.phredScaleErrorRate(PofF) >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING);
     }
 
+
+
     /**
+     * HYQ_doc_log: should the name of this method be changed? The criterion used in this predicate really is intended for diploid samples.
      * Checks whether the variant context has too many alternative alleles for progress to genotyping the site.
      * <p>
      *     AF calculation may get intro trouble with too many alternative alleles.
@@ -482,6 +544,56 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         logger.warn("Attempting to genotype more than " + GenotypeLikelihoods.MAX_DIPLOID_ALT_ALLELES_THAT_CAN_BE_GENOTYPED +
                 " alleles. Site will be skipped at location "+vc.getContig()+":"+vc.getStart());
         return true;
+    }
+
+    /**
+     * Produces an empty variant-call context to output when there is no enough data provided to call anything.
+     *
+     * @param features      feature context
+     * @param ref           the reference context.
+     * @param rawContext    the read alignment at that location.
+     * @return              it might be null if no enough information is provided to do even an empty call.
+     *                      For example when we have limited-context (i.e. any of the tracker, reference or alignment is {@code null}.
+     */
+    protected final VariantCallContext emptyCallContext(final FeatureContext features,
+                                                        final ReferenceContext ref,
+                                                        final AlignmentContext rawContext,
+                                                        final SAMFileHeader header) {
+        if (features == null || ref == null || rawContext == null) {
+            return null;
+        }
+
+        if (!forceSiteEmission()) {
+            return null;
+        }
+
+        VariantContext vc;
+
+        if ( configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES ) {
+            final VariantContext ggaVc = GenotypingGivenAllelesUtils.composeGivenAllelesVariantContextFromRod(features,
+                    rawContext.getLocation(), false, logger, configuration.alleles);
+            if (ggaVc == null) {
+                return null;
+            }
+            vc = new VariantContextBuilder(callSourceString(), ref.getInterval().getContig(), ggaVc.getStart(),
+                    ggaVc.getEnd(), ggaVc.getAlleles()).make();
+        } else {
+            // deal with bad/non-standard reference bases
+            if ( !Allele.acceptableAlleleBases(new byte[]{ref.getBase()}) ) {
+                return null;
+            }
+            final Set<Allele> alleles = new LinkedHashSet<>(Collections.singleton(Allele.create(ref.getBase(),true)));
+            vc = new VariantContextBuilder(callSourceString(), ref.getInterval().getContig(),
+                    ref.getInterval().getStart(), ref.getInterval().getStart(), alleles).make();
+        }
+
+        if ( vc != null && annotationEngine != null ) {
+            // Note: we want to use the *unfiltered* and *unBAQed* context for the annotations
+            final ReadPileup pileup = rawContext.getBasePileup();
+            vc = annotationEngine.annotateContext(vc, features, ref, null, a -> true);
+        }
+
+        return new VariantCallContext(vc, false);
     }
 
     protected final boolean passesEmitThreshold(final double conf, final boolean bestGuessIsRef) {
@@ -546,114 +658,11 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         }
     }
 
-    /**
-     * Produces an empty variant-call context to output when there is no enough data provided to call anything.
-     *
-     * @param features      feature context
-     * @param ref           the reference context.
-     * @param rawContext    the read alignment at that location.
-     * @return              it might be null if no enough information is provided to do even an empty call.
-     *                      For example when we have limited-context (i.e. any of the tracker, reference or alignment is {@code null}.
-     */
-    protected final VariantCallContext emptyCallContext(final FeatureContext features,
-                                                        final ReferenceContext ref,
-                                                        final AlignmentContext rawContext,
-                                                        final SAMFileHeader header) {
-        if (features == null || ref == null || rawContext == null) {
-            return null;
-        }
 
-        if (!forceSiteEmission()) {
-            return null;
-        }
-
-        VariantContext vc;
-
-        if ( configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES ) {
-            final VariantContext ggaVc = GenotypingGivenAllelesUtils.composeGivenAllelesVariantContextFromRod(features,
-                    rawContext.getLocation(), false, logger, configuration.alleles);
-            if (ggaVc == null) {
-                return null;
-            }
-            vc = new VariantContextBuilder(callSourceString(), ref.getInterval().getContig(), ggaVc.getStart(),
-                    ggaVc.getEnd(), ggaVc.getAlleles()).make();
-        } else {
-            // deal with bad/non-standard reference bases
-            if ( !Allele.acceptableAlleleBases(new byte[]{ref.getBase()}) ) {
-                return null;
-            }
-            final Set<Allele> alleles = new LinkedHashSet<>(Collections.singleton(Allele.create(ref.getBase(),true)));
-            vc = new VariantContextBuilder(callSourceString(), ref.getInterval().getContig(),
-                    ref.getInterval().getStart(), ref.getInterval().getStart(), alleles).make();
-        }
-
-        if ( vc != null && annotationEngine != null ) {
-            // Note: we want to use the *unfiltered* and *unBAQed* context for the annotations
-            final ReadPileup pileup = rawContext.getBasePileup();
-            vc = annotationEngine.annotateContext(vc, features, ref, null, a -> true);
-        }
-
-        return new VariantCallContext(vc, false);
-    }
-
-    protected final VariantCallContext estimateReferenceConfidence(final VariantContext vc,
-                                                                   final Map<String, AlignmentContext> contexts,
-                                                                   final double log10OfTheta,
-                                                                   final boolean ignoreCoveredSamples,
-                                                                   final double initialPofRef) {
-        if ( contexts == null ) {
-            return null;
-        }
-
-        double log10POfRef = Math.log10(initialPofRef);
-
-        // for each sample that we haven't examined yet
-        final int sampleCount = samples.numberOfSamples();
-        for (int i = 0; i < sampleCount; i++) {
-            final String sample = samples.getSample(i);
-            final AlignmentContext context = contexts.get(sample);
-            if ( ignoreCoveredSamples && context != null ) {
-                continue;
-            }
-            final int depth = context == null ? 0 : context.getBasePileup().size();
-            log10POfRef += estimateLog10ReferenceConfidenceForOneSample(depth, log10OfTheta);
-        }
-
-        return new VariantCallContext(vc, QualityUtils.phredScaleLog10CorrectRate(log10POfRef) >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING, false);
-    }
 
     // -----------------------------------------------------------------------------------------------
     // private helper structs and utilities
     // -----------------------------------------------------------------------------------------------
-
-    /**
-     * Holds information about the alternative allele subsetting based on supporting evidence, genotyping and output modes.
-     */
-    private static final class OutputAlleleSubset {
-        private  final Allele[] alleles;
-        private  final boolean siteIsMonomorphic;
-        private  final int[] mleCounts;
-        private  final int count;
-
-        private OutputAlleleSubset(final int count, final Allele[] alleles, final int[] mleCounts, final boolean siteIsMonomorphic) {
-            Utils.validateArg(count >= 0, "count");
-            Utils.nonNull(alleles, "alleles");
-            Utils.nonNull(mleCounts, "mleCounts");
-            Utils.validateArg(count <= alleles.length, "alleles.length");
-            this.siteIsMonomorphic = siteIsMonomorphic;
-            this.count = count;
-            this.alleles = alleles;
-            this.mleCounts = mleCounts;
-        }
-
-        private List<Allele> outputAlleles(final Allele referenceAllele) {
-            return Stream.concat(Stream.of(referenceAllele), Arrays.stream(alleles, 0, count)).collect(Collectors.toList());
-        }
-
-        public List<Integer> alternativeAlleleMLECounts() {
-            return Arrays.stream(mleCounts, 0, count).boxed().collect(Collectors.toList());
-        }
-    }
 
     /**
      * Provided the exact mode computations it returns the appropriate subset of alleles that progress to genotyping.

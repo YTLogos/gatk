@@ -31,7 +31,7 @@ public final class VariantCallContext extends VariantContext {
 
     /**
      *
-     * @param callConfidenceThreshold the Unified Argument Collection STANDARD_CONFIDENCE_FOR_CALLING
+     * @param callConfidenceThreshold   see {@link GenotypeCalculationArgumentCollection#STANDARD_CONFIDENCE_FOR_CALLING}
      * @return true if call was confidently ref
      */
     public boolean isCalledRef(double callConfidenceThreshold) {
@@ -40,7 +40,7 @@ public final class VariantCallContext extends VariantContext {
 
     /**
      *
-     * @param callConfidenceThreshold the Unified Argument Collection STANDARD_CONFIDENCE_FOR_CALLING
+     * @param callConfidenceThreshold   see {@link GenotypeCalculationArgumentCollection#STANDARD_CONFIDENCE_FOR_CALLING}
      * @return true if call was confidently alt
      */
     public boolean isCalledAlt(double callConfidenceThreshold) {

@@ -30,7 +30,7 @@ public final class UnifiedArgumentCollection extends StandardCallerArgumentColle
     public boolean COMPUTE_SLOD = false;
 
     /**
-     * The PairHMM implementation to use for -glm INDEL genotype likelihood calculations. The various implementations balance a tradeoff of accuracy and runtime.
+     * The PairHMM implementation to use for -glm INDEL genotype likelihood calculations. The various implementations balance a trade-off of accuracy and runtime.
      */
     @Argument(fullName = "pair_hmm_implementation", shortName = "pairHMM", doc = "The PairHMM implementation to use for -glm INDEL genotype likelihood calculations", optional = true)
     public PairHMM.Implementation pairHMM = PairHMM.Implementation.FASTEST_AVAILABLE;
