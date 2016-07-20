@@ -23,6 +23,7 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
      * Creates a new genotyping-likelihoods collection given the genotype alleles, the sample ploidy model and the
      *   likelihoods themselves.
      * <p>
+     * TODO: is the following documentation outdated?
      * Notice that this constructor does not check whether the likelihood array lengths corresponds to the sample plodies and
      * number of alleles.
      * </p>
@@ -31,8 +32,9 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
      * @param ploidyModel the ploidy model.
      * @param likelihoods the actual genotype likelihoods, one element per sample.
      *
-     * @throws IllegalArgumentException if any argument is {@code null}, or the number of samples in {@code ploidyModel}
-     *  does not correspond with the number of likelihoods arrays in {@code likelihoods}
+     * @throws IllegalArgumentException if any argument is {@code null}, or
+     *                                     there are {@code null} elements in {@code alleles} or {@code likelihoods}, or
+     *                                     the number of samples in {@code ploidyModel} does not correspond with the number of likelihoods arrays in {@code likelihoods}
      */
     GenotypingLikelihoods(final AlleleList<A> alleles, final PloidyModel ploidyModel, final List<GenotypeLikelihoods> likelihoods) {
         Utils.nonNull(alleles, "allele list cannot be null");
@@ -54,7 +56,7 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
      * @param sampleIndex the query sample index.
      *
      * @throws IllegalArgumentException if {@code sampleIndex} is not a valid index for this collection:
-     *   [0,{@link #numberOfSamples()).
+     *   [0,{@link #numberOfSamples()}).
      *
      * @return never {@code null}.
      */

@@ -126,7 +126,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     protected abstract boolean forceSiteEmission();
 
     // -----------------------------------------------------------------------------------------------
-    // interfaces: boilerplate initialization
+    // accessors and modifiers
     // -----------------------------------------------------------------------------------------------
 
     /**
@@ -297,6 +297,15 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         return new VariantCallContext(vcCall, confidentlyCalled(phredScaledConfidence, probOfAtLeastOneAltAllele));
     }
 
+    /**
+     * HYQ_doc_log: missing documentation.
+     * @param vc
+     * @param contexts
+     * @param log10OfTheta
+     * @param ignoreCoveredSamples
+     * @param initialPofRef
+     * @return
+     */
     protected final VariantCallContext estimateReferenceConfidence(final VariantContext vc,
                                                                    final Map<String, AlignmentContext> contexts,
                                                                    final double log10OfTheta,
@@ -508,22 +517,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     // -----------------------------------------------------------------------------------------------
 
     /**
-     * Checks whether a variant site seems confidently called base on user threshold that the score provided by the exact model.
-     *
-     * @param conf the phred scaled quality score
-     * @param PofF HYQ_doc_log: undocumented
-     * @return {@code true} iff the variant is confidently called.
-     */
-    protected final boolean confidentlyCalled(final double conf, final double PofF) {
-        return conf >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING ||
-                (configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES
-                        && QualityUtils.phredScaleErrorRate(PofF) >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING);
-    }
-
-
-
-    /**
-     * HYQ_doc_log: should the name of this method be changed? The criterion used in this predicate really is intended for diploid samples.
+     * TODO: should the name of this method be changed? The criterion used in this predicate really is intended for diploid samples.
      * Checks whether the variant context has too many alternative alleles for progress to genotyping the site.
      * <p>
      *     AF calculation may get intro trouble with too many alternative alleles.
@@ -596,6 +590,47 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         return new VariantCallContext(vc, false);
     }
 
+    /**
+     * Returns the log10 prior probability for all possible allele counts from 0 to N where N is the total number of
+     * genomes (total-ploidy).
+     *
+     * @param vc                the target variant-context, use to determine the total ploidy thus the possible ACs.
+     * @param defaultPloidy     default ploidy to be assume if we do not have the ploidy for some sample in {@code vc}.
+     * @param model             the calculation model (SNP, INDEL or MIXED) whose priors are to be retrieved.
+     * @throws NullPointerException if either {@code vc} or {@code model} is {@code null}
+     * @return                  never {@code null}, an array with exactly <code>total-ploidy(vc) + 1</code> positions.
+     */
+    protected final double[] getAlleleFrequencyPriors(final VariantContext vc,
+                                                      final int defaultPloidy,
+                                                      final GenotypeLikelihoodsCalculationModel model) {
+        final int totalPloidy = GATKVariantContextUtils.totalPloidy(vc, defaultPloidy);
+        switch (model) {
+            case SNP:
+            case GENERALPLOIDYSNP:
+                return log10AlleleFrequencyPriorsSNPs.forTotalPloidy(totalPloidy);
+            case INDEL:
+            case GENERALPLOIDYINDEL:
+                return log10AlleleFrequencyPriorsIndels.forTotalPloidy(totalPloidy);
+            default:
+                throw new IllegalArgumentException("Unexpected GenotypeCalculationModel " + model);
+        }
+    }
+
+    /**
+     * Checks whether a variant site seems confidently called base on user threshold that the score provided by the exact model.
+     *
+     * @param conf the phred scaled quality score
+     * @param PofF HYQ_doc_log: undocumented
+     * @return {@code true} iff the variant is confidently called.
+     */
+    protected final boolean confidentlyCalled(final double conf, final double PofF) {
+        return conf >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING ||
+                (configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES
+                        && QualityUtils.phredScaleErrorRate(PofF) >= configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING);
+    }
+
+
+
     protected final boolean passesEmitThreshold(final double conf, final boolean bestGuessIsRef) {
         return (configuration.outputMode == OutputMode.EMIT_ALL_CONFIDENT_SITES || !bestGuessIsRef) &&
                 conf >= Math.min(configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_CALLING, configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_EMITTING);
@@ -633,32 +668,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         Utils.validateArg(depth >= 0, "depth cannot be less than 0");
         return MathUtils.log10BinomialProbability(depth, 0);
     }
-
-    /**
-     * Returns the log10 prior probability for all possible allele counts from 0 to N where N is the total number of
-     * genomes (total-ploidy).
-     *
-     * @param vc                the target variant-context, use to determine the total ploidy thus the possible ACs.
-     * @param defaultPloidy     default ploidy to be assume if we do not have the ploidy for some sample in {@code vc}.
-     * @param model             the calculation model (SNP, INDEL or MIXED) whose priors are to be retrieved.
-     * @throws NullPointerException if either {@code vc} or {@code model} is {@code null}
-     * @return                  never {@code null}, an array with exactly <code>total-ploidy(vc) + 1</code> positions.
-     */
-    protected final double[] getAlleleFrequencyPriors(final VariantContext vc, final int defaultPloidy, final GenotypeLikelihoodsCalculationModel model) {
-        final int totalPloidy = GATKVariantContextUtils.totalPloidy(vc, defaultPloidy);
-        switch (model) {
-            case SNP:
-            case GENERALPLOIDYSNP:
-                return log10AlleleFrequencyPriorsSNPs.forTotalPloidy(totalPloidy);
-            case INDEL:
-            case GENERALPLOIDYINDEL:
-                return log10AlleleFrequencyPriorsIndels.forTotalPloidy(totalPloidy);
-            default:
-                throw new IllegalArgumentException("Unexpected GenotypeCalculationModel " + model);
-        }
-    }
-
-
 
     // -----------------------------------------------------------------------------------------------
     // private helper structs and utilities

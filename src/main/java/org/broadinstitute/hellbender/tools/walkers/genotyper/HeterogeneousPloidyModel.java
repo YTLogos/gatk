@@ -19,10 +19,17 @@ public final class HeterogeneousPloidyModel implements PloidyModel {
 
     private final boolean isHomogeneous;
 
+    /**
+     * Constructs PloidyModel where samples ploidy are not assumed the same.
+     * @param sampleList  list of samples
+     * @param ploidies    ploidies for each sample in {@code sampleList}
+     * @throws IllegalArgumentException if the number of samples in {@code sampleList} is not the same as the size of {@code ploidies}
+     */
     public HeterogeneousPloidyModel(final SampleList sampleList, final int[] ploidies) {
+        Utils.validateArg(sampleList.numberOfSamples() == ploidies.length, "sample-list and ploidy array length must match");
+
         this.sampleList = Utils.nonNull(sampleList, "the sample list cannot be null");
         this.ploidies = Utils.nonNull(ploidies, "the ploidies cannot be null").clone();
-        Utils.validateArg(sampleList.numberOfSamples() == ploidies.length, "sample-list and ploidy array length must match");
         Arrays.stream(ploidies).forEach(p -> Utils.validateArg(p >= 0, "no ploidy can be less than 0"));
         ploidySum = (int) MathUtils.sum(ploidies);
         isHomogeneous = ploidies.length == 0 || Arrays.stream(ploidies).allMatch(p -> p == ploidies[0]);

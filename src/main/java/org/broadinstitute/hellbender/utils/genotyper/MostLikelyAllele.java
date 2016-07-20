@@ -36,8 +36,8 @@ public final class MostLikelyAllele {
      *
      * @param mostLikely the most likely allele
      * @param secondMostLikely the most likely allele after mostLikely (may be null)
-     * @param log10LikelihoodOfMostLikely the log10 likelihood of the most likely allele      (or {@link Double.NEGATIVE_INFINITY} if none is available)
-     * @param log10LikelihoodOfSecondBest the log10 likelihood of the next most likely allele (or {@link Double.NEGATIVE_INFINITY} if none is available)
+     * @param log10LikelihoodOfMostLikely the log10 likelihood of the most likely allele      (or {@link Double#NEGATIVE_INFINITY} if none is available)
+     * @param log10LikelihoodOfSecondBest the log10 likelihood of the next most likely allele (or {@link Double#NEGATIVE_INFINITY} if none is available)
      */
     public MostLikelyAllele(final Allele mostLikely, final Allele secondMostLikely, final double log10LikelihoodOfMostLikely, final double log10LikelihoodOfSecondBest) {
         Utils.nonNull( mostLikely, "mostLikely allele cannot be null");
@@ -62,7 +62,7 @@ public final class MostLikelyAllele {
      * mostLikely should be a NO_CALL allele.
      *
      * @param mostLikely the most likely allele
-     * @param log10LikelihoodOfMostLikely the log10 likelihood of the most likely allele      (or {@link Double.NEGATIVE_INFINITY} if none is available)
+     * @param log10LikelihoodOfMostLikely the log10 likelihood of the most likely allele      (or {@link Double#NEGATIVE_INFINITY} if none is available)
      */
     public MostLikelyAllele(final Allele mostLikely, final double log10LikelihoodOfMostLikely) {
         this(mostLikely, null, log10LikelihoodOfMostLikely, Double.NEGATIVE_INFINITY);
@@ -83,14 +83,14 @@ public final class MostLikelyAllele {
     }
 
     /**
-     * Retruns the log10 likelihood of the most likely allele or {@link Double.NEGATIVE_INFINITY} if none is available.
+     * Retruns the log10 likelihood of the most likely allele or {@link Double#NEGATIVE_INFINITY} if none is available.
      */
     public double getLog10LikelihoodOfMostLikely() {
         return log10LikelihoodOfMostLikely;
     }
 
     /**
-     * Retruns the log10 likelihood of the second most likely allele or {@link Double.NEGATIVE_INFINITY} if none is available.
+     * Retruns the log10 likelihood of the second most likely allele or {@link Double#NEGATIVE_INFINITY} if none is available.
      */
     public double getLog10LikelihoodOfSecondBest() {
         return log10LikelihoodOfSecondBest;
