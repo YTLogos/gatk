@@ -248,13 +248,13 @@ public abstract class PairHMM implements Closeable{
      */
     @VisibleForTesting
     double computeReadLikelihoodGivenHaplotypeLog10( final byte[] haplotypeBases,
-                                                                  final byte[] readBases,
-                                                                  final byte[] readQuals,
-                                                                  final byte[] insertionGOP,
-                                                                  final byte[] deletionGOP,
-                                                                  final byte[] overallGCP,
-                                                                  final boolean recacheReadValues,
-                                                                  final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
+                                                     final byte[] readBases,
+                                                     final byte[] readQuals,
+                                                     final byte[] insertionGOP,
+                                                     final byte[] deletionGOP,
+                                                     final byte[] overallGCP,
+                                                     final boolean recacheReadValues,
+                                                     final byte[] nextHaplotypeBases) throws IllegalStateException, IllegalArgumentException {
 
         if ( ! initialized ) throw new IllegalStateException("Must call initialize before calling computeReadLikelihoodGivenHaplotypeLog10");
         Utils.nonNull(haplotypeBases, "haplotypeBases may not be null");

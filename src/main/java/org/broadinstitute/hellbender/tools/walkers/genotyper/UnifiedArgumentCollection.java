@@ -67,7 +67,9 @@ public final class UnifiedArgumentCollection extends StandardCallerArgumentColle
      * low-coverage and high-coverage samples, as low coverage samples with any indel containing reads should easily over
      * come this threshold.
      */
-    @Argument(fullName = "min_indel_fraction_per_sample", shortName = "minIndelFrac", doc = "Minimum fraction of all reads at a locus that must contain an indel (of any allele) for that sample to contribute to the indel count for alleles", optional = true)
+    @Argument(fullName = "min_indel_fraction_per_sample", shortName = "minIndelFrac",
+              doc = "Minimum fraction of all reads at a locus that must contain an indel (of any allele) for that sample to contribute to the indel count for alleles",
+              optional = true)
     public double MIN_INDEL_FRACTION_PER_SAMPLE = 0.25;
 
     @Advanced
