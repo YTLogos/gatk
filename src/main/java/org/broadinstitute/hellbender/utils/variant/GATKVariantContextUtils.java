@@ -707,7 +707,7 @@ public final class GATKVariantContextUtils {
      * @param setKey                    the key name of the set
      * @param filteredAreUncalled       are filtered records uncalled?
      * @param mergeInfoWithMaxAC        should we merge in info from the VC with maximum allele count?
-     * @return new VariantContext       representing the merge of unsortedVCs
+     * @return new VariantContext       representing the merge of unsortedVCs; maybe {@code null}
      */
     public static VariantContext simpleMerge(final Collection<VariantContext> unsortedVCs,
                                              final List<String> priorityListOfVCs,
@@ -740,7 +740,7 @@ public final class GATKVariantContextUtils {
      * @param setKey                    the key name of the set
      * @param filteredAreUncalled       are filtered records uncalled?
      * @param mergeInfoWithMaxAC        should we merge in info from the VC with maximum allele count?
-     * @return new VariantContext       representing the merge of unsortedVCs
+     * @return new VariantContext       representing the merge of unsortedVCs (may be {@code null})
      */
     public static VariantContext simpleMerge(final Collection<VariantContext> unsortedVCs,
                                              final List<String> priorityListOfVCs,
