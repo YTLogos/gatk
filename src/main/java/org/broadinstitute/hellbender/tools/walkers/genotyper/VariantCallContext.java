@@ -1,9 +1,12 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
+import htsjdk.samtools.SAMFileHeader;
 import htsjdk.variant.variantcontext.VariantContext;
 
 /**
- * Useful helper class to communicate the results of calculateGenotype to framework
+ * Useful helper class to communicate the results of
+ * {@link GenotypingEngine#calculateGenotypes(VariantContext, GenotypeLikelihoodsCalculationModel, SAMFileHeader)}
+ * to framework
  */
 public final class VariantCallContext extends VariantContext {
 
