@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.Arrays;
 
 /**
+ * TODO: better way of documenting/handling how over-capacity errors (too many genotypes)
  * Genotype likelihood calculator utility.
  *
  * <p>

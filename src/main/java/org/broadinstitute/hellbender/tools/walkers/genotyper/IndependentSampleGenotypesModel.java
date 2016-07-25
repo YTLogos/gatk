@@ -20,6 +20,7 @@ public final class IndependentSampleGenotypesModel {
 
     private final int cacheAlleleCountCapacity;
     private final int cachePloidyCapacity;
+
     private GenotypeLikelihoodCalculator[][] likelihoodCalculators;
     private final GenotypeLikelihoodCalculators calculators;
 
@@ -29,29 +30,49 @@ public final class IndependentSampleGenotypesModel {
      *  Initialize model with given maximum allele count and ploidy for caching
      */
     public IndependentSampleGenotypesModel(final int calculatorCachePloidyCapacity, final int calculatorCacheAlleleCapacity) {
+        Utils.validateArg(calculatorCachePloidyCapacity >= 0, () -> "the ploidy provided cannot be negative: " + calculatorCachePloidyCapacity);
+        Utils.validateArg(calculatorCacheAlleleCapacity >= 0, () -> "the maximum allele index provided cannot be negative: " + calculatorCacheAlleleCapacity);
+
         cachePloidyCapacity = calculatorCachePloidyCapacity;
         cacheAlleleCountCapacity = calculatorCacheAlleleCapacity;
         likelihoodCalculators = new GenotypeLikelihoodCalculator[calculatorCachePloidyCapacity][calculatorCacheAlleleCapacity];
         calculators = new GenotypeLikelihoodCalculators();
     }
 
-    public <A extends Allele> GenotypingLikelihoods<A> calculateLikelihoods(final AlleleList<A> genotypingAlleles, final GenotypingData<A> data) {
+    /**
+     *
+     * @param genotypingAlleles
+     * @param data
+     * @param <A>
+     * @return
+     */
+    public <A extends Allele> GenotypingLikelihoods<A> calculateLikelihoods(final AlleleList<A> genotypingAlleles,
+                                                                            final GenotypingData<A> data) {
+
         Utils.nonNull(genotypingAlleles, "the allele cannot be null");
         Utils.nonNull(data, "the genotyping data cannot be null");
 
+        // prepare data, get information necessary
         final AlleleListPermutation<A> permutation = data.permutation(genotypingAlleles);
         final AlleleLikelihoodMatrixMapper<A> alleleLikelihoodMatrixMapper = AlleleLikelihoodMatrixMapper.newInstance(permutation);
 
         final int sampleCount = data.numberOfSamples();
         final PloidyModel ploidyModel = data.ploidyModel();
-        final List<GenotypeLikelihoods> genotypeLikelihoods = new ArrayList<>(sampleCount);
         final int alleleCount = genotypingAlleles.numberOfAlleles();
 
+        // TODO: why not the following early return?
+//        if(sampleCount==0) { // ever possible to be negative?
+//            return null; // OK not null, but something similar
+//        }
+
+        // result container
+        final List<GenotypeLikelihoods> genotypeLikelihoods = new ArrayList<>(sampleCount);
+        // walk over all samples, genotype
         GenotypeLikelihoodCalculator likelihoodsCalculator = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
         for (int i = 0; i < sampleCount; i++) {
-            final int samplePloidy = ploidyModel.samplePloidy(i);
 
             // get a new likelihoodsCalculator if this sample's ploidy differs from the previous sample's
+            final int samplePloidy = ploidyModel.samplePloidy(i);
             if (samplePloidy != likelihoodsCalculator.ploidy()) {
                 likelihoodsCalculator = getLikelihoodsCalculator(samplePloidy, alleleCount);
             }
@@ -62,6 +83,12 @@ public final class IndependentSampleGenotypesModel {
         return new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods);
     }
 
+    /**
+     *
+     * @param samplePloidy
+     * @param alleleCount
+     * @return
+     */
     private GenotypeLikelihoodCalculator getLikelihoodsCalculator(final int samplePloidy, final int alleleCount) {
         if (samplePloidy >= cachePloidyCapacity || alleleCount >= cacheAlleleCountCapacity) {
             return calculators.getInstance(samplePloidy, alleleCount);
