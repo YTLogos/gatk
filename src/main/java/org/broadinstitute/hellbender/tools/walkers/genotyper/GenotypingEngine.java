@@ -192,6 +192,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         Utils.nonNull(model, "the model cannot be null");
         return calculateGenotypes(null,null,null,null,vc,model,false,null,header);
     }
+
     /**
      * Main entry function to calculate genotypes of a given VC with corresponding GL's that is shared across genotypers (namely UG and HC).
      *
@@ -202,6 +203,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
      * @param vc                                 Input VC
      * @param model                              GL calculation model
      * @param inheritAttributesFromInputVC       Output VC will contain attributes inherited from input vc
+     * @param perReadAlleleLikelihoodMap         ? todo: fill in doc
      * @return                                   VC with assigned genotypes
      */
     protected VariantCallContext calculateGenotypes(final FeatureContext features,
@@ -434,7 +436,10 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
     }
 
     /**
-     * HYQ_doc_log: apparently a copy-paste error. No filling happens here. Instead a AFPriorProvider is returned, exact which type is determined by input.
+     * HYQ_doc_log: apparently a copy-paste error from {@link #computeAlleleFrequencyPriors(int, double[], double, List)}.
+     * HYQ_doc_log: No filling happens here. Instead a AFPriorProvider is returned, exact which type is determined by input.
+     * HYQ_doc_log: In addition, the other function is not used in GATK (except in tests) or protected
+     *
      * Function that fills vector with allele frequency priors.
      * By default, infinite-sites, neutral variation prior is used, where $Pr(AC=i) = theta/i$ where $theta$ is heterozygosity
      * @param N                 Number of chromosomes
