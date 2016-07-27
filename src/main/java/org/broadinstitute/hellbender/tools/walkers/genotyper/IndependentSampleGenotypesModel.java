@@ -33,8 +33,8 @@ public final class IndependentSampleGenotypesModel {
         Utils.validateArg(calculatorCachePloidyCapacity >= 0, () -> "the ploidy provided cannot be negative: " + calculatorCachePloidyCapacity);
         Utils.validateArg(calculatorCacheAlleleCapacity >= 0, () -> "the maximum allele index provided cannot be negative: " + calculatorCacheAlleleCapacity);
 
-        cachePloidyCapacity = calculatorCachePloidyCapacity;
         cacheAlleleCountCapacity = calculatorCacheAlleleCapacity;
+        cachePloidyCapacity = calculatorCachePloidyCapacity;
         likelihoodCalculators = new GenotypeLikelihoodCalculator[calculatorCachePloidyCapacity][calculatorCacheAlleleCapacity];
         calculators = new GenotypeLikelihoodCalculators();
     }
@@ -45,6 +45,7 @@ public final class IndependentSampleGenotypesModel {
      * @param data
      * @param <A>
      * @return
+     * @throws IllegalArgumentException when any of {@code genotypingAlleles} and {@code data} is {@code null}.
      */
     public <A extends Allele> GenotypingLikelihoods<A> calculateLikelihoods(final AlleleList<A> genotypingAlleles,
                                                                             final GenotypingData<A> data) {
@@ -60,14 +61,14 @@ public final class IndependentSampleGenotypesModel {
         final PloidyModel ploidyModel = data.ploidyModel();
         final int alleleCount = genotypingAlleles.numberOfAlleles();
 
-        // TODO: why not the following early return?
-//        if(sampleCount==0) { // ever possible to be negative?
-//            return null; // OK not null, but something similar
-//        }
+        /*// TODO: why not the following early return?
+        if(sampleCount==0) { // ever possible to be negative? or actually, is this indicating something went wrong?
+            return new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, new ArrayList<>());
+        }*/
 
         // result container
         final List<GenotypeLikelihoods> genotypeLikelihoods = new ArrayList<>(sampleCount);
-        // walk over all samples, genotype
+        // walk over all samples, compute GL
         GenotypeLikelihoodCalculator likelihoodsCalculator = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
         for (int i = 0; i < sampleCount; i++) {
 

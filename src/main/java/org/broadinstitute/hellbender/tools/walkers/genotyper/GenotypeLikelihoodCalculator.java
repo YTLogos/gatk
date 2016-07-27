@@ -138,7 +138,7 @@ public final class GenotypeLikelihoodCalculator {
     private double[] readGenotypeLikelihoodComponents;
 
     // -----------------------------------------------------------------------------------------------
-    // Initializers and transformers
+    // Initializers, mappers and transformers
     // -----------------------------------------------------------------------------------------------
 
     /**

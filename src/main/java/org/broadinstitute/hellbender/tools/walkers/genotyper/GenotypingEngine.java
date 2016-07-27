@@ -260,6 +260,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final int defaultPloidy = configuration.genotypeArgs.samplePloidy;
         final int maxAltAlleles = configuration.genotypeArgs.MAX_ALTERNATE_ALLELES;
 
+        // Compute AF, THE deal of this method
         final AFCalculator afCalculator = afCalculatorProvider.getInstance(vc, defaultPloidy, maxAltAlleles);
         final AFCalculationResult AFResult = afCalculator.getLog10PNonRef(vc, defaultPloidy, maxAltAlleles, getAlleleFrequencyPriors(vc,defaultPloidy,model));
 
