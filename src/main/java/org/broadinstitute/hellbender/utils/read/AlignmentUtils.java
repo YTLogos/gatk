@@ -42,10 +42,10 @@ public final class AlignmentUtils {
      * Aligns reads the haplotype, and then projects this alignment of read -> hap onto the reference
      * via the alignment of haplotype (via its getCigar) method.
      *
-     * @param originalRead the read we want to write aligned to the reference genome
-     * @param haplotype the haplotype that the read should be aligned to, before aligning to the reference
-     * @param referenceStart the start of the reference that haplotype is aligned to.  Provides global coordinate frame.
-     * @param isInformative true if the read is differentially informative for one of the haplotypes
+     * @param originalRead      the read we want to write aligned to the reference genome
+     * @param haplotype         the haplotype that the read should be aligned to, before aligning to the reference
+     * @param referenceStart    the start of the reference that haplotype is aligned to.  Provides global coordinate frame.
+     * @param isInformative     true if the read is differentially informative for one of the haplotypes
      *
      * @throws IllegalArgumentException if {@code originalRead} is {@code null} or {@code haplotype} is {@code null} or it
      *   does not have a Cigar or the {@code referenceStart} is invalid (less than 1).
@@ -53,10 +53,10 @@ public final class AlignmentUtils {
      * @return a GATKRead aligned to reference. Never {@code null}.
      */
     public static GATKRead createReadAlignedToRef(final GATKRead originalRead,
-                                                       final Haplotype haplotype,
-                                                       final Haplotype refHaplotype,
-                                                       final int referenceStart,
-                                                       final boolean isInformative) {
+                                                  final Haplotype haplotype,
+                                                  final Haplotype refHaplotype,
+                                                  final int referenceStart,
+                                                  final boolean isInformative) {
         Utils.nonNull(originalRead);
         Utils.nonNull(haplotype);
         Utils.nonNull(refHaplotype);
@@ -66,6 +66,7 @@ public final class AlignmentUtils {
         // compute the smith-waterman alignment of read -> haplotype
         final SWPairwiseAlignment swPairwiseAlignment = new SWPairwiseAlignment(haplotype.getBases(), originalRead.getBases(), CigarUtils.NEW_SW_PARAMETERS);
         if ( swPairwiseAlignment.getAlignmentStart2wrt1() == -1 ) {
+            // TODO: shouldn't we signal something
             // sw can fail (reasons not clear) so if it happens just don't realign the read
             return originalRead;
         }
