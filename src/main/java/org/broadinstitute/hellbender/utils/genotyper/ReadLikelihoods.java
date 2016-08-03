@@ -255,7 +255,14 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         }
     }
 
-    // Does the normalizeLikelihoods job for each read.
+    /**
+     * Does the normalizeLikelihoods job for each read.
+     * @param bestToZero                            set the best likelihood to 0, others will be subtracted the same amount.
+     * @param maximumBestAltLikelihoodDifference    maximum difference between the best alternative allele likelihood and any other likelihood.
+     * @param sampleValues                          loglikelihood matrix of a sample (indexed by {@code sampleIndex}
+     * @param sampleIndex                           index of sample
+     * @param readIndex                             index of read into the particular sample
+     */
     private void normalizeLikelihoodsPerRead(final boolean bestToZero,
                                              final double maximumBestAltLikelihoodDifference,
                                              final double[][] sampleValues,
@@ -524,13 +531,20 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
 
         new IndexRange(0, samples.numberOfSamples()).forEach(s -> {
             final GATKRead[] sampleReads = readsBySampleIndex[s];
-            final List<Integer> removeIndices = new IndexRange(0, sampleReads.length)
-                    .filter(r -> readIsPoorlyModelled(s, r, sampleReads[r], maximumErrorPerBase));
+            final List<Integer> removeIndices = new IndexRange(0, sampleReads.length).filter(r -> readIsPoorlyModelled(s, r, sampleReads[r], maximumErrorPerBase));
             removeSampleReads(s, removeIndices, alleles.numberOfAlleles());
         });
 
     }
 
+    /**
+     *
+     * @param sampleIndex
+     * @param readIndex
+     * @param read
+     * @param maxErrorRatePerBase
+     * @return
+     */
     private boolean readIsPoorlyModelled(final int sampleIndex,
                                          final int readIndex,
                                          final GATKRead read,

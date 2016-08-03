@@ -31,16 +31,6 @@ public final class GenotypeLikelihoodCalculators {
     private int maximumPloidy = 2; // its initial value is the initial capacity of the shared tables.
 
     /**
-     * Maximum possible number of genotypes that this calculator can handle.
-     */
-    public static final int MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY = 1000;
-
-    /**
-     * Mark to indicate genotype-count overflow due to a large number of allele and ploidy;
-     */
-    static final int GENOTYPE_COUNT_OVERFLOW = -1;
-
-    /**
      * The current maximum allele index supported by the tables.
      * <p>
      *     Its initial value indicates the initial capacity of the shared {@link #alleleFirstGenotypeOffsetByPloidy} table.
@@ -48,6 +38,16 @@ public final class GenotypeLikelihoodCalculators {
      * </p>
      */
     private int maximumAllele = 1; // its initial value is the initial capacity of the shared tables.
+
+    /**
+     * Maximum possible number of genotypes that this calculator can handle.
+     */
+    public static final int MAXIMUM_STRONG_REF_GENOTYPE_PER_PLOIDY = 1000;
+
+    /**
+     * Mark to indicate genotype-count overflow due to a large number of allele and ploidy;
+     */
+    private static final int GENOTYPE_COUNT_OVERFLOW = -1;
 
     /**
      * Shared copy of the offset table as described in {@link #buildGenotypeAlleleCountsTable(int, int, int[][])}.
@@ -69,7 +69,7 @@ public final class GenotypeLikelihoodCalculators {
             buildGenotypeAlleleCountsTable(maximumPloidy,maximumAllele,alleleFirstGenotypeOffsetByPloidy);
 
     // -----------------------------------------------------------------------------------------------
-    //
+    // Interface
     // -----------------------------------------------------------------------------------------------
 
     public GenotypeLikelihoodCalculators(){

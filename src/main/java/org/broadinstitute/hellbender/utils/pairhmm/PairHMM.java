@@ -136,30 +136,9 @@ public abstract class PairHMM implements Closeable{
      * @param haplotypeMaxLength the max length of haplotypes we want to use with this PairHMM
      * @param readMaxLength the max length of reads we want to use with this PairHMM
      */
-    public void initialize( final List<Haplotype> haplotypes, final Map<String, List<GATKRead>> perSampleReadList, final int readMaxLength, final int haplotypeMaxLength ) {
+    public void initialize( final List<Haplotype> haplotypes, final Map<String, List<GATKRead>> perSampleReadList,
+                            final int readMaxLength, final int haplotypeMaxLength ) {
         initialize(readMaxLength, haplotypeMaxLength);
-    }
-
-    private static int findMaxAlleleLength(final List<? extends Allele> alleles) {
-        int max = 0;
-        for (final Allele allele : alleles) {
-            final int alleleLength = allele.length();
-            if (max < alleleLength) {
-                max = alleleLength;
-            }
-        }
-        return max;
-    }
-
-    static int findMaxReadLength(final List<GATKRead> reads) {
-        int listMaxReadLength = 0;
-        for(final GATKRead read : reads){
-            final int readLength = read.getLength();
-            if( readLength > listMaxReadLength ) {
-                listMaxReadLength = readLength;
-            }
-        }
-        return listMaxReadLength;
     }
 
     /**
@@ -343,5 +322,27 @@ public abstract class PairHMM implements Closeable{
     public void close() {
         if(doProfiling)
             logger.info("Total compute time in PairHMM computeLogLikelihoods() : "+(pairHMMComputeTime*1e-9));
+    }
+
+    private static int findMaxAlleleLength(final List<? extends Allele> alleles) {
+        int max = 0;
+        for (final Allele allele : alleles) {
+            final int alleleLength = allele.length();
+            if (max < alleleLength) {
+                max = alleleLength;
+            }
+        }
+        return max;
+    }
+
+    static int findMaxReadLength(final List<GATKRead> reads) {
+        int listMaxReadLength = 0;
+        for(final GATKRead read : reads){
+            final int readLength = read.getLength();
+            if( readLength > listMaxReadLength ) {
+                listMaxReadLength = readLength;
+            }
+        }
+        return listMaxReadLength;
     }
 }

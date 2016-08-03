@@ -138,6 +138,35 @@ public final class GenotypeLikelihoodCalculator {
     private double[] readGenotypeLikelihoodComponents;
 
     // -----------------------------------------------------------------------------------------------
+    // CORE
+    // -----------------------------------------------------------------------------------------------
+
+    /**
+     * Calculate the likelihoods given the list of alleles and the likelihood map.
+     *
+     * @param likelihoods the likelihood matrix all alleles vs all reads.
+     *
+     * @throws IllegalArgumentException if {@code alleleList} is {@code null} or {@code likelihoods} is {@code null}
+     *     or the alleleList size does not match the allele-count of this calculator, or there are missing allele vs
+     *     read combinations in {@code likelihoods}.
+     *
+     * @return never {@code null}.
+     */
+    public <A extends Allele> GenotypeLikelihoods genotypeLikelihoods(final LikelihoodMatrix<A> likelihoods) {
+        Utils.nonNull(likelihoods);
+        Utils.validateArg(likelihoods.numberOfAlleles() == alleleCount, "mismatch between allele list and alleleCount");
+        final int readCount = likelihoods.numberOfReads();
+
+        ensureReadCapacity(readCount);
+
+        /// [x][y][z] = z * LnLk(Read_x | Allele_y)
+        final double[] readLikelihoodComponentsByAlleleCount = readLikelihoodComponentsByAlleleCount(likelihoods);
+        final double[][] genotypeLikelihoodByRead = genotypeLikelihoodByRead(readLikelihoodComponentsByAlleleCount,readCount);
+        final double[] readLikelihoodsByGenotypeIndex = genotypeLikelihoods(genotypeLikelihoodByRead, readCount);
+        return GenotypeLikelihoods.fromLog10Likelihoods(readLikelihoodsByGenotypeIndex);
+    }
+
+    // -----------------------------------------------------------------------------------------------
     // Initializers, mappers and transformers
     // -----------------------------------------------------------------------------------------------
 
@@ -327,35 +356,6 @@ public final class GenotypeLikelihoodCalculator {
             }
         }
         return result;
-    }
-
-    // -----------------------------------------------------------------------------------------------
-    // CORE
-    // -----------------------------------------------------------------------------------------------
-
-    /**
-     * Calculate the likelihoods given the list of alleles and the likelihood map.
-     *
-     * @param likelihoods the likelihood matrix all alleles vs all reads.
-     *
-     * @throws IllegalArgumentException if {@code alleleList} is {@code null} or {@code likelihoods} is {@code null}
-     *     or the alleleList size does not match the allele-count of this calculator, or there are missing allele vs
-     *     read combinations in {@code likelihoods}.
-     *
-     * @return never {@code null}.
-     */
-    public <A extends Allele> GenotypeLikelihoods genotypeLikelihoods(final LikelihoodMatrix<A> likelihoods) {
-        Utils.nonNull(likelihoods);
-        Utils.validateArg(likelihoods.numberOfAlleles() == alleleCount, "mismatch between allele list and alleleCount");
-        final int readCount = likelihoods.numberOfReads();
-
-        ensureReadCapacity(readCount);
-
-        /// [x][y][z] = z * LnLk(Read_x | Allele_y)
-        final double[] readLikelihoodComponentsByAlleleCount = readLikelihoodComponentsByAlleleCount(likelihoods);
-        final double[][] genotypeLikelihoodByRead = genotypeLikelihoodByRead(readLikelihoodComponentsByAlleleCount,readCount);
-        final double[] readLikelihoodsByGenotypeIndex = genotypeLikelihoods(genotypeLikelihoodByRead, readCount);
-        return GenotypeLikelihoods.fromLog10Likelihoods(readLikelihoodsByGenotypeIndex);
     }
 
     // -----------------------------------------------------------------------------------------------
