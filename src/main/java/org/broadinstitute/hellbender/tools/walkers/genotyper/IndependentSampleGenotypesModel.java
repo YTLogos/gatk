@@ -21,8 +21,13 @@ public final class IndependentSampleGenotypesModel {
     private final int cacheAlleleCountCapacity;
     private final int cachePloidyCapacity;
 
+    private final GenotypeLikelihoodCalculators calculatorManager;
+    /**
+     * A 2-D array of {@link GenotypeLikelihoodCalculator}'s, whose creation is managed by {@link #calculatorManager}.
+     * Entries are lazily constructed, i.e. the 2-D array takes its shape up on this class' construction, but
+     * entries are not constructed until specifically requested.
+     */
     private GenotypeLikelihoodCalculator[][] likelihoodCalculators;
-    private final GenotypeLikelihoodCalculators calculators;
 
     public IndependentSampleGenotypesModel() { this(DEFAULT_CACHE_PLOIDY_CAPACITY, DEFAULT_CACHE_ALLELE_CAPACITY); }
 
@@ -35,17 +40,15 @@ public final class IndependentSampleGenotypesModel {
 
         cacheAlleleCountCapacity = calculatorCacheAlleleCapacity;
         cachePloidyCapacity = calculatorCachePloidyCapacity;
+        calculatorManager = new GenotypeLikelihoodCalculators();
         likelihoodCalculators = new GenotypeLikelihoodCalculator[calculatorCachePloidyCapacity][calculatorCacheAlleleCapacity];
-        calculators = new GenotypeLikelihoodCalculators();
     }
 
     /**
+     * Given a list of alleles, ploidy model, and read likelihoods, compute allele likelihoods.
      *
-     * @param genotypingAlleles
-     * @param data
-     * @param <A>
-     * @return
-     * @throws IllegalArgumentException when any of {@code genotypingAlleles} and {@code data} is {@code null}.
+     * @throws IllegalArgumentException when any of {@code genotypingAlleles} and {@code data} is {@code null},
+     *                                  or {@code data.numberofSamples()} returns negative.
      */
     public <A extends Allele> GenotypingLikelihoods<A> calculateLikelihoods(final AlleleList<A> genotypingAlleles,
                                                                             final GenotypingData<A> data) {
@@ -54,23 +57,20 @@ public final class IndependentSampleGenotypesModel {
         Utils.nonNull(data, "the genotyping data cannot be null");
 
         // prepare data, get information necessary
-        final AlleleListPermutation<A> permutation = data.permutation(genotypingAlleles);
-        final AlleleLikelihoodMatrixMapper<A> alleleLikelihoodMatrixMapper = AlleleLikelihoodMatrixMapper.newInstance(permutation);
+        final int                               alleleCount = genotypingAlleles.numberOfAlleles();
+        final int                               sampleCount = data.numberOfSamples();
+        final PloidyModel                       ploidyModel = data.ploidyModel();
+        final AlleleListPermutation<A>          permutation = data.permutation(genotypingAlleles);
+        final AlleleLikelihoodMatrixMapper<A>   alleleLikelihoodMatrixMapper = AlleleLikelihoodMatrixMapper.newInstance(permutation);
 
-        final int sampleCount = data.numberOfSamples();
-        final PloidyModel ploidyModel = data.ploidyModel();
-        final int alleleCount = genotypingAlleles.numberOfAlleles();
+        Utils.validateArg(sampleCount >= 0, () -> "Sample count cannot be negative!");
+        if(sampleCount==0) { return new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, new ArrayList<>()); }
 
-        /*// TODO: why not the following early return?
-        if(sampleCount==0) { // ever possible to be negative? or actually, is this indicating something went wrong?
-            return new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, new ArrayList<>());
-        }*/
+        GenotypeLikelihoodCalculator likelihoodsCalculator = getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount);
 
         // result container
         final List<GenotypeLikelihoods> genotypeLikelihoods = new ArrayList<>(sampleCount);
-        // walk over all samples, compute GL
-        GenotypeLikelihoodCalculator likelihoodsCalculator = sampleCount > 0 ? getLikelihoodsCalculator(ploidyModel.samplePloidy(0), alleleCount) : null;
-        for (int i = 0; i < sampleCount; i++) {
+        for (int i = 0; i < sampleCount; i++) {// walk over all samples, compute GL
 
             // get a new likelihoodsCalculator if this sample's ploidy differs from the previous sample's
             final int samplePloidy = ploidyModel.samplePloidy(i);
@@ -81,24 +81,28 @@ public final class IndependentSampleGenotypesModel {
             final LikelihoodMatrix<A> sampleLikelihoods = alleleLikelihoodMatrixMapper.apply(data.readLikelihoods().sampleMatrix(i));
             genotypeLikelihoods.add(likelihoodsCalculator.genotypeLikelihoods(sampleLikelihoods));
         }
+
         return new GenotypingLikelihoods<>(genotypingAlleles, ploidyModel, genotypeLikelihoods);
     }
 
     /**
-     *
+     * If the requested sample ploidy or allele count exceeds capacity of cached calculatorManager, ask for a new, appropriate
+     * one from the manager.
+     * Otherwise 1) if the cached one has been constructed (not just place holder created), return the fully constructed one
+     *           2) ask the manager to fully construct the place holder calculator, save it, then return it.
      * @param samplePloidy
      * @param alleleCount
      * @return
      */
     private GenotypeLikelihoodCalculator getLikelihoodsCalculator(final int samplePloidy, final int alleleCount) {
         if (samplePloidy >= cachePloidyCapacity || alleleCount >= cacheAlleleCountCapacity) {
-            return calculators.getInstance(samplePloidy, alleleCount);
+            return calculatorManager.getInstance(samplePloidy, alleleCount);
         }
         final GenotypeLikelihoodCalculator result = likelihoodCalculators[samplePloidy][alleleCount];
         if (result != null) {
             return result;
         } else {
-            final GenotypeLikelihoodCalculator newOne = calculators.getInstance(samplePloidy, alleleCount);
+            final GenotypeLikelihoodCalculator newOne = calculatorManager.getInstance(samplePloidy, alleleCount);
             likelihoodCalculators[samplePloidy][alleleCount] = newOne;
             return newOne;
         }
