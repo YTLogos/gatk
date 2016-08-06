@@ -77,6 +77,7 @@ public final class GenotypeLikelihoodCalculators {
 
     /**
      * Returns an instance given its ploidy and the number of alleles.
+     * Modifies local cache tables.
      *
      * @param alleleCount   the required allele-count.
      * @param ploidy        the required ploidy-count.

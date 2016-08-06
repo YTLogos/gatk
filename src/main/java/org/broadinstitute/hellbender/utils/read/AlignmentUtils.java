@@ -39,16 +39,17 @@ public final class AlignmentUtils {
     }
 
     /**
-     * Aligns reads the haplotype, and then projects this alignment of read -> hap onto the reference
-     * via the alignment of haplotype (via its getCigar) method.
+     * Aligns reads to the {@code haplotype}, and then projects this alignment of read -> hap onto the reference
+     * via the alignment of haplotype (via its getCigar()) method.
      *
      * @param originalRead      the read we want to write aligned to the reference genome
      * @param haplotype         the haplotype that the read should be aligned to, before aligning to the reference
-     * @param referenceStart    the start of the reference that haplotype is aligned to.  Provides global coordinate frame.
+     * @param referenceStart    the start of the reference that {@code haplotype} is aligned to.  Provides global coordinate frame.
      * @param isInformative     true if the read is differentially informative for one of the haplotypes
      *
-     * @throws IllegalArgumentException if {@code originalRead} is {@code null} or {@code haplotype} is {@code null} or it
-     *   does not have a Cigar or the {@code referenceStart} is invalid (less than 1).
+     * @throws IllegalArgumentException  if 1) any of {@code originalRead} and {@code haplotype} is {@code null}
+     *                                      2) {@code haplotype} does not have a Cigar
+     *                                      3) the {@code referenceStart} is invalid (less than 1).
      *
      * @return a GATKRead aligned to reference. Never {@code null}.
      */
@@ -92,9 +93,7 @@ public final class AlignmentUtils {
         final Cigar haplotypeToRef = trimCigarByBases(extendedHaplotypeCigar, swPairwiseAlignment.getAlignmentStart2wrt1(), extendedHaplotypeCigar.getReadLength() - 1);
         final Cigar readToRefCigarRaw = applyCigarToCigar(swCigar, haplotypeToRef);
         final Cigar readToRefCigarClean = cleanUpCigar(readToRefCigarRaw);
-        final Cigar readToRefCigar = leftAlignIndel(readToRefCigarClean, refHaplotype.getBases(),
-                originalRead.getBases(), swPairwiseAlignment.getAlignmentStart2wrt1(), 0, true);
-
+        final Cigar readToRefCigar = leftAlignIndel(readToRefCigarClean, refHaplotype.getBases(), originalRead.getBases(), swPairwiseAlignment.getAlignmentStart2wrt1(), 0, true);
         read.setCigar(readToRefCigar);
 
         if ( readToRefCigar.getReadLength() != read.getLength() ) {

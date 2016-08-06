@@ -8,17 +8,20 @@ import org.broadinstitute.hellbender.utils.Utils;
  * Stores the most likely and second most likely alleles, along with a threshold
  * for assuming computing that a read is informative.
  *
- * If the difference between the most-likely allele and the next-most-likely allele is < INFORMATIVE_LIKELIHOOD_THRESHOLD
- * then the most likely allele is set to "no call", and isInformative will return false.  This constant can be
- * overridden simply by using one of the version of these calls that accepts informative threshold as an argument.
+ * If the difference between the most-likely allele and the next-most-likely allele is strictly less than
+ * {@link #INFORMATIVE_LIKELIHOOD_THRESHOLD} then the most likely allele is set to "no call", and
+ * calling {@link #isInformative()} will return false.
+ * This constant can be overridden simply by using one of the version of these calls that accepts informative threshold as an argument.
  *
- * For convenience, there are functions called getAlleleIfInformative that return either the most likely allele, or
- * NO_CALL if two or more alleles have likelihoods within INFORMATIVE_LIKELIHOOD_THRESHOLD of one another.
+ * For convenience, two methods {@link #getAlleleIfInformative()} and {@link #getAlleleIfInformative(double)}
+ * that return either the most likely allele, or {@link #NO_CALL} if two or more alleles have likelihoods
+ * within {@link #INFORMATIVE_LIKELIHOOD_THRESHOLD} (or caller-provided threshold) of one another.
  *
- * By default empty allele maps will return NO_CALL, and allele maps with a single entry will return the
- * corresponding key
+ * By default empty allele maps will return {@link #NO_CALL}, and allele maps with a single entry will return the
+ * corresponding key.
  */
 public final class MostLikelyAllele {
+
     public static final double INFORMATIVE_LIKELIHOOD_THRESHOLD = 0.2;
 
     public static final MostLikelyAllele NO_CALL = new MostLikelyAllele(Allele.NO_CALL, null, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
@@ -29,22 +32,31 @@ public final class MostLikelyAllele {
     private final double log10LikelihoodOfSecondBest;
 
     /**
-     * Create a new MostLikelyAllele
+     * Create a new {@link MostLikelyAllele}
      *
-     * If there's a meaningful most likely allele, allele should be a real allele.  If none can be determined,
-     * mostLikely should be a NO_CALL allele.
+     * If there's a meaningful most likely allele, allele should be a real allele.
+     * If none can be determined, {@code mostLikely} should be a NO_CALL allele.
      *
-     * @param mostLikely the most likely allele
-     * @param secondMostLikely the most likely allele after mostLikely (may be null)
-     * @param log10LikelihoodOfMostLikely the log10 likelihood of the most likely allele      (or {@link Double#NEGATIVE_INFINITY} if none is available)
-     * @param log10LikelihoodOfSecondBest the log10 likelihood of the next most likely allele (or {@link Double#NEGATIVE_INFINITY} if none is available)
+     * @param mostLikely                    the most likely allele
+     * @param secondMostLikely              the most likely allele after mostLikely (may be null)
+     * @param log10LikelihoodOfMostLikely   the log10 likelihood of the most likely allele      (or {@link Double#NEGATIVE_INFINITY} if none is available)
+     * @param log10LikelihoodOfSecondBest   the log10 likelihood of the next most likely allele (or {@link Double#NEGATIVE_INFINITY} if none is available)
+     *
+     * @throws IllegalArgumentException     1) {@code mostLikely} is {@code null}
+     *                                      2) {@code mostLikely} is equal to {@code secondMostLikely}
+     *                                      3) {@code log10LikelihoodOfMostLikely} is not less than {@code log10LikelihoodOfSecondBest}
+     *                                      4) {@code log10LikelihoodOfMostLikely} is either {@link MathUtils#goodLog10Probability(double)} or {@link Double#NEGATIVE_INFINITY}
+     *                                      5) {@code log10LikelihoodOfSecondBest} is either {@link MathUtils#goodLog10Probability(double)} or {@link Double#NEGATIVE_INFINITY}
      */
-    public MostLikelyAllele(final Allele mostLikely, final Allele secondMostLikely, final double log10LikelihoodOfMostLikely, final double log10LikelihoodOfSecondBest) {
+    public MostLikelyAllele(final Allele mostLikely,
+                            final Allele secondMostLikely,
+                            final double log10LikelihoodOfMostLikely,
+                            final double log10LikelihoodOfSecondBest) {
         Utils.nonNull( mostLikely, "mostLikely allele cannot be null");
         Utils.validateArg( !mostLikely.equals(secondMostLikely), "most likely allele and second most likely allele should be different");
+
         Utils.validateArg( log10LikelihoodOfMostLikely == Double.NEGATIVE_INFINITY || MathUtils.goodLog10Probability(log10LikelihoodOfMostLikely),
                 () -> "log10LikelihoodOfMostLikely must be either -Infinity or a good log10 prob but got " + log10LikelihoodOfMostLikely);
-
         Utils.validateArg( log10LikelihoodOfSecondBest == Double.NEGATIVE_INFINITY || MathUtils.goodLog10Probability(log10LikelihoodOfSecondBest),
                 () -> "log10LikelihoodOfSecondBest must be either -Infinity or a good log10 prob but got " + log10LikelihoodOfSecondBest);
         Utils.validateArg( log10LikelihoodOfMostLikely >= log10LikelihoodOfSecondBest, () -> "log10LikelihoodOfMostLikely must be <= log10LikelihoodOfSecondBest but got " + log10LikelihoodOfMostLikely + " vs 2nd " + log10LikelihoodOfSecondBest);
@@ -56,15 +68,17 @@ public final class MostLikelyAllele {
     }
 
     /**
-     * Create a new MostLikelyAllele with only 1 allele.
+     * Create a new {@link MostLikelyAllele} with only 1 allele.
      *
-     * If there's a meaningful most likely allele, allele should be a real allele.  If none can be determined,
-     * mostLikely should be a NO_CALL allele.
+     * If there's a meaningful most likely allele, allele should be a real allele.
+     * If none can be determined, {@code mostLikely} should be a NO_CALL allele.
      *
-     * @param mostLikely the most likely allele
-     * @param log10LikelihoodOfMostLikely the log10 likelihood of the most likely allele      (or {@link Double#NEGATIVE_INFINITY} if none is available)
+     * @param mostLikely                    the most likely allele
+     * @param log10LikelihoodOfMostLikely   the log10 likelihood of the most likely allele
+     *                                      (or {@link Double#NEGATIVE_INFINITY} if none is available)
      */
-    public MostLikelyAllele(final Allele mostLikely, final double log10LikelihoodOfMostLikely) {
+    public MostLikelyAllele(final Allele mostLikely,
+                            final double log10LikelihoodOfMostLikely) {
         this(mostLikely, null, log10LikelihoodOfMostLikely, Double.NEGATIVE_INFINITY);
     }
 

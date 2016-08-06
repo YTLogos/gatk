@@ -12,22 +12,17 @@ import org.broadinstitute.hellbender.utils.read.GATKRead;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import htsjdk.variant.variantcontext.Allele;
-import org.broadinstitute.hellbender.utils.GenomeLoc;
-import org.broadinstitute.hellbender.utils.MathUtils;
-import org.broadinstitute.hellbender.utils.haplotype.Haplotype;
-import org.broadinstitute.hellbender.utils.pileup.PileupElement;
-import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
-import org.broadinstitute.hellbender.utils.read.AlignmentUtils;
-import org.broadinstitute.hellbender.utils.read.GATKRead;
-
-import java.util.*;
 
 /**
  *   Wrapper class that holds a set of maps of the form (Read -> Map(Allele->Double))
  *   For each read, this holds underlying alleles represented by an aligned read, and corresponding relative likelihood.
  */
 public final class PerReadAlleleLikelihoodMap {
+
+
+    // -----------------------------------------------------------------------------------------------
+    // Core structs
+    // -----------------------------------------------------------------------------------------------
 
     /** A set of all of the allele, so we can efficiently determine if an allele is already present */
     private final Set<Allele> allelesSet;
@@ -37,11 +32,24 @@ public final class PerReadAlleleLikelihoodMap {
 
     private final Map<GATKRead, Map<Allele, Double>> likelihoodReadMap;
 
+
+    // -----------------------------------------------------------------------------------------------
+    // Initializers
+    // -----------------------------------------------------------------------------------------------
+
     public PerReadAlleleLikelihoodMap() {
         allelesSet = new LinkedHashSet<>();
         alleles = new ArrayList<>();
         likelihoodReadMap = new LinkedHashMap<>();
     }
+
+    // -----------------------------------------------------------------------------------------------
+    // Modifiers (modifies fields) : add
+    // -----------------------------------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------------------------------
+    // Modifiers (modifies fields) : remove
+    // -----------------------------------------------------------------------------------------------
 
     /**
      * Add a new entry into the Read -> ( Allele -> Likelihood ) map of maps.
@@ -65,30 +73,80 @@ public final class PerReadAlleleLikelihoodMap {
         likelihoodReadMap.computeIfAbsent(read, r -> new LinkedHashMap<>()).put(a,likelihood);
     }
 
+
+    // -----------------------------------------------------------------------------------------------
+    // Trivial accessors
+    // -----------------------------------------------------------------------------------------------
+
     /**
-     * Convert the @likelihoodReadMap to a map of alleles to reads, where each read is mapped uniquely to the allele
-     * for which it has the greatest associated likelihood
-     * @return a map from each allele to a list of reads that 'support' the allele
+     * Debug method to dump contents of object into string for display
      */
-    @VisibleForTesting
-    Map<Allele,List<GATKRead>> getAlleleStratifiedReadMap() {
-        final Map<Allele, List<GATKRead>> alleleReadMap = alleles.stream().collect(
-                Collectors.toMap(Function.identity(),
-                                 allele -> new ArrayList<>()));
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
 
-        for ( final Map.Entry<GATKRead, Map<Allele, Double>> entry : likelihoodReadMap.entrySet() ) {
-            final MostLikelyAllele bestAllele = getMostLikelyAllele(entry.getValue());
-            if ( bestAllele.isInformative() ) {
-                alleleReadMap.get(bestAllele.getMostLikelyAllele()).add(entry.getKey());
-            }
+        sb.append("Alelles in map:");
+        for (final Allele a:alleles) {
+            sb.append(a.getDisplayString()).append(",");
         }
+        sb.append("\n");
+        for (final Map.Entry <GATKRead, Map<Allele, Double>> el : getLikelihoodReadMap().entrySet() ) {
+            for (final Map.Entry<Allele,Double> eli : el.getValue().entrySet()) {
+                sb.append("Read "+el.getKey().getName()+". Allele:"+eli.getKey().getDisplayString()+" has likelihood="+ Double.toString(eli.getValue())+"\n");
+            }
 
-        return alleleReadMap;
+        }
+        return sb.toString();
     }
 
     public int size() {
         return likelihoodReadMap.size();
     }
+
+    /**
+     * Returns whether the map is empty.
+     */
+    public boolean isEmpty() {
+        return likelihoodReadMap.isEmpty();
+    }
+
+    /**
+     * Returns the underlying map.
+     * NOTE: returns the actual representation. Callers must be aware of this.
+     */
+    public Map<GATKRead,Map<Allele,Double>> getLikelihoodReadMap() {
+        return likelihoodReadMap;
+    }
+
+    /**
+     * Get an unmodifiable set of the unique alleles in this PerReadAlleleLikelihoodMap
+     * @return a non-null unmodifiable set
+     */
+    public Set<Allele> getAllelesSet() {
+        return Collections.unmodifiableSet(allelesSet);
+    }
+
+    /**
+     * Returns the set of reads stores in the map.
+     */
+    public Set<GATKRead> getReads() {
+        return likelihoodReadMap.keySet();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /**
      * Helper function to add the read underneath a pileup element to the map
@@ -113,20 +171,9 @@ public final class PerReadAlleleLikelihoodMap {
         return likelihoodReadMap.containsKey(p.getRead());
     }
 
-    /**
-     * Returns whether the map is empty.
-     */
-    public boolean isEmpty() {
-        return likelihoodReadMap.isEmpty();
-    }
 
-    /**
-     * Returns the underlying map.
-     * NOTE: returns the actual representation. Callers must be aware of this.
-     */
-    public Map<GATKRead,Map<Allele,Double>> getLikelihoodReadMap() {
-        return likelihoodReadMap;
-    }
+
+
 
     /**
      * Removes all elements from the map.
@@ -145,12 +192,7 @@ public final class PerReadAlleleLikelihoodMap {
         return likelihoodReadMap.get(p.getRead());
     }
 
-    /**
-     * Returns the set of reads stores in the map.
-     */
-    public Set<GATKRead> getReads() {
-        return likelihoodReadMap.keySet();
-    }
+
 
     /**
      * Returns the allele->likelihood map the corresponds to the element's read or {@code null} if no such map exists.
@@ -256,26 +298,7 @@ public final class PerReadAlleleLikelihoodMap {
                                     revSortedEntries.get(1).getValue());
     }
 
-    /**
-     * Debug method to dump contents of object into string for display
-     */
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
 
-        sb.append("Alelles in map:");
-        for (final Allele a:alleles) {
-            sb.append(a.getDisplayString()).append(",");
-        }
-        sb.append("\n");
-        for (final Map.Entry <GATKRead, Map<Allele, Double>> el : getLikelihoodReadMap().entrySet() ) {
-            for (final Map.Entry<Allele,Double> eli : el.getValue().entrySet()) {
-                sb.append("Read "+el.getKey().getName()+". Allele:"+eli.getKey().getDisplayString()+" has likelihood="+ Double.toString(eli.getValue())+"\n");
-            }
-
-        }
-        return sb.toString();
-    }
 
     /**
      * Remove reads from this map that are poorly modelled w.r.t. their per allele likelihoods
@@ -302,43 +325,9 @@ public final class PerReadAlleleLikelihoodMap {
         return removedReads;
     }
 
-    /**
-     * Is this read poorly modelled by all of the alleles in this map?
-     *
-     * A read is poorly modeled when it's likelihood is below what would be expected for a read
-     * originating from one of the alleles given the maxErrorRatePerBase of the reads in general.
-     *
-     * This function makes a number of key assumptions.  First, that the likelihoods reflect the total likelihood
-     * of the read.  In other words, that the read would be fully explained by one of the alleles.  This means
-     * that the allele should be something like the full haplotype from which the read might originate.
-     *
-     * It further assumes that each error in the read occurs with likelihood of -3 (Q30 confidence per base).  So
-     * a read with a 10% error rate with Q30 bases that's 100 bp long we'd expect to see 10 real Q30 errors
-     * even against the true haplotype.  So for this read to be well modelled by at least one allele we'd expect
-     * a likelihood to be >= 10 * -3.
-     *
-     * @param read the read we want to evaluate
-     * @param log10Likelihoods a list of the log10 likelihoods of the read against a set of haplotypes.
-     * @param maxErrorRatePerBase the maximum error rate we'd expect for this read per base, in real space.  So
-     *                            0.01 means a 1% error rate
-     * @return true if none of the log10 likelihoods imply that the read truly originated from one of the haplotypes
-     */
-    @VisibleForTesting
-    static boolean readIsPoorlyModelled(final GATKRead read, final Collection<Double> log10Likelihoods, final double maxErrorRatePerBase) {
-        final double maxErrorsForRead = Math.min(2.0, Math.ceil(read.getLength() * maxErrorRatePerBase));
-        final double log10QualPerBase = -4.0;
-        final double log10MaxLikelihoodForTrueAllele = maxErrorsForRead * log10QualPerBase;
 
-        return log10Likelihoods.stream().allMatch(lik -> lik < log10MaxLikelihoodForTrueAllele);
-    }
 
-    /**
-     * Get an unmodifiable set of the unique alleles in this PerReadAlleleLikelihoodMap
-     * @return a non-null unmodifiable set
-     */
-    public Set<Allele> getAllelesSet() {
-        return Collections.unmodifiableSet(allelesSet);
-    }
+
 
     /**
      * For each allele "a" , identify those reads whose most likely allele is "a", and remove a "downsamplingFraction" proportion
@@ -388,5 +377,56 @@ public final class PerReadAlleleLikelihoodMap {
     @VisibleForTesting
     Collection<Map<Allele, Double>> getAlleleToLikelihoodMaps() {
         return Collections.unmodifiableCollection(likelihoodReadMap.values());
+    }
+
+    /**
+     * Convert the @likelihoodReadMap to a map of alleles to reads, where each read is mapped uniquely to the allele
+     * for which it has the greatest associated likelihood
+     * @return a map from each allele to a list of reads that 'support' the allele
+     */
+    @VisibleForTesting
+    Map<Allele,List<GATKRead>> getAlleleStratifiedReadMap() {
+        final Map<Allele, List<GATKRead>> alleleReadMap = alleles.stream().collect(
+                Collectors.toMap(Function.identity(),
+                        allele -> new ArrayList<>()));
+
+        for ( final Map.Entry<GATKRead, Map<Allele, Double>> entry : likelihoodReadMap.entrySet() ) {
+            final MostLikelyAllele bestAllele = getMostLikelyAllele(entry.getValue());
+            if ( bestAllele.isInformative() ) {
+                alleleReadMap.get(bestAllele.getMostLikelyAllele()).add(entry.getKey());
+            }
+        }
+
+        return alleleReadMap;
+    }
+
+    /**
+     * Is this read poorly modelled by all of the alleles in this map?
+     *
+     * A read is poorly modeled when it's likelihood is below what would be expected for a read
+     * originating from one of the alleles given the maxErrorRatePerBase of the reads in general.
+     *
+     * This function makes a number of key assumptions.  First, that the likelihoods reflect the total likelihood
+     * of the read.  In other words, that the read would be fully explained by one of the alleles.  This means
+     * that the allele should be something like the full haplotype from which the read might originate.
+     *
+     * It further assumes that each error in the read occurs with likelihood of -3 (Q30 confidence per base).  So
+     * a read with a 10% error rate with Q30 bases that's 100 bp long we'd expect to see 10 real Q30 errors
+     * even against the true haplotype.  So for this read to be well modelled by at least one allele we'd expect
+     * a likelihood to be >= 10 * -3.
+     *
+     * @param read the read we want to evaluate
+     * @param log10Likelihoods a list of the log10 likelihoods of the read against a set of haplotypes.
+     * @param maxErrorRatePerBase the maximum error rate we'd expect for this read per base, in real space.  So
+     *                            0.01 means a 1% error rate
+     * @return true if none of the log10 likelihoods imply that the read truly originated from one of the haplotypes
+     */
+    @VisibleForTesting
+    static boolean readIsPoorlyModelled(final GATKRead read, final Collection<Double> log10Likelihoods, final double maxErrorRatePerBase) {
+        final double maxErrorsForRead = Math.min(2.0, Math.ceil(read.getLength() * maxErrorRatePerBase));
+        final double log10QualPerBase = -4.0;
+        final double log10MaxLikelihoodForTrueAllele = maxErrorsForRead * log10QualPerBase;
+
+        return log10Likelihoods.stream().allMatch(lik -> lik < log10MaxLikelihoodForTrueAllele);
     }
 }
