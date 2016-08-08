@@ -20,8 +20,10 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
     private final AlleleList<A> alleles;
 
     /**
-     * Creates a new genotyping-likelihoods collection given the genotype alleles, the sample ploidy model and the
-     *   likelihoods themselves.
+     * Creates a new genotyping-likelihoods collection given
+     *      the genotype alleles,
+     *      the sample ploidy model and
+     *      the likelihoods themselves.
      * <p>
      * TODO: is the following documentation outdated?
      * Notice that this constructor does not check whether the likelihood array lengths corresponds to the sample plodies and
@@ -36,7 +38,9 @@ public final class GenotypingLikelihoods<A extends Allele> implements SampleList
      *                                     there are {@code null} elements in {@code alleles} or {@code likelihoods}, or
      *                                     the number of samples in {@code ploidyModel} does not correspond with the number of likelihoods arrays in {@code likelihoods}
      */
-    GenotypingLikelihoods(final AlleleList<A> alleles, final PloidyModel ploidyModel, final List<GenotypeLikelihoods> likelihoods) {
+    GenotypingLikelihoods(final AlleleList<A> alleles,
+                          final PloidyModel ploidyModel,
+                          final List<GenotypeLikelihoods> likelihoods) {
         Utils.nonNull(alleles, "allele list cannot be null");
         Utils.nonNull(ploidyModel, "the ploidy model cannot be null");
         Utils.nonNull(likelihoods, "the likelihood collection cannot be null");

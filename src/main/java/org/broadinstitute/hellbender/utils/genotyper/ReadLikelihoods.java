@@ -1532,5 +1532,4 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         }
         return result;
     }
-
 }

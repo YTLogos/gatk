@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.UnaryOperator;
 
 /**
- * Creates {@link org.broadinstitute.hellbender.utils.genotyper.LikelihoodMatrix} mappers to be used when working with a subset of the original alleles.
+ * Creates {@link LikelihoodMatrix} mappers to be used when working with a subset of the original alleles.
  */
 @FunctionalInterface
 public interface AlleleLikelihoodMatrixMapper<A extends Allele> extends UnaryOperator<LikelihoodMatrix<A>>{
