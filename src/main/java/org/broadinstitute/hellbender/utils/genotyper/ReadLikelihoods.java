@@ -79,7 +79,11 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
             sample = samples.getSample(sampleIndex);
             read = readsBySampleIndex[sampleIndex][readIndex];
             this.likelihood = likelihood;
-            confidence = likelihood == secondBestLikelihood ? 0 : likelihood - secondBestLikelihood;
+            if(likelihood==Double.NEGATIVE_INFINITY){
+                confidence = 0;
+            }else{
+                confidence = likelihood == secondBestLikelihood ? 0 : likelihood - secondBestLikelihood;
+            }
         }
 
         public boolean isInformative() {
@@ -202,7 +206,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
      * Maps from each read to its index within the sample.
      *
      * <p>In order to save CPU time the indices contained in this array (not the array itself) is
-     * lazily initialized by invoking {@link #readIndexBySampleIndex(int)}.</p>
+     * lazily initialized by invoking {@link #readIndicesBySampleIndex(int)}.</p>
      */
     private final Object2IntMap<GATKRead>[] readIndexBySampleIndex;
 
@@ -465,7 +469,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     }
 
     /**
-     * Change reads based on input mapping from old read new read.
+     * Change reads based on input mapping from old read to new read.
      * @param readRealignments
      */
     public void changeReads(final Map<GATKRead, GATKRead> readRealignments) {
@@ -493,6 +497,11 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     // Serving core
     // -----------------------------------------------------------------------------------------------
 
+    /**
+     *
+     * @param overlap
+     * @return
+     */
     private int[][] overlappingReadIndicesBySampleIndex(final Locatable overlap) {
         if (overlap == null) {
             return null;
@@ -500,16 +509,13 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         final int sampleCount = samples.numberOfSamples();
         final int[][] result = new int[sampleCount][];
         final IntArrayList buffer = new IntArrayList(200);
-        final String contig = overlap.getContig();
-        final int overlapStart = overlap.getStart();
-        final int overlapEnd = overlap.getEnd();
         for (int s = 0; s < sampleCount; s++) {
             buffer.clear();
             final GATKRead[] sampleReads = readsBySampleIndex[s];
             final int sampleReadCount = sampleReads.length;
             buffer.ensureCapacity(sampleReadCount);
             for (int r = 0; r < sampleReadCount; r++) {
-                if (unclippedReadOverlapsRegion(sampleReads[r], contig, overlapStart, overlapEnd)) {
+                if (unclippedReadOverlapsRegion(sampleReads[r], overlap)) {
                     buffer.add(r);
                 }
             }
@@ -904,12 +910,8 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     }
 
     /**
-     *
-     * @param sampleIndex
-     * @param readIndex
-     * @param read
-     * @param maxErrorRatePerBase
-     * @return
+     * Model is the same as:
+     * @see {@link PerReadAlleleLikelihoodMap#readIsPoorlyModelled(GATKRead, Collection, double)}.
      */
     private boolean readIsPoorlyModelled(final int sampleIndex,
                                          final int readIndex,
@@ -944,16 +946,11 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         Utils.nonNull(location, "the location cannot be null");
 
         final int sampleCount = samples.numberOfSamples();
-
-        final String locContig = location.getContig();
-        final int locStart = location.getStart();
-        final int locEnd = location.getEnd();
-
         final int alleleCount = alleles.numberOfAlleles();
         for (int s = 0; s < sampleCount; s++) {
             final GATKRead[] sampleReads = readsBySampleIndex[s];
             final List<Integer> removeIndices = new IndexRange(0, sampleReads.length)
-                    .filter(r -> !unclippedReadOverlapsRegion(sampleReads[r], locContig, locStart, locEnd));
+                    .filter(r -> !unclippedReadOverlapsRegion(sampleReads[r], location));
             removeSampleReads(s, removeIndices, alleleCount);
         }
     }
@@ -1041,7 +1038,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         final GATKRead[] sampleReads = readsBySampleIndex[sampleIndex];
         final int sampleReadCount = sampleReads.length;
 
-        final Object2IntMap<GATKRead> indexByRead = readIndexBySampleIndex(sampleIndex);
+        final Object2IntMap<GATKRead> indexByRead = readIndicesBySampleIndex(sampleIndex);
         // Count how many we are going to remove, which ones (indexes) and remove entry from the read-index map.
         final boolean[] removeIndex = new boolean[sampleReadCount];
         int removeCount = 0; // captures the number of deletions.
@@ -1098,54 +1095,22 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     // -----------------------------------------------------------------------------------------------
 
     /**
-     * Returns reads stratified by their best allele.
-     * @return never {@code null}, perhaps empty.
-     */
-    @VisibleForTesting
-    Map<A,List<GATKRead>> readsByBestAlleleMap() {
-        final int alleleCount = alleles.numberOfAlleles();
-        final Map<A,List<GATKRead>> result = new LinkedHashMap<>(alleleCount);
-        final int totalReadCount = readCount();
-        for (int a = 0; a < alleleCount; a++) {
-            result.put(alleles.getAllele(a), new ArrayList<>(totalReadCount));
-        }
-        final int sampleCount = samples.numberOfSamples();
-        for (int s = 0; s < sampleCount; s++) {
-            readsByBestAlleleMap(s, result);
-        }
-        return result;
-    }
-
-    /**
-     * Returns the index of a read within a sample read-likelihood sub collection.
-     * @param sampleIndex the sample index.
-     * @param read the query read.
-     * @return -1 if there is no such read in that sample, 0 or greater otherwise.
-     */
-    @VisibleForTesting
-    int readIndex(final int sampleIndex,
-                  final GATKRead read) {
-        final Object2IntMap<GATKRead> readIndex = readIndexBySampleIndex(sampleIndex);
-        if (readIndex.containsKey(read)) {
-            return readIndexBySampleIndex(sampleIndex).getInt(read);
-        } else {
-            return -1;
-        }
-    }
-
-    /**
      * Search the best allele for a read.
      *
      * @param sampleIndex including sample index.
      * @param readIndex  target read index.
      *
-     * @return never {@code null}, but with {@link BestAllele#allele allele} == {@code null}
-     * if non-could be found.
+     * @return never {@code null}, but with {@link BestAllele#allele allele} == {@code null} if non-could be found.
      */
     private BestAllele searchBestAllele(final int sampleIndex,
                                         final int readIndex,
                                         final boolean canBeReference) {
+
         final int alleleCount = alleles.numberOfAlleles();
+
+        // if no alleles or
+        //    only 1 allele and reference alleles are stored as the index 0 but caller doesn't want ref allele
+        // return a un-informative BestAllele with null allele
         if (alleleCount == 0 || (alleleCount == 1 && referenceAlleleIndex == 0 && !canBeReference)) {
             return new BestAllele(sampleIndex, readIndex, -1, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY);
         }
@@ -1169,6 +1134,25 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
             }
         }
         return new BestAllele(sampleIndex,readIndex,bestAlleleIndex,bestLikelihood,secondBestLikelihood);
+    }
+
+    /**
+     * Returns reads stratified by their best allele.
+     * @return never {@code null}, perhaps empty.
+     */
+    @VisibleForTesting
+    Map<A,List<GATKRead>> readsByBestAlleleMap() {
+        final int alleleCount = alleles.numberOfAlleles();
+        final Map<A,List<GATKRead>> result = new LinkedHashMap<>(alleleCount);
+        final int totalReadCount = readCount();
+        for (int a = 0; a < alleleCount; a++) {
+            result.put(alleles.getAllele(a), new ArrayList<>(totalReadCount));
+        }
+        final int sampleCount = samples.numberOfSamples();
+        for (int s = 0; s < sampleCount; s++) {
+            readsByBestAlleleMap(s, result);
+        }
+        return result;
     }
 
     /**
@@ -1202,7 +1186,20 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         }
     }
 
-    private Object2IntMap<GATKRead> readIndexBySampleIndex(final int sampleIndex) {
+    /**
+     * Returns the index of a read within a sample read-likelihood sub collection.
+     * @param sampleIndex   the sample index.
+     * @param read          the query read.
+     * @return              -1 if there is no such read in that sample, 0 or greater otherwise.
+     */
+    @VisibleForTesting
+    int readIndex(final int sampleIndex,
+                  final GATKRead read) {
+        final Object2IntMap<GATKRead> readIndex = readIndicesBySampleIndex(sampleIndex);
+        return readIndex.containsKey(read) ? readIndex.getInt(read) : -1;
+    }
+
+    private Object2IntMap<GATKRead> readIndicesBySampleIndex(final int sampleIndex) {
         if (readIndexBySampleIndex[sampleIndex] == null) {
             final GATKRead[] sampleReads = readsBySampleIndex[sampleIndex];
             final int sampleReadCount = sampleReads.length;
@@ -1436,26 +1433,21 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     // TODO: these should be refactored to utilities. they don't depend on data stored here.
     // -----------------------------------------------------------------------------------------------
 
-    public static boolean unclippedReadOverlapsRegion(final GATKRead read, final Locatable region) {
-        return unclippedReadOverlapsRegion(read, region.getContig(), region.getStart(), region.getEnd());
-    }
+    public static boolean unclippedReadOverlapsRegion(final GATKRead read,
+                                                      final Locatable region) {
 
-    private static boolean unclippedReadOverlapsRegion(final GATKRead sampleRead,
-                                                       final String contig,
-                                                       final int start,
-                                                       final int end) {
-        final String readReference = sampleRead.getContig();
-        if (!Objects.equals(readReference, contig)) {
+        final String readReference = read.getContig();
+        if (!Objects.equals(readReference, region.getContig())) {
             return false;
         }
 
-        final int readStart = sampleRead.getUnclippedStart();
-        if (readStart > end) {
+        final int readStart = read.getUnclippedStart();
+        if (readStart > region.getEnd()) {
             return false;
         }
 
-        final int readEnd = sampleRead.isUnmapped() ? sampleRead.getUnclippedEnd() : Math.max(sampleRead.getUnclippedEnd(), sampleRead.getUnclippedStart());
-        return readEnd >= start;
+        final int readEnd = read.isUnmapped() ? read.getUnclippedEnd() : Math.max(read.getUnclippedEnd(), read.getUnclippedStart());
+        return readEnd >= region.getStart();
     }
 
     /**

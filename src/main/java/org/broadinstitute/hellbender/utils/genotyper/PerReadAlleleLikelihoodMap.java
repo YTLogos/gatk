@@ -140,10 +140,10 @@ public final class PerReadAlleleLikelihoodMap {
      * In other words, that the read would be fully explained by one of the alleles.
      * This indicates that the allele should be something like the full haplotype from which the read might originate.
      *
-     * It further assumes that each error in the read occurs with likelihood of -3 (Q30 confidence per base).  So
-     * a read with a 10% error rate with Q30 bases that's 100 bp long we'd expect to see 10 real Q30 errors
-     * even against the true haplotype.  So for this read to be well modelled by at least one allele we'd expect
-     * a likelihood to be >= 10 * -3.
+     * It further assumes that each error in the read occurs with likelihood of -3 (Q30 confidence per base).
+     * So a read with a 10% error rate with Q30 bases that's 100 bp long we'd expect to see 10 real Q30 errors
+     * even against the true haplotype.
+     * So for this read to be well modelled by at least one allele we'd expect a likelihood to be >= 10 * -3.
      *
      * @param read                  the read we want to evaluate
      * @param log10Likelihoods      a list of the log10 likelihoods of the read against a set of haplotypes.
