@@ -352,8 +352,8 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         final int[] oldToNewAlleleIndexMap = oldToNewAlleleIndexMap(newToOldAlleleMap, oldAlleleCount, newAlleles);
 
         final int[][] readsToKeep = overlappingReadIndicesBySampleIndex(overlap);
-        // We calculate the marginal likelihoods.
 
+        // We calculate the marginal likelihoods.
         final double[][][] newLikelihoodValues = marginalLikelihoods(oldAlleleCount, newAlleleCount, oldToNewAlleleIndexMap, readsToKeep);
 
         final int sampleCount = samples.numberOfSamples();
@@ -378,9 +378,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         }
 
         // Finally we create the new read-likelihood
-        return new ReadLikelihoods<>(new IndexedAlleleList<>(newAlleles), samples,
-                newReadsBySampleIndex,
-                newReadIndexBySampleIndex, newLikelihoodValues);
+        return new ReadLikelihoods<>(new IndexedAlleleList<>(newAlleles), samples, newReadsBySampleIndex, newReadIndexBySampleIndex, newLikelihoodValues);
     }
 
     /**
@@ -398,7 +396,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <B extends Allele> ReadLikelihoods<B> marginalize(final Map<B, List<A>> newToOldAlleleMap) {
-        Utils.nonNull(newToOldAlleleMap);
+        Utils.nonNull(newToOldAlleleMap, "the input allele mapping cannot be null");
 
         final B[] newAlleles = newToOldAlleleMap.keySet().toArray((B[]) new Allele[newToOldAlleleMap.size()]);
         final int oldAlleleCount = alleles.numberOfAlleles();
@@ -421,11 +419,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         }
 
         // Finally we create the new read-likelihood
-        return new ReadLikelihoods<>(
-                new IndexedAlleleList(newAlleles),
-                samples,
-                newReadsBySampleIndex,
-                newReadIndexBySampleIndex, newLikelihoodValues);
+        return new ReadLikelihoods<>(new IndexedAlleleList<>(newAlleles), samples, newReadsBySampleIndex, newReadIndexBySampleIndex, newLikelihoodValues);
     }
 
     /**
@@ -445,19 +439,23 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         final double[][][] result = new double[sampleCount][][];
 
         for (int s = 0; s < sampleCount; s++) {
-            final int sampleReadCount = readsBySampleIndex[s].length;
+
+            final int oldSampleReadCount = readsBySampleIndex[s].length;
+            final int[] sampleReadToKeep = readsToKeep == null || readsToKeep[s].length == oldSampleReadCount ? null : readsToKeep[s];
+            final int newSampleReadCount = sampleReadToKeep == null ? oldSampleReadCount : sampleReadToKeep.length;
+
+            // old result and new target initialization
             final double[][] oldSampleValues = valuesBySampleIndex[s];
-            final int[] sampleReadToKeep = readsToKeep == null || readsToKeep[s].length == sampleReadCount ? null : readsToKeep[s];
-            final int newSampleReadCount = sampleReadToKeep == null ? sampleReadCount : sampleReadToKeep.length;
             final double[][] newSampleValues = result[s] = new double[newAlleleCount][newSampleReadCount];
             // We initiate all likelihoods to -Inf.
             for (int a = 0; a < newAlleleCount; a++) {
                 Arrays.fill(newSampleValues[a], Double.NEGATIVE_INFINITY);
             }
+
             // For each old allele and read we update the new table keeping the maximum likelihood.
             for (int r = 0; r < newSampleReadCount; r++) {
                 for (int a = 0; a < oldAlleleCount; a++) {
-                    final int oldReadIndex = newSampleReadCount == sampleReadCount ? r : sampleReadToKeep[r];
+                    final int oldReadIndex = newSampleReadCount == oldSampleReadCount ? r : sampleReadToKeep[r];
                     final int newAlleleIndex = oldToNewAlleleIndexMap[a];
                     if (newAlleleIndex == -1) {
                         continue;
@@ -469,6 +467,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
                 }
             }
         }
+
         return result;
     }
 
@@ -502,9 +501,10 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
     // -----------------------------------------------------------------------------------------------
 
     /**
+     * Returns a 2-D array with row-dimension representing samples, i.e. row count will be the same as sample count.
+     * The sub arrays will be a sample's reads' index that overlaps (with unclipping) the provided interval.
      *
-     * @param overlap
-     * @return
+     * @return {@code null} if the provided {@code overlap} is null
      */
     private int[][] overlappingReadIndicesBySampleIndex(final Locatable overlap) {
         if (overlap == null) {
@@ -530,6 +530,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
 
     /**
      * calculates an old to new allele index map array.
+     * -1 indicates the old allele doesn't map to any new allele.
      * @param newToOldAlleleMap
      * @param oldAlleleCount
      * @param newAlleles
