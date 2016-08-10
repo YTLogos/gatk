@@ -298,7 +298,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
                     sampleValues[a][readIndex] = 0;
                 }
             } else if (worstLikelihoodCap != Double.NEGATIVE_INFINITY) {
-                for (int a = 0; a < alleleCount; a++) { // cap all allele's likelihood from below (worstLikelihoodcap) and above (shift down by best likelihood) -> max would become 0
+                for (int a = 0; a < alleleCount; a++) { // first cap all allele's likelihood from below (worstLikelihoodcap) then shift down by best likelihood -> max would become 0
                     sampleValues[a][readIndex] = (sampleValues[a][readIndex] < worstLikelihoodCap ? worstLikelihoodCap : sampleValues[a][readIndex]) - bestAbsoluteLikelihood;
                 }
             } else { // shift down all likelihoods when ref is the best and all alt allele are bad (best alt allele has -\infty likelihood)
@@ -309,7 +309,7 @@ public final class ReadLikelihoods<A extends Allele> implements SampleList, Alle
         } else {
             // Guarantee to be the case by enclosing code.
             for (int a = 0; a < alleleCount; a++) {
-                if (sampleValues[a][readIndex] < worstLikelihoodCap) { // caps all alleles' (including ref) likelihood from below
+                if (sampleValues[a][readIndex] < worstLikelihoodCap) { // caps all alleles' (including ref if it's not the best) likelihood from below
                     sampleValues[a][readIndex] = worstLikelihoodCap;
                 }
             }

@@ -231,7 +231,8 @@ public abstract class PairHMM implements Closeable{
     }
 
     /**
-     * Compute the total probability of read arising from haplotypeBases given base substitution, insertion, and deletion
+     * Compute the total probability of read arising from {@code haplotypeBases} given
+     * base substitution, insertion, and deletion
      * probabilities.
      *
      * Note on using {@link #hapStartIndex}:
@@ -333,7 +334,7 @@ public abstract class PairHMM implements Closeable{
     }
 
     // -----------------------------------------------------------------------------------------------
-    // Abstract
+    // Abstract core method to be implemented
     // -----------------------------------------------------------------------------------------------
 
     /**
@@ -351,7 +352,7 @@ public abstract class PairHMM implements Closeable{
                                                                            final int nextHapStartIndex);
 
     // -----------------------------------------------------------------------------------------------
-    // trivial stuff
+    // trivia
     // -----------------------------------------------------------------------------------------------
     /**
      * Return the results of the computeLogLikelihoods function
@@ -365,7 +366,7 @@ public abstract class PairHMM implements Closeable{
         return max.isPresent()? max.getAsInt() : 0;
     }
 
-    static int findMaxReadLength(final List<GATKRead> reads) {
+    private static int findMaxReadLength(final List<GATKRead> reads) {
         final OptionalInt max = reads.stream().mapToInt(GATKRead::getLength).max();
         return max.isPresent()? max.getAsInt() : 0;
     }
