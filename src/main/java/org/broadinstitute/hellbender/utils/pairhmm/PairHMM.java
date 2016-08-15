@@ -212,11 +212,12 @@ public abstract class PairHMM implements Closeable{
             for (int a = 0; a < alleleCount; a++) {
                 final Allele allele = alleles.get(a);
                 final byte[] alleleBases = allele.getBases();
-                final byte[] nextAlleleBases = a == alleles.size() - 1 ? null : alleles.get(a + 1).getBases();
+                final byte[] nextAlleleBases = (a == alleles.size() - 1) ? null : alleles.get(a + 1).getBases();
 
                 final double lk = computeReadLikelihoodGivenHaplotypeLog10(alleleBases,
                                                                            readBases, readQuals, readInsQuals, readDelQuals,
-                                                                           overallGCP, isFirstHaplotype, nextAlleleBases);
+                                                                           overallGCP,
+                                                                           isFirstHaplotype, nextAlleleBases);
                 logLikelihoods.set(a, readIndex, lk);
                 mLogLikelihoodArray[idx++] = lk;
             }
@@ -239,7 +240,8 @@ public abstract class PairHMM implements Closeable{
      * This allows you to compute the exact true likelihood of a full haplotypes given a read,
      * assuming that the previous calculation read over a full haplotype, recaching the read values,
      * starting only at the place where the new haplotype bases and the previous haplotype bases differ.
-     * This index is 0-based, and can be computed with findFirstPositionWhereHaplotypesDiffer given the two haplotypes.
+     * This index is 0-based, and can be computed with {@link #findFirstPositionWhereHaplotypesDiffer(byte[], byte[])}
+     * given the two haplotypes.
      * Note that this assumes that the read and all associated quals values are the same.
      *
      * @param haplotypeBases    the full sequence (in standard SAM encoding) of the haplotype, must be >= than read bases in length

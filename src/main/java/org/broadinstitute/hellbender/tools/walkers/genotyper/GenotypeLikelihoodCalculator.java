@@ -43,45 +43,12 @@ public final class GenotypeLikelihoodCalculator {
     // -----------------------------------------------------------------------------------------------
 
     /**
-     * Offset table for this calculator.
-     *
-     * <p>
-     *     This is a shallow copy of {@link GenotypeLikelihoodCalculators#alleleFirstGenotypeOffsetByPloidy} when the calculator was created
-     *     thus it follows the same format as that array. Please refer to its documentation.
-     * </p>
-     *
-     * <p>You can assume that this offset table contain at least (probably more) the numbers corresponding to the allele count and ploidy for this calculator.
-     * However since it might have more than that and so you must use {@link #alleleCount} and {@link #ploidy} when
-     * iterating through this array rather that its length or the length of its components.</p>.
-     */
-    private final int[][] alleleFirstGenotypeOffsetByPloidy;
-
-    /**
-     * Genotype table for this calculator.
-     *
-     * <p>It is ensure that it contains all the genotypes for this calculator ploidy and allele count, maybe more. For
-     * that reason you must use {@link #genotypeCount} when iterating through this array and not relay on its length.</p>
-     */
-    private final GenotypeAlleleCounts[] genotypeAlleleCounts;
-
-    /**
      * Indicates how many reads the calculator supports.
      *
      * <p>This figure is increased dynamically as per the
      * calculation request calling {@link #ensureReadCapacity(int) ensureReadCapacity}.<p/>
      */
     private int readCapacity = -1;
-
-    /**
-     * Max-heap for integers used for this calculator internally.
-     */
-    private final PriorityQueue<Integer> alleleHeap;
-
-    /**
-     * Cache of the last genotype-allele-count requested using {@link #genotypeAlleleCountsAt(int)}, when it
-     * goes beyond the maximum genotype-allele-count static capacity. Check on that method documentation for details.
-     */
-    private GenotypeAlleleCounts lastOverheadCounts;
 
     /**
      * Buffer used as a temporary container for likelihood components for genotypes stratified by alleles, allele frequency and reads.
@@ -160,11 +127,12 @@ public final class GenotypeLikelihoodCalculator {
                                            final GenotypeAlleleCounts[][] genotypeTableByPloidy) {
         Utils.validateArg(ploidy > 0, () -> "ploidy must be at least 1 but was " + ploidy);
 
+        // initialize defining states
         this.alleleCount = alleleCount;
         this.ploidy = ploidy;
-        // The number of possible components is limited by distinct allele count and ploidy.
         maximumDistinctAllelesInGenotype = Math.min(ploidy, alleleCount);
 
+        // then initialize various cache facilitating computation
         this.alleleFirstGenotypeOffsetByPloidy = alleleFirstGenotypeOffsetByPloidy;
         genotypeAlleleCounts = genotypeTableByPloidy[ploidy];
 
@@ -218,7 +186,15 @@ public final class GenotypeLikelihoodCalculator {
      */
     private void ensureReadCapacity(final int requestedCapacity) {
         Utils.validateArg(requestedCapacity >= 0, "capacity may not be negative");
-        if (readCapacity == -1) { // first time call.
+        final int newCapacity = readCapacity == -1 ? Math.max(requestedCapacity, 10) : (requestedCapacity << 1);
+        readAlleleLikelihoodByAlleleCount = new double[newCapacity * alleleCount * (ploidy+1)];
+        for (int i = 0; i < genotypeCount; i++) {
+            readLikelihoodsByGenotypeIndex[i] = new double[newCapacity];
+        }
+        final int factor = readCapacity == -1 ? ploidy : maximumDistinctAllelesInGenotype;
+        readGenotypeLikelihoodComponents = new double[factor * newCapacity];
+        readCapacity = newCapacity; // simplified code compared to below
+        /*if (readCapacity == -1) { // first time call.
             final int minimumCapacity = Math.max(requestedCapacity, 10); // Never go too small, 10 is the minimum.
             readAlleleLikelihoodByAlleleCount = new double[minimumCapacity * alleleCount * (ploidy+1)];
             for (int i = 0; i < genotypeCount; i++) {
@@ -234,7 +210,7 @@ public final class GenotypeLikelihoodCalculator {
             }
             readGenotypeLikelihoodComponents = new double[maximumDistinctAllelesInGenotype * doubleCapacity];
             readCapacity = doubleCapacity;
-        }
+        }*/
     }
 
     /**
@@ -303,26 +279,6 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     /**
-     * Calculates the final genotype likelihood array out of the likelihoods for each genotype per read.
-     *
-     * @param readLikelihoodsByGenotypeIndex <i>[g][r]</i> likelihoods for each genotype <i>g</i> and <i>r</i>.
-     * @param readCount number of reads in the input likelihood arrays in {@code genotypeLikelihoodByRead}.
-     * @return never {@code null}, one position per genotype where the <i>i</i> entry is the likelihood of the ith
-     *   genotype (0-based).
-     */
-    private double[] genotypeLikelihoods(final double[][] readLikelihoodsByGenotypeIndex,
-                                         final int readCount) {
-        final double[] result = new double[genotypeCount];
-        final double denominator = readCount * MathUtils.log10(ploidy);
-        // instead of dividing each read likelihood by ploidy ( so subtract log10(ploidy) )
-        // we multiply them all and the divide by ploidy^readCount (so substract readCount * log10(ploidy) )
-        for (int g = 0; g < genotypeCount; g++) {
-            result[g] = MathUtils.sum(readLikelihoodsByGenotypeIndex[g], 0, readCount) - denominator;
-        }
-        return result;
-    }
-
-    /**
      * Calculates the likelihood component by read for a given genotype allele count assuming that there are
      * exactly one allele present in the genotype.
      */
@@ -388,6 +344,63 @@ public final class GenotypeLikelihoodCalculator {
             likelihoodByRead[r] = MathUtils.approximateLog10SumLog10(readGenotypeLikelihoodComponents, readDataOffset, readDataOffset + componentCount);
         }
     }
+
+    /**
+     * Calculates the final genotype likelihood array out of the likelihoods for each genotype per read.
+     *
+     * @param readLikelihoodsByGenotypeIndex <i>[g][r]</i> likelihoods for each genotype <i>g</i> and <i>r</i>.
+     * @param readCount number of reads in the input likelihood arrays in {@code genotypeLikelihoodByRead}.
+     * @return never {@code null}, one position per genotype where the <i>i</i> entry is the likelihood of the ith
+     *   genotype (0-based).
+     */
+    private double[] genotypeLikelihoods(final double[][] readLikelihoodsByGenotypeIndex,
+                                         final int readCount) {
+        final double[] result = new double[genotypeCount];
+        final double denominator = readCount * MathUtils.log10(ploidy);
+        // instead of dividing each read likelihood by ploidy ( so subtract log10(ploidy) )
+        // we multiply them all and the divide by ploidy^readCount (so substract readCount * log10(ploidy) )
+        for (int g = 0; g < genotypeCount; g++) {
+            result[g] = MathUtils.sum(readLikelihoodsByGenotypeIndex[g], 0, readCount) - denominator;
+        }
+        return result;
+    }
+
+    // -----------------------------------------------------------------------------------------------
+    // Various structs (cache, buffer) for accessors and transformers
+    // -----------------------------------------------------------------------------------------------
+
+    /**
+     * Offset table for this calculator.
+     *
+     * <p>
+     *     This is a shallow copy of {@link GenotypeLikelihoodCalculators#alleleFirstGenotypeOffsetByPloidy} when the calculator was created
+     *     thus it follows the same format as that array. Please refer to its documentation.
+     * </p>
+     *
+     * <p>You can assume that this offset table contain at least (probably more) the numbers corresponding to the allele count and ploidy for this calculator.
+     * However since it might have more than that and so you must use {@link #alleleCount} and {@link #ploidy} when
+     * iterating through this array rather that its length or the length of its components.</p>.
+     */
+    private final int[][] alleleFirstGenotypeOffsetByPloidy;
+
+    /**
+     * Genotype table for this calculator.
+     *
+     * <p>It is ensure that it contains all the genotypes for this calculator ploidy and allele count, maybe more. For
+     * that reason you must use {@link #genotypeCount} when iterating through this array and not relay on its length.</p>
+     */
+    private final GenotypeAlleleCounts[] genotypeAlleleCounts;
+
+    /**
+     * Max-heap for integers used for this calculator internally.
+     */
+    private final PriorityQueue<Integer> alleleHeap;
+
+    /**
+     * Cache of the last genotype-allele-count requested using {@link #genotypeAlleleCountsAt(int)}, when it
+     * goes beyond the maximum genotype-allele-count static capacity. Check on that method documentation for details.
+     */
+    private GenotypeAlleleCounts lastOverheadCounts;
 
     // -----------------------------------------------------------------------------------------------
     // Accessors and transformers
@@ -536,7 +549,7 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     // -----------------------------------------------------------------------------------------------
-    // Utilities: various others
+    // Utilities serving the accessors and transformers
     // -----------------------------------------------------------------------------------------------
 
     /**
