@@ -19,11 +19,6 @@ public final class GenotypeLikelihoodCalculator {
     // -----------------------------------------------------------------------------------------------
 
     /**
-     * Number of genotypes given this calculator {@link #ploidy} and {@link #alleleCount}.
-     */
-    private final int genotypeCount;
-
-    /**
      * Number of genotyping alleles for this calculator.
      */
     private final int alleleCount;
@@ -34,13 +29,14 @@ public final class GenotypeLikelihoodCalculator {
     private final int ploidy;
 
     /**
+     * Number of genotypes given this calculator {@link #ploidy} and {@link #alleleCount}.
+     */
+    private final int genotypeCount;
+
+    /**
      * Maximum number of components (or distinct alleles) for any genotype with this calculator ploidy and allele count.
      */
     private int maximumDistinctAllelesInGenotype;
-
-    // -----------------------------------------------------------------------------------------------
-    // Various structs (cache, buffer) for computation
-    // -----------------------------------------------------------------------------------------------
 
     /**
      * Indicates how many reads the calculator supports.
@@ -50,70 +46,8 @@ public final class GenotypeLikelihoodCalculator {
      */
     private int readCapacity = -1;
 
-    /**
-     * Buffer used as a temporary container for likelihood components for genotypes stratified by alleles, allele frequency and reads.
-     *
-     * <p>To improve performance we use a 1-dimensional array to implement a 3-dimensional one as some of those dimension
-     * have typically very low depths (allele and allele frequency)</p>
-     *
-     * <p>
-     *     The value contained in position <code>[a][f][r] == log10Lk(read[r] | allele[a]) + log10(f) </code>. Exception is
-     *     for f == 0 whose value is undefined (in practice 0.0) and never used.
-     * </p>
-     *
-     * <p>
-     *     It is indexed by read, then by allele and then by the number of copies of the allele. For the latter
-     *     there are as many entries as the ploidy of the calculator + 1 (to accommodate zero copies although is
-     *     never used in practice).
-     * </p>
-     */
-    private double[] readAlleleLikelihoodByAlleleCount = null;
-
-    /**
-     * Buffer used as a temporary container for likelihood components for genotypes stratified by reads.
-     *
-     * <p>
-     *     It is indexed by genotype index and then by read index. The read capacity is increased as needed by calling
-     *     {@link #ensureReadCapacity(int) ensureReadCapacity}.
-     * </p>
-     */
-    private final double[][] readLikelihoodsByGenotypeIndex;
-
-    /**
-     * Buffer field use as a temporal container for sorted allele counts when calculating the likelihood of a
-     * read in a genotype.
-     * <p>
-     *      This array follows the same format as {@link GenotypeAlleleCounts#sortedAlleleCounts}. Each component in the
-     *      genotype takes up two positions in the array where the first indicate the allele index and the second its frequency in the
-     *      genotype. Only non-zero frequency alleles are represented, taking up the first positions of the array.
-     * </p>
-     *
-     * <p>
-     *     This array is sized so that it can accommodate the maximum possible number of distinct alleles in any
-     *     genotype supported by the calculator, value stored in {@link #maximumDistinctAllelesInGenotype}.
-     * </p>
-     */
-    private final int[] genotypeAllelesAndCounts;
-
-    /**
-     * Buffer field use as a temporal container for component likelihoods when calculating the likelihood of a
-     * read in a genotype. It is stratified by read and the allele component of the genotype likelihood... that is
-     * the part of the likelihood sum that correspond to a particular allele in the genotype.
-     *
-     * <p>
-     *     It is implemented in a 1-dimensional array since typically one of the dimensions is rather small. Its size
-     *     is equal to {@link #readCapacity} times {@link #maximumDistinctAllelesInGenotype}.
-     * </p>
-     *
-     * <p>
-     *     More concretely [r][i] == log10Lk(read[r] | allele[i]) + log(freq[i]) where allele[i] is the ith allele
-     *     in the genotype of interest and freq[i] is the number of times it occurs in that genotype.
-     * </p>
-     */
-    private double[] readGenotypeLikelihoodComponents;
-
     // -----------------------------------------------------------------------------------------------
-    // CORE
+    // CORE Interface
     // -----------------------------------------------------------------------------------------------
 
     /**
@@ -177,7 +111,7 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     // -----------------------------------------------------------------------------------------------
-    // Utilities serving core, in the order they are called on duty
+    // Actual mathematical calculations
     // -----------------------------------------------------------------------------------------------
 
     /**
@@ -186,39 +120,61 @@ public final class GenotypeLikelihoodCalculator {
      */
     private void ensureReadCapacity(final int requestedCapacity) {
         Utils.validateArg(requestedCapacity >= 0, "capacity may not be negative");
-        final int newCapacity = readCapacity == -1 ? Math.max(requestedCapacity, 10) : (requestedCapacity << 1);
+        final int newCapacity = readCapacity == -1 ? Math.max(requestedCapacity, 10) : (requestedCapacity*2);
+
+        // expand the 1-d array implementation of the 3-D matrix
         readAlleleLikelihoodByAlleleCount = new double[newCapacity * alleleCount * (ploidy+1)];
+
+        // expand the 2-D matrix m[g_i][r_j]
         for (int i = 0; i < genotypeCount; i++) {
             readLikelihoodsByGenotypeIndex[i] = new double[newCapacity];
         }
+
+        // expand the 1-D array of genotype likelihoods
         final int factor = readCapacity == -1 ? ploidy : maximumDistinctAllelesInGenotype;
         readGenotypeLikelihoodComponents = new double[factor * newCapacity];
-        readCapacity = newCapacity; // simplified code compared to below
-        /*if (readCapacity == -1) { // first time call.
-            final int minimumCapacity = Math.max(requestedCapacity, 10); // Never go too small, 10 is the minimum.
-            readAlleleLikelihoodByAlleleCount = new double[minimumCapacity * alleleCount * (ploidy+1)];
-            for (int i = 0; i < genotypeCount; i++) {
-                readLikelihoodsByGenotypeIndex[i] = new double[minimumCapacity];
-            }
-            readGenotypeLikelihoodComponents = new double[ploidy * minimumCapacity];
-            readCapacity = minimumCapacity;
-        } else if (readCapacity < requestedCapacity) {
-            final int doubleCapacity = (requestedCapacity << 1);
-            readAlleleLikelihoodByAlleleCount = new double[doubleCapacity * alleleCount * (ploidy+1)];
-            for (int i = 0; i < genotypeCount; i++) {
-                readLikelihoodsByGenotypeIndex[i] = new double[doubleCapacity];
-            }
-            readGenotypeLikelihoodComponents = new double[maximumDistinctAllelesInGenotype * doubleCapacity];
-            readCapacity = doubleCapacity;
-        }*/
+
+        readCapacity = newCapacity;
     }
 
     /**
-     * Returns a 3rd matrix with the likelihood components.
+     * Buffer used as a temporary container for likelihood components for genotypes stratified by alleles, allele frequency and reads.
+     *
+     * <p>
+     *     The value contained in position <code>[a][f][r] == log10Lk(read[r] | allele[a]) + log10(f) </code>. Exception is
+     *     for f == 0 whose value is undefined (in practice 0.0) and never used.
+     * </p>
+     *
+     * <p>
+     *     It is indexed by read, then by allele and then by the number of copies of the allele. For the latter
+     *     there are as many entries as the ploidy of the calculator + 1 (to accommodate zero copies although is
+     *     never used in practice).
+     * </p>
+     *
+     * <p>To improve performance we use a 1-dimensional array to implement a 3-dimensional one as some of those dimension
+     * have typically very low depths (allele and allele frequency)</p>
+     *
+     * Suppose there are N reads, A alleles, and ploidy is P. For each allele, a_i, there is N*(P+1) entries of likelihoods
+     * {r_1, r_2, ..., r_N}, ..., {r_1, r_2, ..., r_N}  ...  {r_1, r_2, ..., r_N}, ..., {r_1, r_2, ..., r_N}
+     * |__________________|       |__________________|  ...  |__________________|       |__________________|
+     *           |                          |                          |                          |
+     *          f=0          ...           f=P                        f=0          ...           f=P
+     *           |__________________________|                          |__________________________|
+     *                        |                                                     |
+     *                    allele_1                                              allele_A
+     *                        |_____________________________________________________|
+     *                                                   |
+     *                                               A of them
+     */
+    private double[] readAlleleLikelihoodByAlleleCount = null;
+
+    /**
+     * Fills {@link #readAlleleLikelihoodByAlleleCount} with the likelihood components and return it.
      *
      * <pre>
      *     result[y][z][x] :=  z * lnLk ( read_x | allele_y ).
      * </pre>
+     * where z is the allele frequency/count.
      *
      * @return never {@code null}.
      */
@@ -228,13 +184,14 @@ public final class GenotypeLikelihoodCalculator {
 
         // frequency1Offset = readCount to skip the useless frequency == 0. So now we are at the start frequency == 1
         // frequency1Offset += alleleDataSize to skip to the next allele index data location (+ readCount) at each iteration.
-        for (int a = 0, frequency1Offset = readCount; a < alleleCount; a++, frequency1Offset += alleleDataSize) {
+        for (int a = 0, frequency1Offset = readCount; a < alleleCount; a++, frequency1Offset += alleleDataSize) {           // each allele
+
             likelihoods.copyAlleleLikelihoods(a, readAlleleLikelihoodByAlleleCount, frequency1Offset);
 
             // p = 2 because the frequency == 1 we already have it.
-            for (int frequency = 2, destinationOffset = frequency1Offset + readCount; frequency <= ploidy; frequency++) {
+            for (int frequency = 2, destinationOffset = frequency1Offset + readCount; frequency <= ploidy; frequency++) {   // each possible allele frequency/count for this allele
                 final double log10frequency = MathUtils.log10(frequency);
-                for (int r = 0, sourceOffset = frequency1Offset; r < readCount; r++) {
+                for (int r = 0, sourceOffset = frequency1Offset; r < readCount; r++) {                                      // each read under this allele frequency/count
                     readAlleleLikelihoodByAlleleCount[destinationOffset++] =
                             readAlleleLikelihoodByAlleleCount[sourceOffset++] + log10frequency;
                 }
@@ -242,6 +199,16 @@ public final class GenotypeLikelihoodCalculator {
         }
         return readAlleleLikelihoodByAlleleCount;
     }
+
+    /**
+     * Buffer used as a temporary container for likelihood components for genotypes stratified by reads.
+     *
+     * <p>
+     *     It is indexed by genotype index and then by read index. The read capacity is increased as needed by calling
+     *     {@link #ensureReadCapacity(int) ensureReadCapacity}.
+     * </p>
+     */
+    private final double[][] readLikelihoodsByGenotypeIndex;
 
     /**
      * Calculates the likelihood component of each read on each genotype.
@@ -259,17 +226,20 @@ public final class GenotypeLikelihoodCalculator {
         GenotypeAlleleCounts alleleCounts = genotypeAlleleCounts[0];
 
         for (int genotypeIndex = 0; genotypeIndex < genotypeCount; genotypeIndex++) {
+
+            // target container for extracting read likelihoods from input {@code readLikelihoodComponentsByAlleleCount}
             final double[] readLikelihoods = this.readLikelihoodsByGenotypeIndex[genotypeIndex];
+
             final int componentCount = alleleCounts.distinctAlleleCount();
             switch (componentCount) {
                 case 1: //
-                    singleComponentGenotypeLikelihoodByRead(alleleCounts, readLikelihoods, readLikelihoodComponentsByAlleleCount, readCount);
+                    singleComponentGenotypeLikelihoodByRead(alleleCounts,readLikelihoods,readLikelihoodComponentsByAlleleCount,readCount);
                     break;
                 case 2:
-                    twoComponentGenotypeLikelihoodByRead(alleleCounts,readLikelihoods,readLikelihoodComponentsByAlleleCount, readCount);
+                    twoComponentGenotypeLikelihoodByRead(alleleCounts,readLikelihoods,readLikelihoodComponentsByAlleleCount,readCount);
                     break;
                 default:
-                    manyComponentGenotypeLikelihoodByRead(alleleCounts,readLikelihoods,readLikelihoodComponentsByAlleleCount, readCount);
+                    manyComponentGenotypeLikelihoodByRead(alleleCounts,readLikelihoods,readLikelihoodComponentsByAlleleCount,readCount);
             }
             if (genotypeIndex < genotypeCount - 1) {
                 alleleCounts = nextGenotypeAlleleCounts(alleleCounts);
@@ -286,9 +256,12 @@ public final class GenotypeLikelihoodCalculator {
                                                          final double[] likelihoodByRead,
                                                          final double[] readLikelihoodComponentsByAlleleCount,
                                                          final int readCount) {
-        final int allele = genotypeAlleleCounts.alleleIndexAt(0);
+        final int alleleIndex = genotypeAlleleCounts.alleleIndexAt(0);
         // the count of the only component must be = ploidy.
-        int offset = (allele * (ploidy + 1) + ploidy) * readCount;
+        // an easier to understand but more verbose way is to write: alleleIndex * (ploidy + 1) * readCount + frequency * readCount,
+        // where the first term is to skip the first several alleles preceding the single allele present in this genotype,
+        // and the second term is to go directly to the case that the allele frequency/count for a hom genotype is simply its ploidy
+        int offset = (alleleIndex * (ploidy + 1) + ploidy) * readCount;
         for (int r = 0; r < readCount; r++) {
             likelihoodByRead[r] = readLikelihoodComponentsByAlleleCount[offset++];
         }
@@ -296,24 +269,61 @@ public final class GenotypeLikelihoodCalculator {
 
     /**
      * Calculates the likelihood component by read for a given genotype allele count assuming that there are
-     * exactly two alleles present in the genotype (with arbitrary non-zero counts each).
+     * exactly two alleles present in the genotype (with arbitrary non-zero counts each and counts adding up to ploidy).
      */
     private void twoComponentGenotypeLikelihoodByRead(final GenotypeAlleleCounts genotypeAlleleCounts,
                                                       final double[] likelihoodByRead,
                                                       final double[] readLikelihoodComponentsByAlleleCount,
                                                       final int readCount) {
+
         final int allele0 = genotypeAlleleCounts.alleleIndexAt(0);
-        final int freq0 = genotypeAlleleCounts.alleleCountAt(0);
+        final int freq0   = genotypeAlleleCounts.alleleCountAt(0);
         final int allele1 = genotypeAlleleCounts.alleleIndexAt(1);
         final int freq1 = ploidy - freq0; // no need to get it from genotypeAlleleCounts.
+
         int allele0LnLkOffset = readCount * ((ploidy + 1) * allele0 + freq0);
         int allele1LnLkOffset = readCount * ((ploidy + 1) * allele1 + freq1);
+
         for (int r = 0; r < readCount; r++) {
             final double lnLk0 = readLikelihoodComponentsByAlleleCount[allele0LnLkOffset++];
             final double lnLk1 = readLikelihoodComponentsByAlleleCount[allele1LnLkOffset++];
             likelihoodByRead[r] = MathUtils.approximateLog10SumLog10(lnLk0, lnLk1);
         }
     }
+
+    /**
+     * Buffer field use as a temporary container for component likelihoods when calculating the likelihood of a
+     * read in a genotype. It is stratified by read and the allele component of the genotype likelihood... that is
+     * the part of the likelihood sum that correspond to a particular allele in the genotype.
+     *
+     * <p>
+     *     It is implemented in a 1-dimensional array since typically one of the dimensions is rather small.
+     *     Its size is equal to {@link #readCapacity} times {@link #maximumDistinctAllelesInGenotype}.
+     * </p>
+     *
+     * <p>
+     *     More concretely [r][i] == log10Lk(read[r] | allele[i]) + log(freq[i]) where allele[i] is the ith allele
+     *     in the genotype of interest and freq[i] is the number of times it occurs in that genotype.
+     * </p>
+     */
+    private double[] readGenotypeLikelihoodComponents;
+
+    /**
+     * Buffer field use as a temporary container for sorted allele counts when calculating the likelihood of a
+     * read in a genotype.
+     * <p>
+     *      This array follows the same format as {@link GenotypeAlleleCounts#sortedAlleleCounts}. Each component in the
+     *      genotype takes up two positions in the array where the first indicate the allele index and the second its frequency in the
+     *      genotype. Only non-zero frequency alleles are represented, taking up the first positions of the array.
+     * </p>
+     *
+     * <p>
+     *     This array is sized so that it can accommodate the maximum possible number of distinct alleles in any
+     *     genotype supported by the calculator, value stored in {@link #maximumDistinctAllelesInGenotype}.
+     *     So it is not necessary to dynamically change its capacity via {@link #ensureReadCapacity(int)}.
+     * </p>
+     */
+    private final int[] genotypeAllelesAndCounts;
 
     /**
      * General genotype likelihood component by read calculator. It does not make any assumption in the exact
@@ -348,17 +358,17 @@ public final class GenotypeLikelihoodCalculator {
     /**
      * Calculates the final genotype likelihood array out of the likelihoods for each genotype per read.
      *
-     * @param readLikelihoodsByGenotypeIndex <i>[g][r]</i> likelihoods for each genotype <i>g</i> and <i>r</i>.
-     * @param readCount number of reads in the input likelihood arrays in {@code genotypeLikelihoodByRead}.
-     * @return never {@code null}, one position per genotype where the <i>i</i> entry is the likelihood of the ith
-     *   genotype (0-based).
+     * @param readLikelihoodsByGenotypeIndex    <i>[g][r]</i> likelihoods for each genotype <i>g</i> and <i>r</i>.
+     * @param readCount                         number of reads in the input likelihood arrays in {@code genotypeLikelihoodByRead}.
+     * @return                                  never {@code null}, one position per genotype where the <i>i</i> entry is
+     *                                          the likelihood of the ith genotype (0-based).
      */
     private double[] genotypeLikelihoods(final double[][] readLikelihoodsByGenotypeIndex,
                                          final int readCount) {
         final double[] result = new double[genotypeCount];
         final double denominator = readCount * MathUtils.log10(ploidy);
         // instead of dividing each read likelihood by ploidy ( so subtract log10(ploidy) )
-        // we multiply them all and the divide by ploidy^readCount (so substract readCount * log10(ploidy) )
+        // we multiply them all and the divide by ploidy^readCount (so subtract readCount * log10(ploidy) )
         for (int g = 0; g < genotypeCount; g++) {
             result[g] = MathUtils.sum(readLikelihoodsByGenotypeIndex[g], 0, readCount) - denominator;
         }
@@ -605,7 +615,7 @@ public final class GenotypeLikelihoodCalculator {
     }
 
     /**
-     *
+     * Given an {@link GenotypeAlleleCounts} object, find its next by querying the cache table.
      * @param alleleCounts
      * @return
      */
