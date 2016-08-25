@@ -39,4 +39,16 @@ public final class BwaSparkIntegrationTest extends CommandLineProgramTest {
         SamAssertionUtils.assertSamsEqual(new File(output, "part-r-00000.bam"), expectedSam);
     }
 
+    @Test
+    public void testUnkownSamFormat(){
+        final File input = new File("test.sam");
+        final File output = new File("out.bam");
+        ArgumentsBuilder args = new ArgumentsBuilder();
+        args.addInput(input);
+        args.addOutput(output);
+        args.addReference(new File(b37_reference_20_21));
+        args.addBooleanArgument("disableSequenceDictionaryValidation", true);
+        this.runCommandLine(args.getArgsArray());
+    }
+
 }
