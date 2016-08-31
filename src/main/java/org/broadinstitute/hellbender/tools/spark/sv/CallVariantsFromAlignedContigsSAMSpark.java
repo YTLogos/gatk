@@ -21,7 +21,8 @@ import scala.Tuple2;
 import java.util.List;
 import java.util.Optional;
 
-import static org.broadinstitute.hellbender.tools.spark.sv.CallVariantsFromAlignedContigsSpark.*;
+import static org.broadinstitute.hellbender.tools.spark.sv.CallVariantsFromAlignedContigsSpark.DEFAULT_MIN_ALIGNMENT_LENGTH;
+import static org.broadinstitute.hellbender.tools.spark.sv.CallVariantsFromAlignedContigsSpark.callVariantsFromAlignmentRegionsAndWriteVariants;
 
 /**
  * This tool takes a SAM file containing the alignments of assembled contigs or long reads to the reference
