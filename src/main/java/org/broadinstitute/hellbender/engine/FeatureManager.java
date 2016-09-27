@@ -80,7 +80,7 @@ public final class FeatureManager implements AutoCloseable {
      * The tool instance containing the FeatureInput argument values that will form the basis of our
      * pool of FeatureDataSources
      */
-    private final CommandLineProgram toolInstance;
+    private transient final CommandLineProgram toolInstance;
 
     /**
      * Mapping from FeatureInput argument to query-able FeatureDataSource for that source of Features
