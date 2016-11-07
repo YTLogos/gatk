@@ -6,6 +6,7 @@ import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.util.Locatable;
 import htsjdk.tribble.Feature;
+import htsjdk.variant.utils.SAMSequenceDictionaryExtractor;
 import htsjdk.variant.variantcontext.writer.Options;
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
 import org.broadinstitute.hellbender.cmdline.Argument;
@@ -48,6 +49,9 @@ public abstract class GATKTool extends CommandLineProgram {
 
     @Argument(fullName = "disableSequenceDictionaryValidation", shortName = "disableSequenceDictionaryValidation", doc = "If specified, do not check the sequence dictionaries from our inputs for compatibility. Use at your own risk!", optional = true)
     private boolean disableSequenceDictionaryValidation = false;
+
+    @Argument(fullName = "sequenceDictionary", shortName = "sequenceDictionary", optional = true, doc = "The master sequence dictionary (.dict) to use for this tool. Overrides any embedded sequence dictionaries found in tool inputs")
+    private String inputSequenceDictionary;
 
     @Argument(fullName=StandardArgumentDefinitions.CREATE_OUTPUT_BAM_INDEX_LONG_NAME,
             shortName=StandardArgumentDefinitions.CREATE_OUTPUT_BAM_INDEX_SHORT_NAME,
@@ -187,7 +191,7 @@ public abstract class GATKTool extends CommandLineProgram {
         if ( intervalArgumentCollection.intervalsSpecified() ) {
             final SAMSequenceDictionary sequenceDictionary = getBestAvailableSequenceDictionary();
             if ( sequenceDictionary == null ) {
-                throw new UserException("We currently require a sequence dictionary (from a reference, a source of reads, or a source of variants) " +
+                throw new UserException("We currently require a sequence dictionary (from a dictionary, a reference, a source of reads, or a source of variants) " +
                                         "to process intervals. This restriction may be removed in the future.");
             }
 
@@ -279,10 +283,11 @@ public abstract class GATKTool extends CommandLineProgram {
      * Returns the "best available" sequence dictionary or {@code null} if there is no single best dictionary.
      *
      * The algorithm for selecting the best dictionary is as follows:
-     * 1) if there is a reference, then the best dictionary is the reference sequence dictionary
-     * 2) Otherwise, if there are reads, then the best dictionary is the sequence dictionary constructed from the reads.
-     * 3) Otherwise, if there are features and the feature data source has only one dictionary, then that one is the best dictionary.
-     * 4) Otherwise, the result is {@code null}.
+     * 1) if a dictionary is explicitly specified, use that
+     * 2) if there is a reference, then the best dictionary is the reference sequence dictionary
+     * 3) Otherwise, if there are reads, then the best dictionary is the sequence dictionary constructed from the reads.
+     * 4) Otherwise, if there are features and the feature data source has only one dictionary, then that one is the best dictionary.
+     * 5) Otherwise, the result is {@code null}.
      *
      * TODO: check interval file(s) as well for a sequence dictionary
      *
@@ -291,13 +296,19 @@ public abstract class GATKTool extends CommandLineProgram {
      * @return best available sequence dictionary given our inputs or {@code null} if no one dictionary is the best one.
      */
     public SAMSequenceDictionary getBestAvailableSequenceDictionary() {
+        // TODO - should we cache this rather than regenerating it each time ? it could be large, i.e. hg38
+        if (inputSequenceDictionary != null) {
+            // this will extract a sequence dictionary from practically anything (.fasta, reads, vcf)
+            // should we restrict it to ".dict"
+            return SAMSequenceDictionaryExtractor.extractDictionary((new File(inputSequenceDictionary)));
+        }
         if (hasReference()){
             return reference.getSequenceDictionary();
         } else if (hasReads()){
             return reads.getSequenceDictionary();
         } else if (hasFeatures()){
             final List<SAMSequenceDictionary> dictionaries = features.getVariantSequenceDictionaries();
-            //If there is just one, it clearly is the best. Otherwise, noone is best.
+            //If there is just one, it clearly is the best. Otherwise, none is best.
             if (dictionaries.size() == 1){
                 return dictionaries.get(0);
             }

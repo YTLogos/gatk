@@ -268,6 +268,25 @@ public final class GATKToolUnitTest extends BaseTest{
     }
 
     @Test
+    public void testBestSequenceDictionary_fromDictionary() throws Exception {
+        final GATKTool tool = new TestGATKToolWithReads();
+        final CommandLineParser clp = new CommandLineParser(tool);
+        final File bamFile = new File(publicTestDir + "org/broadinstitute/hellbender/engine/reads_data_source_test1.bam");
+        final String[] args = {"-I", bamFile.getCanonicalPath(),
+                                "--sequenceDictionary", "testDict"};
+        clp.parseArguments(System.out, args);
+        tool.onStartup();
+        //read the dict back in and compare to bam dict
+        final SAMSequenceDictionary toolDict = tool.getBestAvailableSequenceDictionary();
+        try(final SamReader open = SamReaderFactory.makeDefault().open(bamFile)) {
+            final SAMSequenceDictionary bamDict = open.getFileHeader().getSequenceDictionary();
+            toolDict.assertSameDictionary(bamDict);
+            bamDict.assertSameDictionary(toolDict);
+            Assert.assertEquals(toolDict, bamDict);
+        }
+    }
+
+    @Test
     public void testBestSequenceDictionary_fromReads() throws Exception {
         final GATKTool tool = new TestGATKToolWithReads();
         final CommandLineParser clp = new CommandLineParser(tool);
@@ -302,6 +321,14 @@ public final class GATKToolUnitTest extends BaseTest{
         fastaDict.assertSameDictionary(toolDict);
 
         Assert.assertEquals(toolDict, fastaDict);
+    }
+
+    @DataProvider(name="sequenceDictionaryTests")
+    public Object[][] createSequenceDictionaryTestData() {
+        return new Object[][]{
+                //inputs, dictionary, expectedDictionary
+                {new File(publicTestDir, "org/broadinstitute/hellbender/engine/example_variants.vcf"), ".vcf", ".idx", true, true},
+        };
     }
 
     @Test
