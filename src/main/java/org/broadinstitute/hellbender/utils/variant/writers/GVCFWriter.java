@@ -14,7 +14,6 @@ public final class GVCFWriter implements VariantContextWriter {
 
     /** Where we'll ultimately write our VCF records */
     private final VariantContextWriter underlyingWriter;
-
     private final GVCFBlockCombiner gvcfBlockCombiner;
 
     /**
@@ -36,8 +35,12 @@ public final class GVCFWriter implements VariantContextWriter {
      * @param defaultPloidy    the assumed ploidy for input variant context without one.
      */
     public GVCFWriter(final VariantContextWriter underlyingWriter, final List<Integer> gqPartitions, final int defaultPloidy) {
+        this( underlyingWriter, new GVCFBlockCombiner(gqPartitions, defaultPloidy));
+    }
+
+    public GVCFWriter(final VariantContextWriter underlyingWriter, GVCFBlockCombiner combiner) {
         this.underlyingWriter = Utils.nonNull(underlyingWriter);
-        this.gvcfBlockCombiner = new GVCFBlockCombiner(gqPartitions, defaultPloidy);
+        this.gvcfBlockCombiner = Utils.nonNull(combiner);
     }
 
     /**

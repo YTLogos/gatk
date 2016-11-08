@@ -69,7 +69,7 @@ public final class GVCFBlockCombiner implements PushPullTransformer<VariantConte
         return result;
     }
 
-    void addRangesToHeader(VCFHeader header) {
+    public void addRangesToHeader(VCFHeader header) {
         Utils.nonNull(header, "header cannot be null");
 
         header.addMetaDataLine(VCFStandardHeaderLines.getInfoLine(VCFConstants.END_KEY));
