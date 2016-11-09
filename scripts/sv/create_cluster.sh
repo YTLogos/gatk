@@ -16,7 +16,7 @@ gcloud dataproc clusters create ${CLUSTER_NAME} \
     --master-boot-disk-size 500 \
     --worker-boot-disk-size 500 \
     --num-workers 10 \
-    --image-version 1.0 \
+    --image-version 1.1 \
     --project ${PROJECT} \
     --initialization-actions gs://${INITIALIZATION_BUCKET}/initialization_scripts/dataproc_initialization.sh \
     --initialization-action-timeout 60m
