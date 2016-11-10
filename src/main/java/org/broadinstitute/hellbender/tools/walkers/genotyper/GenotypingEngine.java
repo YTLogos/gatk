@@ -30,8 +30,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
 
     protected final AFCalculator newAFCalculator;
 
-    protected final AFCalculatorProvider afCalculatorProvider;
-
     protected final Config configuration;
 
     protected VariantAnnotatorEngine annotationEngine;
@@ -58,11 +56,9 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
      * @throws IllegalArgumentException if any of {@code samples}, {@code configuration} is {@code null}.
      */
     protected GenotypingEngine(final Config configuration,
-                               final SampleList samples,
-                               final AFCalculatorProvider afCalculatorProvider) {
+                               final SampleList samples) {
         this.configuration = Utils.nonNull(configuration, "the configuration cannot be null");
         this.samples = Utils.nonNull(samples, "the sample list cannot be null");
-        this.afCalculatorProvider = Utils.nonNull(afCalculatorProvider, "the AF calculator provider cannot be null");
         logger = LogManager.getLogger(getClass());
         numberOfGenomes = this.samples.numberOfSamples() * configuration.genotypeArgs.samplePloidy;
         log10AlleleFrequencyPriorsSNPs = composeAlleleFrequencyPriorProvider(numberOfGenomes,
@@ -243,9 +239,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         }
 
 
-        final AFCalculator afCalculator = configuration.genotypeArgs.USE_NEW_AF_CALCULATOR ? newAFCalculator
-                : afCalculatorProvider.getInstance(vc,defaultPloidy,maxAltAlleles);
-        final AFCalculationResult AFresult = afCalculator.getLog10PNonRef(reducedVC, defaultPloidy,maxAltAlleles, getAlleleFrequencyPriors(vc,defaultPloidy,model));
+        final AFCalculationResult AFresult = newAFCalculator.getLog10PNonRef(reducedVC, defaultPloidy,maxAltAlleles, getAlleleFrequencyPriors(vc,defaultPloidy,model));
         final OutputAlleleSubset outputAlternativeAlleles = calculateOutputAlleleSubset(AFresult, vc);
 
         // posterior probability that at least one alt allele exists in the samples

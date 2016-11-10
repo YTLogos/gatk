@@ -2,7 +2,6 @@ package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
 import htsjdk.variant.variantcontext.Allele;
 import org.broadinstitute.hellbender.exceptions.UserException;
-import org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc.AFCalculatorProvider;
 import org.broadinstitute.hellbender.utils.genotyper.SampleList;
 
 
@@ -19,9 +18,8 @@ public final class MinimalGenotypingEngine extends GenotypingEngine<UnifiedArgum
      * @param configuration the UG configuration.
      * @param samples list of samples
      */
-    public MinimalGenotypingEngine(final UnifiedArgumentCollection configuration, final SampleList samples,
-                                    final AFCalculatorProvider afCalculatorProvider ) {
-        super(configuration, samples, afCalculatorProvider);
+    public MinimalGenotypingEngine(final UnifiedArgumentCollection configuration, final SampleList samples ) {
+        super(configuration, samples);
 
         if ( configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES ) {
             throw new UserException("GENOTYPE_GIVEN_ALLELES mode not supported in the MinimalGenotypingEngine");
