@@ -7,11 +7,9 @@ import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.ArgumentCollection;
 import org.broadinstitute.barclay.argparser.Hidden;
 import org.broadinstitute.hellbender.engine.FeatureInput;
-import org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc.AFCalculatorImplementation;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.io.File;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
@@ -20,28 +18,6 @@ import java.util.Map;
  */
 public class StandardCallerArgumentCollection implements Serializable {
     private static final long serialVersionUID = 1L;
-
-    /**
-     * Copies the values from other into this StandardCallerArgumentCollection
-     *
-     * @param other StandardCallerArgumentCollection from which to copy values
-     */
-    public void copyStandardCallerArgsFrom( final StandardCallerArgumentCollection other ) {
-        Utils.nonNull(other);
-
-        this.genotypeArgs = new GenotypeCalculationArgumentCollection(other.genotypeArgs);
-        this.genotypingOutputMode = other.genotypingOutputMode;
-        this.alleles = other.alleles; // FeatureInputs are immutable outside of the engine, so this shallow copy is safe
-        this.CONTAMINATION_FRACTION = other.CONTAMINATION_FRACTION;
-        this.CONTAMINATION_FRACTION_FILE = other.CONTAMINATION_FRACTION_FILE != null ? new File(other.CONTAMINATION_FRACTION_FILE.getAbsolutePath()) : null;
-        if ( other.sampleContamination != null ) {
-            setSampleContamination(other.sampleContamination);
-        }
-        this.requestedAlleleFrequencyCalculationModel = other.requestedAlleleFrequencyCalculationModel;
-        this.exactCallsLog = other.exactCallsLog != null ? new File(other.exactCallsLog.getAbsolutePath()) : null;
-        this.outputMode = other.outputMode;
-        this.annotateAllSitesWithPLs = other.annotateAllSitesWithPLs;
-    }
 
     @ArgumentCollection
     public GenotypeCalculationArgumentCollection genotypeArgs = new GenotypeCalculationArgumentCollection();
@@ -104,13 +80,6 @@ public class StandardCallerArgumentCollection implements Serializable {
         this.sampleContamination = new DefaultedMap<>(CONTAMINATION_FRACTION);  //NOTE: a bit weird because it ignores the default from the argument and uses ours
         this.sampleContamination.putAll(sampleContamination);                   //make a copy to be safe
     }
-
-    /**
-     * Controls the model used to calculate the probability that a site is variant plus the various sample genotypes in the data at a given locus.
-     */
-    @Hidden
-    @Argument(fullName = "p_nonref_model", shortName = "pnrm", doc = "Non-reference probability calculation model to employ", optional = true)
-    public AFCalculatorImplementation requestedAlleleFrequencyCalculationModel;
 
     @Hidden
     @Argument(shortName = "logExactCalls", doc="x", optional=true)

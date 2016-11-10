@@ -39,11 +39,6 @@ public final class GetGLsTest extends BaseTest.TestDataProvider {
         return getCalc().getLog10PNonRef(getVC(), HomoSapiensConstants.DEFAULT_PLOIDY, numAltAlleles, getPriors());
     }
 
-    public AFCalculationResult executeRef() {
-        final AFCalculator ref = AFCalculatorImplementation.EXACT_REFERENCE.newInstance();
-        return ref.getLog10PNonRef(getVC(), HomoSapiensConstants.DEFAULT_PLOIDY, numAltAlleles, getPriors());
-    }
-
     public double[] getPriors() {
         return priors;
     }
