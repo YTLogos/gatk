@@ -9,15 +9,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+//TODO: delete this?
 public final class GetGLsTest extends BaseTest.TestDataProvider {
     GenotypesContext GLs;
     int numAltAlleles;
-    final AFCalculator calc;
+    final AlleleFrequencyCalculator calc;
     final int[] expectedACs;
     final double[] priors;
     final String priorName;
 
-    GetGLsTest(final AFCalculator calc, int numAltAlleles, List<Genotype> arg, final double[] priors, final String priorName) {
+    GetGLsTest(final AlleleFrequencyCalculator calc, int numAltAlleles, List<Genotype> arg, final double[] priors, final String priorName) {
         super(GetGLsTest.class);
         GLs = GenotypesContext.create(new ArrayList<>(arg));
         this.numAltAlleles = numAltAlleles;
@@ -43,7 +44,7 @@ public final class GetGLsTest extends BaseTest.TestDataProvider {
         return priors;
     }
 
-    public AFCalculator getCalc() {
+    public AlleleFrequencyCalculator getCalc() {
         return calc;
     }
 

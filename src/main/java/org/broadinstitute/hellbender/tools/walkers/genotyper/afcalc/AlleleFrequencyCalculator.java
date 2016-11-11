@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
 /**
  * @author David Benjamin &lt;davidben@broadinstitute.org&gt;
  */
-public final class AlleleFrequencyCalculator extends AFCalculator {
+public final class AlleleFrequencyCalculator  {
     private static final GenotypeLikelihoodCalculators GL_CALCS = new GenotypeLikelihoodCalculators();
     private static final double THRESHOLD_FOR_ALLELE_COUNT_CONVERGENCE = 0.1;
     private static final int HOM_REF_GENOTYPE_INDEX = 0;
@@ -53,7 +53,6 @@ public final class AlleleFrequencyCalculator extends AFCalculator {
      *                                be given to ref, alt SNP, and alt indel alleles.  Hack won't be necessary when we destroy the old AF calculators
      * @return result (for programming convenience)
      */
-    @Override
     public AFCalculationResult getLog10PNonRef(final VariantContext vc, final int defaultPloidy, final int maximumAlternativeAlleles, final double[] refSnpIndelPseudocounts) {
         Utils.nonNull(vc, "VariantContext cannot be null");
         final int numAlleles = vc.getNAlleles();
@@ -167,15 +166,5 @@ public final class AlleleFrequencyCalculator extends AFCalculator {
         });
         return MathUtils.normalizeLog10(log10Posteriors);
     }
-
-    @Override   //Note: unused
-    protected AFCalculationResult getResultFromFinalState(final VariantContext vc, final double[] priors, final StateTracker st) { return null; }
-
-    @Override//Note: unused
-    protected AFCalculationResult computeLog10PNonRef(final VariantContext vc, final int defaultPloidy,
-                                                               final double[] priors, final StateTracker st) { return null; }
-
-    @Override   //Note: unused
-    protected StateTracker getStateTracker(final boolean reset, final int maximumAlternativeAlleleCount) { return null; }
 
 }

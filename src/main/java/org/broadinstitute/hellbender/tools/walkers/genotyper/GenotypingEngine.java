@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 public abstract class GenotypingEngine<Config extends StandardCallerArgumentCollection> {
 
-    protected final AFCalculator newAFCalculator;
+    protected final AlleleFrequencyCalculator newAFCalculator;
 
     protected final Config configuration;
 
