@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 public abstract class GenotypingEngine<Config extends StandardCallerArgumentCollection> {
 
-    protected final AlleleFrequencyCalculator newAFCalculator;
+    protected final AlleleFrequencyCalculator alleleFrequencyCalculator;
 
     protected final Config configuration;
 
@@ -69,7 +69,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final double refPseudocount = configuration.genotypeArgs.snpHeterozygosity / Math.pow(configuration.genotypeArgs.heterozygosityStandardDeviation,2);
         final double snpPseudocount = configuration.genotypeArgs.snpHeterozygosity * refPseudocount;
         final double indelPseudocount = configuration.genotypeArgs.indelHeterozygosity * refPseudocount;
-        newAFCalculator = new AlleleFrequencyCalculator(refPseudocount, snpPseudocount, indelPseudocount, configuration.genotypeArgs.samplePloidy);
+        alleleFrequencyCalculator = new AlleleFrequencyCalculator(refPseudocount, snpPseudocount, indelPseudocount, configuration.genotypeArgs.samplePloidy);
     }
 
     /**
@@ -239,7 +239,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         }
 
 
-        final AFCalculationResult AFresult = newAFCalculator.getLog10PNonRef(reducedVC, defaultPloidy);
+        final AFCalculationResult AFresult = alleleFrequencyCalculator.getLog10PNonRef(reducedVC, defaultPloidy);
         final OutputAlleleSubset outputAlternativeAlleles = calculateOutputAlleleSubset(AFresult, vc);
 
         // posterior probability that at least one alt allele exists in the samples
