@@ -23,8 +23,6 @@ public final class MinimalGenotypingEngine extends GenotypingEngine<UnifiedArgum
 
         if ( configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES ) {
             throw new UserException("GENOTYPE_GIVEN_ALLELES mode not supported in the MinimalGenotypingEngine");
-        } else if ( configuration.GLmodel != GenotypeLikelihoodsCalculationModel.SNP ) {
-            throw new UserException("Only the diploid SNP model is supported in the MinimalGenotypingEngine");
         } else if ( configuration.COMPUTE_SLOD ) {
             throw new UserException("--computeSLOD not supported in the MinimalGenotypingEngine");
         }

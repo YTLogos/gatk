@@ -10,9 +10,6 @@ import org.broadinstitute.hellbender.utils.pairhmm.PairHMM;
 public final class UnifiedArgumentCollection extends StandardCallerArgumentCollection {
     private static final long serialVersionUID = 1L;
 
-    @Argument(fullName = "genotype_likelihoods_model", shortName = "glm", doc = "Genotype likelihoods calculation model to employ -- SNP is the default option, while INDEL is also available for calling indels and BOTH is available for calling both together", optional = true)
-    public GenotypeLikelihoodsCalculationModel GLmodel = GenotypeLikelihoodsCalculationModel.SNP;
-
     /**
      * The PCR error rate is independent of the sequencing error rate, which is necessary because we cannot necessarily
      * distinguish between PCR errors vs. sequencing errors.  The practical implication for this value is that it
