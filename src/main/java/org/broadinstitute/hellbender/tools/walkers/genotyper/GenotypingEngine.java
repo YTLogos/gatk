@@ -558,53 +558,5 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final long AN = genotypes.stream().flatMap(g -> g.getAlleles().stream()).filter(Allele::isCalled).count();
         return alleleCountsofMLE.stream().map(AC -> Math.min(1.0, (double) AC / AN)).collect(Collectors.toList());
     }
-
-
-    //TODO: use AlleleFrequencyCalculator
-    /**
-     * Calculates the active state profile value for a single sample.
-     *
-     * @param log10GenotypeLikelihoods the single sample genotype likelihoods.
-     * @return log10 probability from 0 to -Infinity.
-     */
-    public double calculateSingleSampleRefVsAnyActiveStateProfileValue(final double[] log10GenotypeLikelihoods) {
-        Utils.nonNull(log10GenotypeLikelihoods, "the input likelihoods cannot be null");
-        Utils.validateArg(log10GenotypeLikelihoods.length == configuration.genotypeArgs.samplePloidy + 1, "wrong likelihoods dimensions");
-
-        final double[] log10Priors = log10AlleleFrequencyPriorsSNPs.forTotalPloidy(configuration.genotypeArgs.samplePloidy);
-        final double log10ACeq0Likelihood = log10GenotypeLikelihoods[0];
-        final double log10ACeq0Prior = log10Priors[0];
-        final double log10ACeq0Posterior = log10ACeq0Likelihood + log10ACeq0Prior;
-
-        // If the maximum a posteriori AC is 0 then the profile value must be 0.0 as per existing code; it does
-        // not matter whether AC > 0 is at all plausible.
-        boolean mapACeq0 = true;
-        for (int AC = 1; AC < log10Priors.length; AC++) {
-            if (log10Priors[AC] + log10GenotypeLikelihoods[AC] > log10ACeq0Posterior) {
-                mapACeq0 = false;
-                break;
-            }
-        }
-        if (mapACeq0) {
-            return 0.0;
-        }
-
-        //TODO bad way to calculate AC > 0 posterior that follows the current behaviour of ExactAFCalculator (StateTracker)
-        //TODO this is the lousy part... this code just adds up lks and priors of AC != 0 before as if
-        //TODO Sum(a_i * b_i) is equivalent to Sum(a_i) * Sum(b_i)
-        final double log10ACgt0Likelihood = MathUtils.approximateLog10SumLog10(log10GenotypeLikelihoods, 1, log10GenotypeLikelihoods.length);
-        final double log10ACgt0Prior = MathUtils.approximateLog10SumLog10(log10Priors, 1, log10Priors.length);
-        final double log10ACgt0Posterior = log10ACgt0Likelihood + log10ACgt0Prior;
-        final double log10PosteriorNormalizationConstant = MathUtils.approximateLog10SumLog10(log10ACeq0Posterior, log10ACgt0Posterior);
-        //TODO End of lousy part.
-
-        final double normalizedLog10ACeq0Posterior = log10ACeq0Posterior - log10PosteriorNormalizationConstant;
-        // This is another condition to return a 0.0 also present in AFCalculator code as well.
-        if (normalizedLog10ACeq0Posterior >= QualityUtils.qualToErrorProbLog10(configuration.genotypeArgs.STANDARD_CONFIDENCE_FOR_EMITTING)) {
-            return 0.0;
-        }
-
-        return 1.0 - Math.pow(10.0, normalizedLog10ACeq0Posterior);
-
-    }
+    
 }
