@@ -18,12 +18,9 @@ import java.util.*;
  */
 public final class AFCalculationResult {
     private static final int AF0 = 0;
-    private static final int AF1p = 1;
-    private static final int LOG_10_ARRAY_SIZES = 2;
 
-    private final double[] log10LikelihoodsOfAC;
-    private final double[] log10PriorsOfAC;
-    private final double[] log10PosteriorsOfAC;
+    private final double log10PNoVariant;
+    private final double log10PYesVariant;
 
     private final Map<Allele, Double> log10pRefByAllele;
 
@@ -42,13 +39,9 @@ public final class AFCalculationResult {
      */
     public AFCalculationResult(final int[] alleleCountsOfMLE,
                                final List<Allele> allelesUsedInGenotyping,
-                               final double[] log10LikelihoodsOfAC,
-                               final double[] log10PriorsOfAC,
+                               final double log10PosteriorOfNoVariant,
                                final Map<Allele, Double> log10pRefByAllele) {
         Utils.nonNull(alleleCountsOfMLE, "alleleCountsOfMLE cannot be null");
-        Utils.nonNull(log10PriorsOfAC, "log10PriorsOfAC cannot be null");
-        Utils.nonNull(log10LikelihoodsOfAC, "log10LikelihoodsOfAC cannot be null");
-        Utils.nonNull(log10LikelihoodsOfAC, "log10LikelihoodsOfAC cannot be null");
         Utils.nonNull(log10pRefByAllele, "log10pRefByAllele cannot be null");
         Utils.nonNull(allelesUsedInGenotyping, "allelesUsedInGenotyping cannot be null");
         if ( allelesUsedInGenotyping.isEmpty() ) {
@@ -57,43 +50,21 @@ public final class AFCalculationResult {
         if ( alleleCountsOfMLE.length != allelesUsedInGenotyping.size() - 1) {
             throw new IllegalArgumentException("alleleCountsOfMLE.length " + alleleCountsOfMLE.length + " != allelesUsedInGenotyping.size() " + allelesUsedInGenotyping.size());
         }
-        if ( log10LikelihoodsOfAC.length != 2 ) {
-            throw new IllegalArgumentException("log10LikelihoodsOfAC must have length equal 2");
-        }
-        if ( log10PriorsOfAC.length != 2 ) {
-            throw new IllegalArgumentException("log10PriorsOfAC must have length equal 2");
-        }
+
         if ( log10pRefByAllele.size() != allelesUsedInGenotyping.size() - 1 ) {
             throw new IllegalArgumentException("log10pRefByAllele has the wrong number of elements: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
         }
         if ( ! allelesUsedInGenotyping.containsAll(log10pRefByAllele.keySet()) ) {
             throw new IllegalArgumentException("log10pRefByAllele doesn't contain all of the alleles used in genotyping: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
-        }if ( ! MathUtils.goodLog10ProbVector(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES, false) ) {
-            throw new IllegalArgumentException("log10LikelihoodsOfAC are bad " + Utils.join(",", log10LikelihoodsOfAC));
         }
-        if ( ! MathUtils.goodLog10ProbVector(log10PriorsOfAC, LOG_10_ARRAY_SIZES, false) ) {
-            throw new IllegalArgumentException("log10priors are bad " + Utils.join(",", log10PriorsOfAC));
-        }
+
+        log10PNoVariant = log10PosteriorOfNoVariant;
+        log10PYesVariant = MathUtils.log10OneMinusPow10(log10PosteriorOfNoVariant);
 
         //make defensive copies of all arguments
         this.alleleCountsOfMLE = alleleCountsOfMLE.clone();
         this.allelesUsedInGenotyping = Collections.unmodifiableList(new ArrayList<>(allelesUsedInGenotyping));
-
-        this.log10LikelihoodsOfAC = Arrays.copyOf(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES);
-        this.log10PriorsOfAC = Arrays.copyOf(log10PriorsOfAC, LOG_10_ARRAY_SIZES);
-        this.log10PosteriorsOfAC = computePosteriors(log10LikelihoodsOfAC, log10PriorsOfAC);
         this.log10pRefByAllele = Collections.unmodifiableMap(new LinkedHashMap<>(log10pRefByAllele));
-    }
-
-    /**
-     * Return a new AFCalcResult with a new prior probability
-     *
-     * @param log10PriorsOfAC
-     * @return
-     */
-    public AFCalculationResult copyWithNewPriors(final double[] log10PriorsOfAC) {
-        Utils.nonNull(log10PriorsOfAC);
-        return new AFCalculationResult(alleleCountsOfMLE, allelesUsedInGenotyping, log10LikelihoodsOfAC, log10PriorsOfAC, log10pRefByAllele);
     }
 
     /**
@@ -139,55 +110,17 @@ public final class AFCalculationResult {
     /**
      * Get the log10 normalized -- across all ACs -- posterior probability of AC == 0 for all alleles
      */
-    public double getLog10PosteriorOfAFEq0() {
-        return log10PosteriorsOfAC[AF0];
+    public double getLog10PosteriorThatNoVariantExists() {
+        return log10PNoVariant;
     }
 
     /**
      * Get the log10 normalized -- across all ACs -- posterior probability of AC > 0 for any alleles
      */
-    public double getLog10PosteriorOfAFGT0() {
-        return log10PosteriorsOfAC[AF1p];
+    public double getLog10PosteriorThatVariantExists() {
+        return log10PYesVariant;
     }
 
-    /**
-     * Get the log10 unnormalized -- across all ACs -- likelihood of AC == 0 for all alleles
-     */
-    public double getLog10LikelihoodOfAFEq0() {
-        return log10LikelihoodsOfAC[AF0];
-    }
-
-    /**
-     * Get the log10 unnormalized -- across all ACs -- likelihood of AC > 0 for any alleles
-     */
-    public double getLog10LikelihoodOfAFGT0() {
-        return log10LikelihoodsOfAC[AF1p];
-    }
-
-    /**
-     * Get the log10 unnormalized -- across all ACs -- prior probability of AC == 0 for all alleles
-     */
-    public double getLog10PriorOfAFEq0() {
-        return log10PriorsOfAC[AF0];
-    }
-
-    /**
-     * Get the log10 unnormalized -- across all ACs -- prior probability of AC > 0
-     */
-    public double getLog10PriorOfAFGT0() {
-        return log10PriorsOfAC[AF1p];
-    }
-
-    @Override
-    public String toString() {
-        final List<String> byAllele = new LinkedList<>();
-        for ( final Allele a : allelesUsedInGenotyping) {
-            if (a.isNonReference()) {
-                byAllele.add(String.format("%s => MLE %d / posterior %.2f", a, getAlleleCountAtMLE(a), getLog10PosteriorOfAFEq0ForAllele(a)));
-            }
-        }
-        return String.format("AFCalc%n\t\tlog10PosteriorOfAFGT0=%.2f%n\t\t%s", getLog10LikelihoodOfAFGT0(), Utils.join("\n\t\t", byAllele));
-    }
 
     /**
      * Are we sufficiently confident in being non-ref that the site is considered polymorphic?
@@ -247,19 +180,6 @@ public final class AFCalculationResult {
         final Double log10pNonRef = log10pRefByAllele.get(allele);
         Utils.nonNull(log10pNonRef, "Unknown allele " + allele);
         return log10pNonRef;
-    }
-
-    /**
-     * Returns the log10 normalized posteriors given the log10 likelihoods and priors
-     *
-     * @param log10LikelihoodsOfAC
-     * @param log10PriorsOfAC
-     *
-     * @return freshly allocated log10 normalized posteriors vector
-     */
-    private static double[] computePosteriors(final double[] log10LikelihoodsOfAC, final double[] log10PriorsOfAC) {
-        final double[] log10UnnormalizedPosteriors = MathArrays.ebeAdd(log10LikelihoodsOfAC, log10PriorsOfAC);
-        return MathUtils.normalizeLog10(log10UnnormalizedPosteriors);
     }
 
     /**

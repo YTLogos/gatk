@@ -162,14 +162,14 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final OutputAlleleSubset outputAlternativeAlleles = calculateOutputAlleleSubset(AFresult, vc);
 
         // posterior probability that at least one alt allele exists in the samples
-        final double probOfAtLeastOneAltAllele = Math.pow(10, AFresult.getLog10PosteriorOfAFGT0());
+        final double probOfAtLeastOneAltAllele = Math.pow(10, AFresult.getLog10PosteriorThatVariantExists());
 
         // note the math.abs is necessary because -10 * 0.0 => -0.0 which isn't nice
         final double log10Confidence =
                 ! outputAlternativeAlleles.siteIsMonomorphic ||
                         configuration.genotypingOutputMode == GenotypingOutputMode.GENOTYPE_GIVEN_ALLELES || configuration.annotateAllSitesWithPLs
-                        ? AFresult.getLog10PosteriorOfAFEq0() + 0.0
-                        : AFresult.getLog10PosteriorOfAFGT0() + 0.0 ;
+                        ? AFresult.getLog10PosteriorThatNoVariantExists() + 0.0
+                        : AFresult.getLog10PosteriorThatVariantExists() + 0.0 ;
 
 
         // Add 0.0 removes -0.0 occurrences.

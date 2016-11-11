@@ -64,7 +64,7 @@ public class AlleleFrequencyCalculatorUnitTest extends BaseTest {
             final VariantContext vc2 = pair.getRight();
             final AFCalculationResult result1 = afCalc.getLog10PNonRef(vc1);
             final AFCalculationResult result2 = afCalc.getLog10PNonRef(vc2);
-            Assert.assertEquals(result1.getLog10PosteriorOfAFEq0(), result2.getLog10PosteriorOfAFEq0(), EPS);
+            Assert.assertEquals(result1.getLog10PosteriorThatNoVariantExists(), result2.getLog10PosteriorThatNoVariantExists(), EPS);
             Assert.assertEquals(result1.getLog10PosteriorOfAFEq0ForAllele(B), result2.getLog10PosteriorOfAFEq0ForAllele(C), EPS);
             Assert.assertEquals(result1.getLog10PosteriorOfAFEq0ForAllele(C), result2.getLog10PosteriorOfAFEq0ForAllele(B), EPS);
         }
@@ -148,7 +148,7 @@ public class AlleleFrequencyCalculatorUnitTest extends BaseTest {
         // since we maintain a flat allele frequency distribution, the probability of being ref as each successive sample is added
         // is multiplied by the probability of any one.  Thus we get an arithmetic series in log space
         final double[] log10PRefs = vcsWithDifferentNumbersOfSamples.stream()
-                .mapToDouble(vc -> afCalc.getLog10PNonRef(vc).getLog10LikelihoodOfAFEq0()).toArray();
+                .mapToDouble(vc -> afCalc.getLog10PNonRef(vc).getLog10PosteriorThatNoVariantExists()).toArray();
 
         for (int n = 0; n < 9; n++) {
             Assert.assertEquals(log10PRefs[n+1] - log10PRefs[n], log10PRefs[0], 0.01);
@@ -165,7 +165,7 @@ public class AlleleFrequencyCalculatorUnitTest extends BaseTest {
             final List<Genotype> genotypeList = new ArrayList<>(Collections.nCopies(numRef, AA));
             genotypeList.add(AB);
             final VariantContext vc = makeVC(alleles, genotypeList);
-            final double log10PRef = afCalc.getLog10PNonRef(vc).getLog10LikelihoodOfAFEq0();
+            final double log10PRef = afCalc.getLog10PNonRef(vc).getLog10PosteriorThatNoVariantExists();
             Assert.assertTrue(log10PRef < (-EXTREMELY_CONFIDENT_PL/10) + Math.log10(numRef) + 1);
         }
     }
