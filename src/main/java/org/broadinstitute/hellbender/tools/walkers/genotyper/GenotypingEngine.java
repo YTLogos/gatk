@@ -40,8 +40,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
 
     protected final SampleList samples;
 
-    private final AFPriorProvider log10AlleleFrequencyPriorsSNPs;
-
     private final List<SimpleInterval> upstreamDeletionsLoc = new LinkedList<>();
 
     /**
@@ -59,26 +57,11 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         this.samples = Utils.nonNull(samples, "the sample list cannot be null");
         logger = LogManager.getLogger(getClass());
         numberOfGenomes = this.samples.numberOfSamples() * configuration.genotypeArgs.samplePloidy;
-        log10AlleleFrequencyPriorsSNPs = composeAlleleFrequencyPriorProvider(numberOfGenomes,
-                configuration.genotypeArgs.snpHeterozygosity);
 
         final double refPseudocount = configuration.genotypeArgs.snpHeterozygosity / Math.pow(configuration.genotypeArgs.heterozygosityStandardDeviation,2);
         final double snpPseudocount = configuration.genotypeArgs.snpHeterozygosity * refPseudocount;
         final double indelPseudocount = configuration.genotypeArgs.indelHeterozygosity * refPseudocount;
         alleleFrequencyCalculator = new AlleleFrequencyCalculator(refPseudocount, snpPseudocount, indelPseudocount, configuration.genotypeArgs.samplePloidy);
-    }
-
-    /**
-     * Function that fills vector with allele frequency priors. By default, infinite-sites, neutral variation prior is used,
-     * where Pr(AC=i) = theta/i where theta is heterozygosity
-     * @param N                                Number of chromosomes
-     * @param heterozygosity                   default heterozygosity to use, if inputPriors is empty
-     * @throws IllegalArgumentException if {@code inputPriors} has size != {@code N} or any entry in {@code inputPriors} is not in the (0,1) range.
-     *
-     * @return never {@code null}.
-     */
-    public static AFPriorProvider composeAlleleFrequencyPriorProvider(final int N, final double heterozygosity) {
-            return new HeterozygosityAFPriorProvider(heterozygosity);
     }
 
     /**
@@ -558,5 +541,5 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         final long AN = genotypes.stream().flatMap(g -> g.getAlleles().stream()).filter(Allele::isCalled).count();
         return alleleCountsofMLE.stream().map(AC -> Math.min(1.0, (double) AC / AN)).collect(Collectors.toList());
     }
-    
+
 }
