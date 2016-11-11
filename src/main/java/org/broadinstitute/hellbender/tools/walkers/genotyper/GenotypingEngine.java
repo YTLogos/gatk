@@ -239,7 +239,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         }
 
 
-        final AFCalculationResult AFresult = newAFCalculator.getLog10PNonRef(reducedVC, defaultPloidy,maxAltAlleles, getAlleleFrequencyPriors(vc,defaultPloidy,model));
+        final AFCalculationResult AFresult = newAFCalculator.getLog10PNonRef(reducedVC, defaultPloidy);
         final OutputAlleleSubset outputAlternativeAlleles = calculateOutputAlleleSubset(AFresult, vc);
 
         // posterior probability that at least one alt allele exists in the samples
