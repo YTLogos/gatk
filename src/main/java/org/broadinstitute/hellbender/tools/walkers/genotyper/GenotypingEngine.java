@@ -451,14 +451,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         return new VariantCallContext(vc, passesCallThreshold(QualityUtils.phredScaleLog10CorrectRate(log10POfRef)), false);
     }
 
-    /**
-     * Returns the log10 prior probability for all possible allele counts from 0 to N where N is the total number of
-     * genomes (total-ploidy).
-     *
-     * @param vc the target variant-context, use to determine the total ploidy thus the possible ACs.
-     * @throws java.lang.NullPointerException if either {@code vc} or {@code model} is {@code null}
-     * @return never {@code null}, an array with exactly <code>total-ploidy(vc) + 1</code> positions.
-     */
     protected final double getLog10Heterozygosity(final VariantContext vc) {
         return vc.isSNP() ? Math.log10(configuration.genotypeArgs.snpHeterozygosity) :
             Math.log10(configuration.genotypeArgs.indelHeterozygosity);
