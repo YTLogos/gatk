@@ -10,6 +10,7 @@ import org.broadinstitute.hellbender.engine.FeatureInput;
 import org.broadinstitute.hellbender.utils.Utils;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
