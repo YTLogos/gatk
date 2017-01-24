@@ -13,6 +13,7 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.exceptions.UserException;
+import org.broadinstitute.hellbender.tools.copynumber.coverage.readcount.ReadCountData;
 import org.broadinstitute.hellbender.tools.exome.samplenamefinder.SampleNameFinder;
 import org.broadinstitute.hellbender.utils.MatrixSummaryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -96,9 +97,9 @@ public final class ReadCountCollectionUtils {
     public static void write(final Writer writer, final ReadCountCollection collection, final String... headerComments) throws IOException {
         Utils.nonNull(collection, "input collection cannot be null");
         Utils.nonNull(headerComments, "header comments cannot be null");
-        final boolean withIntervals = collection.targets().stream().anyMatch(t -> t.getInterval() != null);
-        final TableWriter<ReadCountRecord> tableWriter = withIntervals
-                ? writerWithIntervals(writer, collection.columnNames()) : writerWithoutIntervals(writer, collection);
+        Utils.validate(collection.targets().stream().anyMatch(t -> t.getInterval() != null),
+                " All targets in the read count collection must have intervals ");
+        final TableWriter<ReadCountRecord> tableWriter = getReadCountTableWriter(writer, collection.columnNames());
         performWriting(collection, tableWriter, headerComments);
     }
 
@@ -141,7 +142,7 @@ public final class ReadCountCollectionUtils {
      * @throws IllegalArgumentException if {@code countColumnNames} is {@code null}, contains
      *  {@code null} or a non valid count column name (e.g. a reserved word).
      */
-    public static TableWriter<ReadCountRecord> writerWithIntervals(final Writer writer, final List<String> countColumnNames) throws IOException {
+    public static TableWriter<ReadCountRecord> getReadCountTableWriter(final Writer writer, final List<String> countColumnNames) throws IOException {
 
         final List<String> columnNames = new ArrayList<>();
 
@@ -168,54 +169,6 @@ public final class ReadCountCollectionUtils {
         };
     }
 
-    private static TableWriter<ReadCountRecord> writerWithoutIntervals(final Writer writer,
-                                                                       final ReadCountCollection collection) throws IOException {
-
-        final List<String> columnNames = new ArrayList<>();
-        columnNames.add(TargetTableColumn.NAME.toString());
-        columnNames.addAll(collection.columnNames());
-        return createReadCountRecordTableWriterWithoutIntervals(writer, columnNames);
-    }
-
-    private static TableWriter<ReadCountRecord> createReadCountRecordTableWriterWithoutIntervals(final Writer writer, List<String> columnNames) throws IOException {
-        final TableColumnCollection columns = new TableColumnCollection(columnNames);
-        return new TableWriter<ReadCountRecord>(writer, columns) {
-
-            @Override
-            protected void composeLine(final ReadCountRecord record, final DataLine dataLine) {
-                dataLine.append(record.getTarget().getName());
-                record.appendCountsTo(dataLine);
-            }
-        };
-    }
-
-    /**
-     * Reads the content from a reader into a {@link ReadCountCollection}.
-     *
-     * @param sourceReader the source reader
-     * @param sourceName source name.
-     * @return never {@code null}.
-     * @throws IOException            if there was some problem reading the file contents.
-     * @throws UserException.BadInput if there is some formatting issue in the source file contents. This includes
-     *                                lack of target names in the source file.
-     */
-    public static ReadCountCollection parse(final Reader sourceReader, final String sourceName) throws IOException {
-        return parse(sourceReader, sourceName, null, false);
-    }
-
-    /**
-     * Reads the content of a file into a {@link ReadCountCollection}.
-     *
-     * @param file the source file.
-     * @return never {@code null}.
-     * @throws IOException            if there was some problem reading the file contents.
-     * @throws UserException.BadInput if there is some formatting issue win the source file contents. This includes
-     *                                lack of target names in the source file.
-     */
-    public static ReadCountCollection parse(final File file) throws IOException {
-        return parse(file, null, false);
-    }
-
     /**
      * Reads the content of a file into a {@link ReadCountCollection}.
      * <p>
@@ -224,10 +177,6 @@ public final class ReadCountCollectionUtils {
      * </p>
      *
      * @param file  the source file.
-     * @param targets collection of exons (targets). This parameter can be {@code null}, to indicate that no exon
-     *              collection is to be considered.
-     * @param ignoreMissingTargets whether we ignore read counts that make reference to targets that are not present in
-     *                             the input target collection {@code targets}.
      * @return never {@code null}.
      * @throws IllegalArgumentException if {@code file} is {@code null}.
      * @throws IOException              if there was any problem reading the content of {@code file}.
@@ -235,26 +184,17 @@ public final class ReadCountCollectionUtils {
      *                                  resolve a target name based on the input file content and the target collection
      *                                  provided as long as {@code ignoreMissingTargets} is {@code false}.
      */
-    public static ReadCountCollection parse(final File file, final TargetCollection<Target> targets,
-                                                final boolean ignoreMissingTargets) throws IOException {
+    public static ReadCountCollection parse(final File file) throws IOException {
         Utils.nonNull(file, "the input file cannot be null");
-        final ReadCountsReader reader = new ReadCountsReader(file, targets, ignoreMissingTargets);
+        final ReadCountsReader reader = new ReadCountsReader(file);
         return readCounts(file.getPath(), reader, reader.getCountColumnNames());
     }
 
     /**
      * Reads the content of a source reader into a {@link ReadCountCollection}.
-     * <p>
-     * If no target name is included in the input but intervals are present, the {@code exons} collection provided
-     * will be utilized to resolve those names.
-     * </p>
      *
      * @param sourceReader  the source reader.
      * @param sourceName  source name.
-     * @param targets collection of exons (targets). This parameter can be {@code null}, to indicate that no exon
-     *              collection is to be considered.
-     * @param ignoreMissingTargets whether we ignore read counts that make reference to targets that are not present in
-     *                             the input target collection {@code targets}.
      * @return never {@code null}.
      * @throws IllegalArgumentException if {@code file} is {@code null}.
      * @throws IOException              if there was any problem reading the content of {@code file}.
@@ -262,12 +202,11 @@ public final class ReadCountCollectionUtils {
      *                                  resolve a target name based on the input file content and the target collection
      *                                  provided as long as {@code ignoreMissingTargets} is {@code false}.
      */
-    public static ReadCountCollection parse(final Reader sourceReader, final String sourceName,
-                                                final TargetCollection<Target> targets, final boolean ignoreMissingTargets) throws IOException {
+    public static ReadCountCollection parse(final Reader sourceReader, final String sourceName) throws IOException {
         Utils.nonNull(sourceReader, "the input source reader cannot be null");
         Utils.nonNull(sourceName, "the input source name be null");
 
-        final ReadCountsReader readCountsReader = new ReadCountsReader(sourceReader, targets, ignoreMissingTargets);
+        final ReadCountsReader readCountsReader = new ReadCountsReader(sourceReader);
         return readCounts(sourceName, readCountsReader, readCountsReader.getCountColumnNames());
     }
 
@@ -281,11 +220,11 @@ public final class ReadCountCollectionUtils {
      * @throws IOException if there is a low level IO error.
      */
     private static ReadCountCollection readCounts(final String sourceName,
-                                                  final TableReader<ReadCountRecord> tableReader,
+                                                  final TableReader<ReadCountData> tableReader,
                                                   final List<String> columnNames) throws IOException {
         final Buffer buffer = new Buffer();
 
-        ReadCountRecord record;
+        ReadCountData record;
         while ((record = tableReader.readRecord()) != null) {
             final Target target = record.getTarget();
             final double[] lineCounts = record.getDoubleCounts();
@@ -404,7 +343,7 @@ public final class ReadCountCollectionUtils {
         }
 
         try (final TableWriter<ReadCountRecord> writer =
-                     writerWithIntervals(outWriter, Collections.singletonList(sampleName))) {
+                     getReadCountTableWriter(outWriter, Collections.singletonList(sampleName))) {
             for (String comment : comments) {
                 writer.writeComment(comment);
             }
