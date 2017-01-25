@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper;
 
 import org.broadinstitute.hellbender.utils.test.BaseTest;
-import org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc.GeneralPloidyFailOverAFCalculatorProvider;
 import org.broadinstitute.hellbender.utils.genotyper.IndexedSampleList;
 import org.broadinstitute.hellbender.utils.genotyper.SampleList;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
@@ -35,7 +34,7 @@ public class GenotypingEngineUnitTest extends BaseTest {
         final UnifiedArgumentCollection uac = new UnifiedArgumentCollection();
         uac.genotypeArgs = new GenotypeCalculationArgumentCollection(genotypeArgs);
         final SampleList samples = new IndexedSampleList("test");
-        genotypingEngine = new MinimalGenotypingEngine(uac, samples, new GeneralPloidyFailOverAFCalculatorProvider(genotypeArgs));
+        genotypingEngine = new MinimalGenotypingEngine(uac, samples);
 
         allelesDel = new ArrayList<>(Arrays.asList(refAllele,
                 Allele.create("TCTTTCCTTCCCTCCCTCCCTCCCTCCCTTCCTTCCCTCCCTCCCTC"),
@@ -75,7 +74,7 @@ public class GenotypingEngineUnitTest extends BaseTest {
                 new GenotypeBuilder("sample1").alleles(gtAlleles).PL(new double[]{0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}).make(),  // first alt
                 new GenotypeBuilder("sample2").alleles(gtAlleles).PL(new double[]{0, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0}).make()); // second alt
         final VariantContext vc = new VariantContextBuilder("test", "1",1, refAllele.length(), allelesDel).genotypes(genotypes).make();
-        final VariantContext vcOut = genotypingEngine.calculateGenotypes(vc, GenotypeLikelihoodsCalculationModel.INDEL, null);
+        final VariantContext vcOut = genotypingEngine.calculateGenotypes(vc, null);
         Assert.assertFalse(vcOut.getAlleles().contains(altT));
 
         // Make sure the spanning deletion is removed since the deletion was removed
@@ -86,7 +85,7 @@ public class GenotypingEngineUnitTest extends BaseTest {
                 new GenotypeBuilder("sample2").alleles(gtAlleles).PL(new double[]{0, 0, 0, 0, 0, 0}).make());
         final VariantContext vcSpanDel = new VariantContextBuilder("test1", "1",2, 2 + refAlleleSpanDel.length() - 1, vcAllelesSpanDel).
                 genotypes(genotypesSpanDel).make();
-        final VariantContext vcOut1 = genotypingEngine.calculateGenotypes(vcSpanDel, GenotypeLikelihoodsCalculationModel.INDEL, null);
+        final VariantContext vcOut1 = genotypingEngine.calculateGenotypes(vcSpanDel, null);
         Assert.assertFalse(vcOut1.getAlleles().contains(Allele.SPAN_DEL));
     }
 }
