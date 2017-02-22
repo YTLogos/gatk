@@ -921,7 +921,7 @@ public final class ReadUtils {
     }
 
     /**
-     * Resets the quality scores of the reads to the orginal (pre-BQSR) ones.
+     * Resets the quality scores of the reads to the orignal (pre-BQSR) ones.
      */
     public static GATKRead resetOriginalBaseQualities(final GATKRead read) {
         final byte[] originalQuals = ReadUtils.getOriginalBaseQualities(read);
