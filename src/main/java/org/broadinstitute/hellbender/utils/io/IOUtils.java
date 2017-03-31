@@ -51,6 +51,13 @@ public final class IOUtils {
     /**
      * Returns true if the file's extension is CRAM.
      */
+    public static boolean isCramFile(final Path path) {
+        return isCramFileName(path.getFileName().toString());
+    }
+
+    /**
+     * Returns true if the file's extension is CRAM.
+     */
     public static boolean isCramFileName(final String inputFileName) {
         return CramIO.CRAM_FILE_EXTENSION.equalsIgnoreCase("." + FilenameUtils.getExtension(inputFileName));
     }

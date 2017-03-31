@@ -2,6 +2,9 @@ package org.broadinstitute.hellbender.utils.read;
 
 import htsjdk.samtools.*;
 import htsjdk.samtools.cram.build.CramIO;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -982,6 +985,39 @@ public final class ReadUtils {
     }
 
     /**
+     * Create a common SAMFileWriter for use with GATK tools.
+     *
+     * @param outputPath - if this file has a .cram extension then a reference is required. Can not be null.
+     * @param referenceFile - the reference source to use. Can not be null if a output file has a .cram extension.
+     * @param header - header to be used for the output writer
+     * @param preSorted - if true then the records must already be sorted to match the header sort order
+     * @param createOutputBamIndex - if true an index will be created for .BAM and .CRAM files
+     * @param createMD5 - if true an MD5 file will be created
+     *
+     * @return SAMFileWriter
+     */
+    public static SAMFileWriter createCommonSAMWriter(
+        final Path outputPath,
+        final File referenceFile,
+        final SAMFileHeader header,
+        final boolean preSorted,
+        boolean createOutputBamIndex,
+        final boolean createMD5)
+    {
+        Utils.nonNull(outputPath);
+        Utils.nonNull(header);
+
+        if (createOutputBamIndex && header.getSortOrder() != SAMFileHeader.SortOrder.coordinate) {
+            logger.warn("Skipping index file creation for: " +
+                outputPath +  ". Index file creation requires reads in coordinate sorted order.");
+            createOutputBamIndex = false;
+        }
+
+        final SAMFileWriterFactory factory = new SAMFileWriterFactory().setCreateIndex(createOutputBamIndex).setCreateMd5File(createMD5);
+        return ReadUtils.createCommonSAMWriterFromFactory(factory, outputPath, referenceFile, header, preSorted);
+    }
+
+    /**
      * Create a common SAMFileWriter from a factory for use with GATK tools. Assumes that if the factory has been set
      * to create an index, the header must be set to coordinate sorted.
      *
@@ -1007,6 +1043,48 @@ public final class ReadUtils {
         }
 
         return factory.makeWriter(header.clone(), preSorted, outputFile, referenceFile);
+    }
+
+    /**
+     * Create a common SAMFileWriter from a factory for use with GATK tools. Assumes that if the factory has been set
+     * to create an index, the header must be set to coordinate sorted.
+     *
+     * @param outputPath if this file has a .cram extension then a reference is required. Can not be null.
+     * @param referenceFile the reference source to use. Can not be null if a output file has a .cram extension.
+     * @param header header to be used for the output writer
+     * @param preSorted if true then records must already be sorted to match the header sort order
+     * @param factory SAMFileWriterFactory factory to use
+     * @param openOptions (optional) NIO options specifying how to open the file
+     * @return SAMFileWriter
+     */
+    public static SAMFileWriter createCommonSAMWriterFromFactory(
+        final SAMFileWriterFactory factory,
+        final Path outputPath,
+        final File referenceFile,
+        final SAMFileHeader header,
+        final boolean preSorted,
+        OpenOption... openOptions)
+    {
+        Utils.nonNull(outputPath);
+        Utils.nonNull(header);
+
+        try {
+            if (outputPath.getFileName().endsWith(CramIO.CRAM_FILE_EXTENSION)) {
+                if (null == referenceFile ) {
+                    throw new UserException("A reference file is required for writing CRAM files");
+                }
+                // htsjdk doesn't currently support presorted & outputStream at the same time for CRAM :-(
+                return factory.makeCRAMWriter(header, Files.newOutputStream(outputPath, openOptions), referenceFile);
+            } else if (outputPath.getFileName().endsWith(".sam")) {
+                return factory.makeSAMWriter(header, preSorted, Files.newOutputStream(outputPath, openOptions));
+            } else {
+                // default to BAM, matching the logic in htsjdk
+                return factory.makeBAMWriter(header, preSorted, Files.newOutputStream(outputPath, openOptions));
+            }
+        } catch (IOException x) {
+            throw new UserException.CouldNotCreateOutputFile(outputPath.getFileName().toString(), "Unable to create writer", x);
+        }
+
     }
 
     /**
