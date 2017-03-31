@@ -1069,7 +1069,7 @@ public final class ReadUtils {
         Utils.nonNull(header);
 
         try {
-            if (outputPath.getFileName().endsWith(CramIO.CRAM_FILE_EXTENSION)) {
+            if (outputPath.toString().endsWith(CramIO.CRAM_FILE_EXTENSION)) {
                 if (null == referenceFile ) {
                     throw new UserException("A reference file is required for writing CRAM files");
                 }

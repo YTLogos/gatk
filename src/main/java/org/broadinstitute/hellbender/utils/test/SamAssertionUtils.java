@@ -372,7 +372,7 @@ public final class SamAssertionUtils {
      * Unconditionally validate/assert that the contents are CRAM
      */
     public static void assertCRAMContents(final File putativeCRAMFile) {
-        Assert.assertTrue(ReadUtils.hasCRAMFileContents(putativeCRAMFile));
+        Assert.assertTrue(ReadUtils.hasCRAMFileContents(putativeCRAMFile), "should have had CRAM contents: " + putativeCRAMFile.getName());
     }
 
     private static void sortSam(final File input, final File output, final File reference, final ValidationStringency stringency) {
