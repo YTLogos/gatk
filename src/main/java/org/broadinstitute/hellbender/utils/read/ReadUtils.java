@@ -1075,14 +1075,14 @@ public final class ReadUtils {
                 }
                 // htsjdk doesn't currently support presorted & outputStream at the same time for CRAM :-(
                 return factory.makeCRAMWriter(header, Files.newOutputStream(outputPath, openOptions), referenceFile);
-            } else if (outputPath.getFileName().endsWith(".sam")) {
+            } else if (outputPath.toString().endsWith(".sam")) {
                 return factory.makeSAMWriter(header, preSorted, Files.newOutputStream(outputPath, openOptions));
             } else {
                 // default to BAM, matching the logic in htsjdk
                 return factory.makeBAMWriter(header, preSorted, Files.newOutputStream(outputPath, openOptions));
             }
         } catch (IOException x) {
-            throw new UserException.CouldNotCreateOutputFile(outputPath.getFileName().toString(), "Unable to create writer", x);
+            throw new UserException.CouldNotCreateOutputFile(outputPath.toString(), "Unable to create writer", x);
         }
 
     }
