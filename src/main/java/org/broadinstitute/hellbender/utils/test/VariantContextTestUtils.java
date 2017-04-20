@@ -1,9 +1,14 @@
 package org.broadinstitute.hellbender.utils.test;
 
 import com.google.common.annotations.VisibleForTesting;
-import htsjdk.variant.variantcontext.Genotype;
-import htsjdk.variant.variantcontext.VariantContext;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import htsjdk.variant.variantcontext.*;
 import htsjdk.variant.vcf.VCFConstants;
+import htsjdk.variant.vcf.VCFHeader;
+import htsjdk.variant.vcf.VCFHeaderLineCount;
+import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.testng.Assert;
 
@@ -46,10 +51,112 @@ public final class VariantContextTestUtils {
         return attribute;
     }
 
+    public static VariantContext sortAlleles(final VariantContext vc, final VCFHeader header){
+        final List<Allele> originalAltAlleles = vc.getAlternateAlleles();
+        final List<Allele> sortedAltAlleles = originalAltAlleles.stream().sorted().collect(Collectors.toList());
+        if(originalAltAlleles.equals(sortedAltAlleles)) {
+            return vc;
+        } else {
+
+            final List<Allele> sortedAlleles = new ArrayList<>(vc.getNAlleles());
+            sortedAlleles.add(vc.getReference());
+            sortedAlleles.addAll(sortedAltAlleles);
+
+            final VariantContextBuilder result = new VariantContextBuilder(vc);
+            result.alleles(sortedAlleles);
+
+            final HashMap<String, Object> newAttributes = new HashMap<>(vc.getAttributes());
+            newAttributes.replaceAll((key, value) -> updateAttribute(key, value, vc.getAlleles(), sortedAlleles,
+                                                                     header.getInfoHeaderLine(key).getCountType(), vc.getGenotypes().getMaxPloidy(2)));
+            result.attributes(newAttributes);
+
+            return result.make();
+        }
+    }
+
+    private static Object updateAttribute(final String key, final Object value,
+                                   final List<Allele> originalAlleles, final List<Allele> sortedAlleles,
+                                   final VCFHeaderLineCount count, int ploidy) {
+        switch( count ){
+            case INTEGER:
+            case UNBOUNDED:
+                //doesn't depend on allele ordering
+                return value;
+            case A: return remapATypeValues(attributeToList(value), createAlleleIndexMap(originalAlleles, sortedAlleles));
+            case R: return remapRTypeValues(attributeToList(value), createAlleleIndexMap(originalAlleles, sortedAlleles));
+            case G: return remapGTypeValues(attributeToList(value), originalAlleles, ploidy, createAlleleIndexMap(originalAlleles, sortedAlleles));
+            default:
+                throw new GATKException("found unexpected vcf header count type: " + count);
+        }
+    }
+
+    static List<Integer> createAlleleIndexMap(final List<Allele> originalAlleles, final List<Allele> sortedAlleles){
+        final List<Integer> mapping = new ArrayList<>(originalAlleles.size());
+        for ( final Allele a: originalAlleles){
+            final int newIndex = sortedAlleles.indexOf(a);
+            mapping.add(newIndex);
+        }
+        return mapping;
+    }
+
+    static List<Object> remapRTypeValues(List<?> oldValue, List<Integer> mapping){
+        return remapListValues(oldValue, mapping, 0);
+    }
+
+    private static List<Object> remapListValues(List<?> oldValue, List<Integer> mapping, int offset) {
+        Utils.validate(oldValue.size() + offset == mapping.size(), "attribute list size doesn't match mapping length - offset");
+        final ArrayList<Object> reordered = new ArrayList<>(oldValue.size());
+        for(int i = 0; i < oldValue.size(); i++){
+            reordered.add(oldValue.get(mapping.get(i+offset) - offset));
+        }
+        return reordered;
+    }
+
+    static List<Object> remapATypeValues(List<?> oldValue, List<Integer> mapping){
+        return remapListValues(oldValue, mapping, 1 );
+    }
+
+    static List<Object> remapGTypeValues(List<?> oldValue, List<Allele> originalAlleles, int ploidy, List<Integer> alleleIndexMap){
+        GenotypeLikelihoods.initializeAnyploidPLIndexToAlleleIndices(originalAlleles.size()-1, ploidy);
+        final BiMap<List<Integer>, Integer> originalAlleleIndexToPLIndexMap = HashBiMap.create();
+        for( int i = 0; i < oldValue.size(); i++){
+            final List<Integer> alleles = GenotypeLikelihoods.getAlleles(i, ploidy).stream().sorted().collect(Collectors.toList());
+            originalAlleleIndexToPLIndexMap.put(alleles, i);
+        }
+
+        List<Object> newValues = new ArrayList<>(oldValue.size());
+        for (int i = 0; i < oldValue.size(); i++){
+            final List<Integer> alleles = originalAlleleIndexToPLIndexMap.inverse().get(i);
+            List<Integer> newKey = alleles.stream().map(alleleIndexMap::get).sorted().collect(Collectors.toList());
+            originalAlleleIndexToPLIndexMap.get(newKey);
+            newValues.add(originalAlleleIndexToPLIndexMap.get(newKey));
+        }
+
+        return newValues;
+    }
+
+    //copied from htsjdk.variant.variantcontext.CommonInfo.getAttributeAsList for simplicity
+    //maybe we should expose this as a static method in htsjdk?
+    @SuppressWarnings("unchecked")
+    private static List<Object> attributeToList(final Object attribute){
+        if ( attribute == null ) return Collections.emptyList();
+        if ( attribute instanceof List) return (List<Object>)attribute;
+        if ( attribute.getClass().isArray() ) {
+            if (attribute instanceof int[]) {
+                return Arrays.stream((int[])attribute).boxed().collect(Collectors.toList());
+            } else if (attribute instanceof double[]) {
+                return Arrays.stream((double[])attribute).boxed().collect(Collectors.toList());
+            }
+            return Arrays.asList((Object[])attribute);
+        }
+        return Collections.singletonList(attribute);
+    }
+
+
     public static void assertGenotypesAreEqual(final Genotype actual, final Genotype expected) {
         Assert.assertEquals(actual.getSampleName(), expected.getSampleName(), "Genotype names");
-        Assert.assertEquals(actual.getAlleles(), expected.getAlleles(), "Genotype alleles");
-        Assert.assertEquals(actual.getGenotypeString(), expected.getGenotypeString(), "Genotype string");
+        Assert.assertTrue(CollectionUtils.isEqualCollection(actual.getAlleles(), expected.getAlleles()), "Genotype alleles");
+        Assert.assertEquals(actual.getGenotypeString(false), expected.getGenotypeString(false), "Genotype string");
         Assert.assertEquals(actual.getType(), expected.getType(), "Genotype type");
 
         // filters are the same
@@ -60,11 +167,11 @@ public final class VariantContextTestUtils {
         Assert.assertEquals(actual.hasDP(), expected.hasDP(), "Genotype hasDP");
         Assert.assertEquals(actual.getDP(), expected.getDP(), "Genotype dp");
         Assert.assertEquals(actual.hasAD(), expected.hasAD(), "Genotype hasAD");
-        Assert.assertTrue(Arrays.equals(actual.getAD(), expected.getAD()));
+        Assert.assertEquals(actual.getAD(), expected.getAD(), "Genotype AD");
         Assert.assertEquals(actual.hasGQ(), expected.hasGQ(), "Genotype hasGQ");
         Assert.assertEquals(actual.getGQ(), expected.getGQ(), "Genotype gq");
         Assert.assertEquals(actual.hasPL(), expected.hasPL(), "Genotype hasPL");
-        Assert.assertTrue(Arrays.equals(actual.getPL(), expected.getPL()));
+        Assert.assertEquals(actual.getPL(), expected.getPL(), "Genotype PL");
 
         Assert.assertEquals(actual.hasLikelihoods(), expected.hasLikelihoods(), "Genotype haslikelihoods");
         Assert.assertEquals(actual.getLikelihoodsString(), expected.getLikelihoodsString(), "Genotype getlikelihoodsString");
@@ -157,7 +264,7 @@ public final class VariantContextTestUtils {
 
         Assert.assertEquals(actual.filtersWereApplied(), expected.filtersWereApplied(), "filtersWereApplied");
         Assert.assertEquals(actual.isFiltered(), expected.isFiltered(), "isFiltered");
-        BaseTest.assertEqualsSet(actual.getFilters(), expected.getFilters(), "filters");
+        Assert.assertEquals(actual.getFilters(), expected.getFilters(), "filters");
         BaseTest.assertEqualsDoubleSmart(actual.getPhredScaledQual(), expected.getPhredScaledQual());
 
         assertVariantContextsHaveSameGenotypes(actual, expected);
