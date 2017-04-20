@@ -63,21 +63,19 @@ public final class GATKVariantContextUtils {
             final File outFile,
             final SAMSequenceDictionary referenceDictionary,
             final boolean createMD5,
-            final Options... options)
-    {
+            final Options... options) {
         Utils.nonNull(outFile);
 
-        VariantContextWriterBuilder vcWriterBuilder =
+        final VariantContextWriterBuilder vcWriterBuilder =
                 new VariantContextWriterBuilder().clearOptions().setOutputFile(outFile);
 
         if (VariantContextWriterBuilder.OutputType.UNSPECIFIED == getVariantFileTypeFromExtension(outFile)) {
             // the only way the user has to specify an output type is by file extension, and htsjdk
-            // throws if it can't map the file extension to a known vcf type, so fallback to a default
-            // of VCF
+            // throws if it can't map the file extension to a known vcf type, so fallback to a default of VCF
             logger.warn(String.format(
                     "Can't determine output variant file format from output file extension \"%s\". Defaulting to VCF.",
                     FilenameUtils.getExtension(outFile.getPath())));
-            vcWriterBuilder = vcWriterBuilder.setOutputFileType(VariantContextWriterBuilder.OutputType.VCF);
+            vcWriterBuilder.setOutputFileType(VariantContextWriterBuilder.OutputType.VCF);
         }
 
         if (createMD5) {
@@ -85,11 +83,11 @@ public final class GATKVariantContextUtils {
         }
 
         if (null != referenceDictionary) {
-            vcWriterBuilder = vcWriterBuilder.setReferenceDictionary(referenceDictionary);
+            vcWriterBuilder.setReferenceDictionary(referenceDictionary);
         }
 
         for (Options opt : options) {
-            vcWriterBuilder = vcWriterBuilder.setOption(opt);
+            vcWriterBuilder.setOption(opt);
         }
 
         return vcWriterBuilder.build();
@@ -137,14 +135,8 @@ public final class GATKVariantContextUtils {
     public static boolean overlapsRegion(final VariantContext variantContext, final GenomeLoc region) {
         Utils.nonNull(region, "the active region is null");
         Utils.nonNull(variantContext);
-
-        if (region.isUnmapped())
-            return false;
-        if (variantContext.getEnd() < region.getStart())
-            return false;
-        if (variantContext.getStart() > region.getStop())
-            return false;
-        return variantContext.getContig().equals(region.getContig());
+        return !region.isUnmapped() && region.getStart() <= variantContext.getEnd()
+                && variantContext.getStart() <= region.getStop() && variantContext.getContig().equals(region.getContig());
     }
 
     /**
@@ -160,11 +152,8 @@ public final class GATKVariantContextUtils {
     public static boolean overlapsRegion(final VariantContext variantContext, final SimpleInterval region) {
         Utils.nonNull(region, "the active region is null");
         Utils.nonNull(variantContext);
-        if (variantContext.getEnd() < region.getStart())
-            return false;
-        if (variantContext.getStart() > region.getEnd())
-            return false;
-        return variantContext.getContig().equals(region.getContig());
+        return region.getStart() <= variantContext.getEnd() && variantContext.getStart() <= region.getEnd()
+                && variantContext.getContig().equals(region.getContig());
     }
 
     private static boolean hasPLIncompatibleAlleles(final Collection<Allele> alleleSet1, final Collection<Allele> alleleSet2) {
@@ -172,16 +161,11 @@ public final class GATKVariantContextUtils {
         final Iterator<Allele> it2 = alleleSet2.iterator();
 
         while ( it1.hasNext() && it2.hasNext() ) {
-            final Allele a1 = it1.next();
-            final Allele a2 = it2.next();
-            if ( ! a1.equals(a2) )
+            if ( ! it1.next().equals(it2.next()) )
                 return true;
         }
 
-        // by this point, at least one of the iterators is empty.  All of the elements
-        // we've compared are equal up until this point.  But it's possible that the
-        // sets aren't the same size, which is indicated by the test below.  If they
-        // are of the same size, though, the sets are compatible
+        // at least one of the iterators is now empty.  We now return true if *only* one is empty.
         return it1.hasNext() || it2.hasNext();
     }
 
@@ -217,8 +201,7 @@ public final class GATKVariantContextUtils {
     public static int totalPloidy(final VariantContext vc, final int defaultPloidy) {
         Utils.nonNull(vc, "the vc provided cannot be null");
         Utils.validateArg(defaultPloidy >= 0, "the default ploidy must 0 or greater");
-        return vc.getGenotypes().stream().mapToInt(Genotype::getPloidy)
-                .map(p -> p <= 0 ? defaultPloidy : p).sum();
+        return vc.getGenotypes().stream().mapToInt(Genotype::getPloidy).map(p -> p <= 0 ? defaultPloidy : p).sum();
     }
 
     /**
@@ -226,9 +209,7 @@ public final class GATKVariantContextUtils {
      */
     public static BaseUtils.BaseSubstitutionType getSNPSubstitutionType(final VariantContext context) {
         Utils.nonNull(context);
-        if (!context.isSNP() || !context.isBiallelic()) {
-            throw new IllegalArgumentException("Requested SNP substitution type for bialleic non-SNP " + context);
-        }
+        Utils.validateArg(context.isSNP() && context.isBiallelic(), () -> "Requested SNP substitution type for bialleic non-SNP " + context);
         return BaseUtils.SNPSubstitutionType(context.getReference().getBases()[0], context.getAlternateAllele(0).getBases()[0]);
     }
 
@@ -254,8 +235,6 @@ public final class GATKVariantContextUtils {
     public static List<Allele> homozygousAlleleList(final Allele allele, final int ploidy) {
         Utils.nonNull(allele);
         Utils.validateArg(ploidy >= 0, "ploidy cannot be negative");
-
-        // Use a tailored inner class to implement the list:
         return Collections.nCopies(ploidy,allele);
     }
 
@@ -279,12 +258,12 @@ public final class GATKVariantContextUtils {
                 gb.alleles(noCallAlleles(ploidy)).noGQ();
             } else {
                 final int maxLikelihoodIndex = MathUtils.maxElementIndex(genotypeLikelihoods);
-                final GenotypeLikelihoodCalculator glCalc = GL_CALCS.getInstance(ploidy, allelesToUse.size());
-                final GenotypeAlleleCounts alleleCounts = glCalc.genotypeAlleleCountsAt(maxLikelihoodIndex);
+                final List<Allele> alleles = GL_CALCS.getInstance(ploidy, allelesToUse.size())
+                        .genotypeAlleleCountsAt(maxLikelihoodIndex)
+                        .asAlleleList(allelesToUse);
 
-                gb.alleles(alleleCounts.asAlleleList(allelesToUse));
-                final int numAltAlleles = allelesToUse.size() - 1;
-                if ( numAltAlleles > 0 ) {
+                gb.alleles(alleles);
+                if ( allelesToUse.size() > 1 ) {
                     gb.log10PError(GenotypeLikelihoods.getGQLog10FromLikelihoods(maxLikelihoodIndex, genotypeLikelihoods));
                 }
             }
@@ -351,19 +330,12 @@ public final class GATKVariantContextUtils {
      * @return
      */
     public static boolean isTandemRepeat(final VariantContext vc, final byte[] refBasesStartingAtVCWithPad) {
-        final String refBasesStartingAtVCWithoutPad = new String(refBasesStartingAtVCWithPad).substring(1);
         if ( ! vc.isIndel() ) // only indels are tandem repeats
             return false;
 
         final Allele ref = vc.getReference();
-
-        for ( final Allele allele : vc.getAlternateAlleles() ) {
-            if ( ! isRepeatAllele(ref, allele, refBasesStartingAtVCWithoutPad) )
-                return false;
-        }
-
-        // we've passed all of the tests, so we are a repeat
-        return true;
+        final String refBasesStartingAtVCWithoutPad = new String(refBasesStartingAtVCWithPad).substring(1);
+        return vc.getAlternateAlleles().stream().allMatch(a -> isRepeatAllele(ref, a, refBasesStartingAtVCWithoutPad));
     }
 
     /**
@@ -376,25 +348,21 @@ public final class GATKVariantContextUtils {
         Utils.nonNull(vc);
         Utils.nonNull(refBasesStartingAtVCWithPad);
 
-        if ( ! vc.isIndel() ){ // only indels are tandem repeats
+        if (!isTandemRepeat(vc, refBasesStartingAtVCWithPad)) {
             return null;
         }
-        final boolean VERBOSE = false;
-        final String refBasesStartingAtVCWithoutPad = new String(refBasesStartingAtVCWithPad).substring(1);
 
+        final byte[] refBasesStartingAtVCWithoutPad = allButFirstBase(refBasesStartingAtVCWithPad);
         final Allele refAllele = vc.getReference();
-        final byte[] refAlleleBases = Arrays.copyOfRange(refAllele.getBases(), 1, refAllele.length());
+        final byte[] refAlleleBases = allButFirstBase(refAllele.getBases());
 
         byte[] repeatUnit = null;
         final List<Integer> lengths = new ArrayList<>();
 
         for ( final Allele allele : vc.getAlternateAlleles() ) {
-            Pair<int[],byte[]> result = getNumTandemRepeatUnits(refAlleleBases, Arrays.copyOfRange(allele.getBases(), 1, allele.length()), refBasesStartingAtVCWithoutPad.getBytes());
+            Pair<int[],byte[]> result = getNumTandemRepeatUnits(refAlleleBases, allButFirstBase(allele.getBases()), refBasesStartingAtVCWithoutPad);
 
             final int[] repetitionCount = result.getLeft();
-            // repetition count = 0 means allele is not a tandem expansion of context
-            if (repetitionCount[0] == 0 || repetitionCount[1] == 0)
-                return null;
 
             if (lengths.isEmpty()) {
                 lengths.add(repetitionCount[0]); // add ref allele length only once
@@ -402,15 +370,13 @@ public final class GATKVariantContextUtils {
             lengths.add(repetitionCount[1]);  // add this alt allele's length
 
             repeatUnit = result.getRight();
-            if (VERBOSE) {
-                System.out.println("RefContext:"+refBasesStartingAtVCWithoutPad);
-                System.out.println("Ref:"+refAllele.toString()+" Count:" + String.valueOf(repetitionCount[0]));
-                System.out.println("Allele:"+allele.toString()+" Count:" + String.valueOf(repetitionCount[1]));
-                System.out.println("RU:"+new String(repeatUnit));
-            }
         }
 
         return new MutablePair<>(lengths,repeatUnit);
+    }
+
+    private static byte[] allButFirstBase(final byte[] bases) {
+        return Arrays.copyOfRange(bases, 1, bases.length);
     }
 
     public static Pair<int[],byte[]> getNumTandemRepeatUnits(final byte[] refBases, final byte[] altBases, final byte[] remainingRefContext) {
