@@ -11,8 +11,6 @@ env:
   - TEST_TYPE=integration TEST_VERBOSITY=minimal
   - TEST_TYPE=unit TEST_VERBOSITY=minimal
   global:
-  #for genomics db
-  - LD_LIBRARY_PATH=$TRAVIS_BUILD_DIR/dependencies/libcsv/.libs
   #gradle needs this
   - TERM=dumb
   #limit gradle jvm memory and disable daemon
@@ -22,8 +20,6 @@ env:
   - GCLOUD=$HOME/gcloud/google-cloud-sdk/bin 
   - CLOUDSDK_PYTHON_SITEPACKAGES=1 
   - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/servicekey.json
-  #Path to GenomicsDB binaries
-  - GATK_GENOMICSDB_BIN=src/test/resources/large/tiledb_bin
   #hellbender specific variables
   - HELLBENDER_TEST_INPUTS=gs://hellbender/test/resources/
   - HELLBENDER_TEST_STAGING=gs://hellbender/test/staging/
