@@ -14,6 +14,7 @@ import org.broadinstitute.hellbender.engine.*;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
+import org.broadinstitute.hellbender.utils.iterators.AlignmentContextIteratorFactory;
 import org.broadinstitute.hellbender.utils.iterators.IntervalOverlappingIterator;
 import org.broadinstitute.hellbender.utils.locusiterator.LIBSDownsamplingInfo;
 import org.broadinstitute.hellbender.utils.locusiterator.LocusIteratorByState;
@@ -66,6 +67,20 @@ public abstract class LocusWalkerSpark extends GATKSparkTool {
     }
 
     /**
+     * Does this tool emit information for uncovered loci? Tools that do should override to return {@code true}.
+     *
+     * NOTE:  Typically, this should only be used when intervals are specified.
+     * NOTE:  If MappedReadFilter is removed, then emitting empty loci will fail.
+     * NOTE:  If there is no available sequence dictionary and this is set to true, there should be a failure.  Please
+     *  consider requiring reads and/or references for all tools that wish to set this to {@code true}.
+     *
+     * @return {@code true} if this tool requires uncovered loci information to be emitted, {@code false} otherwise
+     */
+    public boolean emitEmptyLoci() {
+        return false;
+    }
+
+    /**
      * Loads alignments and the corresponding reference and features into a {@link JavaRDD} for the intervals specified.
      *
      * If no intervals were specified, returns all the alignments.
@@ -82,7 +97,7 @@ public abstract class LocusWalkerSpark extends GATKSparkTool {
         JavaRDD<Shard<GATKRead>> shardedReads = SparkSharder.shard(ctx, getReads(), GATKRead.class, sequenceDictionary, intervalShards, maxLocatableSize, shuffle);
         Broadcast<ReferenceMultiSource> bReferenceSource = hasReference() ? ctx.broadcast(getReference()) : null;
         Broadcast<FeatureManager> bFeatureManager = features == null ? null : ctx.broadcast(features);
-        return shardedReads.flatMap(getAlignmentsFunction(bReferenceSource, bFeatureManager, sequenceDictionary, getHeaderForReads(), getDownsamplingInfo()));
+        return shardedReads.flatMap(getAlignmentsFunction(bReferenceSource, bFeatureManager, sequenceDictionary, getHeaderForReads(), getDownsamplingInfo(), emitEmptyLoci()));
     }
 
     /**
@@ -96,7 +111,7 @@ public abstract class LocusWalkerSpark extends GATKSparkTool {
      */
     private static FlatMapFunction<Shard<GATKRead>, LocusWalkerContext> getAlignmentsFunction(
             Broadcast<ReferenceMultiSource> bReferenceSource, Broadcast<FeatureManager> bFeatureManager,
-            SAMSequenceDictionary sequenceDictionary, SAMFileHeader header, LIBSDownsamplingInfo downsamplingInfo) {
+            SAMSequenceDictionary sequenceDictionary, SAMFileHeader header, LIBSDownsamplingInfo downsamplingInfo, boolean isEmitEmptyLoci) {
         return (FlatMapFunction<Shard<GATKRead>, LocusWalkerContext>) shardedRead -> {
             SimpleInterval interval = shardedRead.getInterval();
             SimpleInterval paddedInterval = shardedRead.getPaddedInterval();
@@ -105,13 +120,11 @@ public abstract class LocusWalkerSpark extends GATKSparkTool {
                     new ReferenceMemorySource(bReferenceSource.getValue().getReferenceBases(null, paddedInterval), sequenceDictionary);
             FeatureManager fm = bFeatureManager == null ? null : bFeatureManager.getValue();
 
-            final Set<String> samples = header.getReadGroups().stream()
-                    .map(SAMReadGroupRecord::getSample)
-                    .collect(Collectors.toSet());
-            LocusIteratorByState libs = new LocusIteratorByState(readIterator, downsamplingInfo, false, samples, header, true, false);
-            IntervalOverlappingIterator<AlignmentContext> alignmentContexts = new IntervalOverlappingIterator<>(libs, ImmutableList.of(interval), sequenceDictionary);
-            final Spliterator<AlignmentContext> alignmentContextSpliterator = Spliterators.spliteratorUnknownSize(alignmentContexts, 0);
-            return StreamSupport.stream(alignmentContextSpliterator, false).map(alignmentContext -> {
+            final SAMSequenceDictionary referenceDictionary = reference == null? null : reference.getSequenceDictionary();
+
+            final Iterator<AlignmentContext> alignmentContextIterator = AlignmentContextIteratorFactory.createAlignmentContextIterator(Collections.<SimpleInterval>singletonList(interval), header, readIterator, sequenceDictionary,
+                    downsamplingInfo, referenceDictionary, isEmitEmptyLoci, false, true, false);
+            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(alignmentContextIterator, 0), false).map(alignmentContext -> {
                 final SimpleInterval alignmentInterval = new SimpleInterval(alignmentContext);
                 return new LocusWalkerContext(alignmentContext, new ReferenceContext(reference, alignmentInterval), new FeatureContext(fm, alignmentInterval));
             }).iterator();
