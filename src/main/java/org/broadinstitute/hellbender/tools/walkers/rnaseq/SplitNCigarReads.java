@@ -4,6 +4,7 @@ import htsjdk.samtools.*;
 import htsjdk.samtools.reference.IndexedFastaSequenceFile;
 import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
+import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.hellbender.cmdline.programgroups.ReadProgramGroup;
 import org.broadinstitute.hellbender.engine.FeatureContext;
 import org.broadinstitute.hellbender.engine.ReferenceContext;
@@ -42,6 +43,7 @@ import static org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions.
         oneLineSummary = "Split Reads with N in Cigar",
         programGroup = ReadProgramGroup.class
 )
+@DocumentedFeature
 public final class SplitNCigarReads extends TwoPassReadWalker {
 
     // A list of tags that break upon splitting on N. These will be removed from reads in the output.
