@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * Tool to discover reads that support a hypothesis of a genomic breakpoint.
@@ -447,7 +448,7 @@ public final class FindBreakpointEvidenceSpark extends GATKSparkTool {
         @Override
         public AlignedAssemblyOrExcuse apply( final Tuple2<Integer, List<FastqRead>> intervalAndReads ) {
             final List<FastqRead> readsList = intervalAndReads._2();
-
+            
             final int fastqSize = readsList.stream().mapToInt(FastqRead -> FastqRead.getBases().length).sum();
             if (fastqSize > maxFastqSize) {
                 return new AlignedAssemblyOrExcuse(intervalAndReads._1(),
