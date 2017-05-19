@@ -272,9 +272,21 @@ public final class FeatureDataSource<T extends Feature> implements GATKDataSourc
                 throw new UserException("GenomicsDB inputs can only be used to provide VariantContexts.", e);
             }
         } else {
-            final Path featurePath = IOUtils.getPath(featureInput.getFeaturePath());
-            IOUtils.assertFileIsReadable(featurePath);
-            final FeatureCodec<T, ?> codec = (FeatureCodec<T, ?>) FeatureManager.getCodecForFile(featurePath, targetFeatureType);
+            final Class<FeatureCodec<T, ?>> codecClass = featureInput.getFeatureCodecClass();
+            FeatureCodec<T, ?> codec;
+            if (codecClass == null) {
+                final Path featurePath = IOUtils.getPath(featureInput.getFeaturePath());
+                IOUtils.assertFileIsReadable(featurePath);
+                codec = (FeatureCodec<T, ?>) FeatureManager.getCodecForFile(featurePath, targetFeatureType);
+                featureInput.setFeatureCodecClass((Class<FeatureCodec<T, ?>>)codec.getClass());
+            } else {
+                try {
+                    codec = codecClass.newInstance();
+                }
+                catch ( InstantiationException | IllegalAccessException e ) {
+                    throw new GATKException("Unable to automatically instantiate codec " + codecClass.getName());
+                }
+            }
             return getTribbleFeatureReader(featureInput, codec, cloudWrapper, cloudIndexWrapper);
         }
     }
