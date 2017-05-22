@@ -2,7 +2,6 @@ package org.broadinstitute.hellbender.engine;
 
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.CommandLineException;
 import org.broadinstitute.hellbender.engine.filters.CountingReadFilter;
@@ -10,12 +9,7 @@ import org.broadinstitute.hellbender.engine.filters.ReadFilter;
 import org.broadinstitute.hellbender.engine.filters.ReadFilterLibrary;
 import org.broadinstitute.hellbender.engine.filters.WellformedReadFilter;
 import org.broadinstitute.hellbender.exceptions.UserException;
-import org.broadinstitute.hellbender.utils.IntervalUtils;
-import org.broadinstitute.hellbender.utils.SequenceDictionaryUtils;
-import org.broadinstitute.hellbender.utils.iterators.AlignmentContextIteratorFactory;
-import org.broadinstitute.hellbender.utils.iterators.IntervalAlignmentContextIterator;
-import org.broadinstitute.hellbender.utils.iterators.IntervalLocusIterator;
-import org.broadinstitute.hellbender.utils.iterators.IntervalOverlappingIterator;
+import org.broadinstitute.hellbender.utils.locusiterator.AlignmentContextIteratorBuilder;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.locusiterator.LIBSDownsamplingInfo;
 import org.broadinstitute.hellbender.utils.locusiterator.LocusIteratorByState;
@@ -23,7 +17,6 @@ import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * A LocusWalker is a tool that processes reads that overlap a single position in a reference at a time from
@@ -163,10 +156,16 @@ public abstract class LocusWalker extends GATKTool {
         // get the filter and transformed iterator
         final Iterator<GATKRead> readIterator = getTransformedReadStream(countedFilter).iterator();
 
-        Iterator<AlignmentContext> iterator = AlignmentContextIteratorFactory.createAlignmentContextIterator(
-                intervalsForTraversal, header, readIterator, getBestAvailableSequenceDictionary(),
-                getDownsamplingInfo(), getReferenceDictionary(), emitEmptyLoci(),
-                keepUniqueReadListInLibs(), includeDeletions(), includeNs());
+        final AlignmentContextIteratorBuilder alignmentContextIteratorBuilder = new AlignmentContextIteratorBuilder();
+        alignmentContextIteratorBuilder.setDownsamplingInfo(getDownsamplingInfo());
+        alignmentContextIteratorBuilder.setEmitEmptyLoci(emitEmptyLoci());
+        alignmentContextIteratorBuilder.setIncludeDeletions(includeDeletions());
+        alignmentContextIteratorBuilder.setKeepUniqueReadListInLibs(keepUniqueReadListInLibs());
+        alignmentContextIteratorBuilder.setIncludeNs(includeNs());
+
+        final Iterator<AlignmentContext> iterator = alignmentContextIteratorBuilder.build(
+                readIterator, header, intervalsForTraversal, getBestAvailableSequenceDictionary(),
+                hasReference());
 
         // iterate over each alignment, and apply the function
         iterator.forEachRemaining(alignmentContext -> {

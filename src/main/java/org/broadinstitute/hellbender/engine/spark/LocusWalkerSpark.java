@@ -1,8 +1,6 @@
 package org.broadinstitute.hellbender.engine.spark;
 
-import com.google.common.collect.ImmutableList;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMReadGroupRecord;
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -14,8 +12,7 @@ import org.broadinstitute.hellbender.engine.*;
 import org.broadinstitute.hellbender.engine.datasources.ReferenceMultiSource;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
-import org.broadinstitute.hellbender.utils.iterators.AlignmentContextIteratorFactory;
-import org.broadinstitute.hellbender.utils.iterators.IntervalOverlappingIterator;
+import org.broadinstitute.hellbender.utils.locusiterator.AlignmentContextIteratorBuilder;
 import org.broadinstitute.hellbender.utils.locusiterator.LIBSDownsamplingInfo;
 import org.broadinstitute.hellbender.utils.locusiterator.LocusIteratorByState;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -122,8 +119,17 @@ public abstract class LocusWalkerSpark extends GATKSparkTool {
 
             final SAMSequenceDictionary referenceDictionary = reference == null? null : reference.getSequenceDictionary();
 
-            final Iterator<AlignmentContext> alignmentContextIterator = AlignmentContextIteratorFactory.createAlignmentContextIterator(Collections.<SimpleInterval>singletonList(interval), header, readIterator, sequenceDictionary,
-                    downsamplingInfo, referenceDictionary, isEmitEmptyLoci, false, true, false);
+            final AlignmentContextIteratorBuilder alignmentContextIteratorBuilder = new AlignmentContextIteratorBuilder();
+            alignmentContextIteratorBuilder.setDownsamplingInfo(downsamplingInfo);
+            alignmentContextIteratorBuilder.setEmitEmptyLoci(isEmitEmptyLoci);
+            alignmentContextIteratorBuilder.setIncludeDeletions(true);
+            alignmentContextIteratorBuilder.setKeepUniqueReadListInLibs(false);
+            alignmentContextIteratorBuilder.setIncludeNs(false);
+
+            final Iterator<AlignmentContext> alignmentContextIterator = alignmentContextIteratorBuilder.build(
+                    readIterator, header, Collections.singletonList(interval), sequenceDictionary,
+                    reference != null);
+
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(alignmentContextIterator, 0), false).map(alignmentContext -> {
                 final SimpleInterval alignmentInterval = new SimpleInterval(alignmentContext);
                 return new LocusWalkerContext(alignmentContext, new ReferenceContext(reference, alignmentInterval), new FeatureContext(fm, alignmentInterval));

@@ -4,7 +4,7 @@ import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
-import org.broadinstitute.hellbender.utils.locusiterator.LocusIteratorByState;
+import org.broadinstitute.hellbender.utils.locusiterator.AlignmentContextIteratorBuilder;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ public class IntervalAlignmentContextIterator implements Iterator<AlignmentConte
 
 
     /**
-     *  Note:  Typically, if you are calling this from a walker tool, you want to use {@link AlignmentContextIteratorFactory}
+     *  Note:  Typically, if you are calling this from a walker tool, you want to use {@link AlignmentContextIteratorBuilder}
      *
      * @param alignmentContextIterator iterator for alignment context
      * @param intervalLocusIterator an iterator that will traverse all relevant loci
