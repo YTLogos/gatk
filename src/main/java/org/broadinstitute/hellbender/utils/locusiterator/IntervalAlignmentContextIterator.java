@@ -1,9 +1,10 @@
-package org.broadinstitute.hellbender.utils.iterators;
+package org.broadinstitute.hellbender.utils.locusiterator;
 
 import htsjdk.samtools.SAMSequenceDictionary;
 import org.broadinstitute.hellbender.engine.AlignmentContext;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
+import org.broadinstitute.hellbender.utils.iterators.IntervalLocusIterator;
 import org.broadinstitute.hellbender.utils.locusiterator.AlignmentContextIteratorBuilder;
 import org.broadinstitute.hellbender.utils.pileup.ReadPileup;
 

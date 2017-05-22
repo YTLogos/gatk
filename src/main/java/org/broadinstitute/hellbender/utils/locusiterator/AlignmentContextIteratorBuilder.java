@@ -10,7 +10,6 @@ import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.IntervalUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
-import org.broadinstitute.hellbender.utils.iterators.IntervalAlignmentContextIterator;
 import org.broadinstitute.hellbender.utils.iterators.IntervalLocusIterator;
 import org.broadinstitute.hellbender.utils.iterators.IntervalOverlappingIterator;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -26,8 +25,6 @@ import java.util.stream.Collectors;
 public class AlignmentContextIteratorBuilder {
 
     protected static final Logger logger = LogManager.getLogger(AlignmentContextIteratorBuilder.class);
-
-
 
     private boolean isEmitEmptyLoci;
     private boolean isKeepUniqueReadListInLibs;
