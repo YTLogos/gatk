@@ -8,6 +8,7 @@ import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 import org.broadinstitute.hellbender.utils.test.IntegrationTestSpec;
+import org.broadinstitute.hellbender.utils.test.SamAssertionUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -265,7 +266,7 @@ public class HaplotypeCallerIntegrationTest extends CommandLineProgramTest {
     }
 
     @Test
-    public void testBamoutProducesReasonablySizedOutput() {
+    public void testBamoutProducesReasonablySizedOutput() throws IOException {
         Utils.resetRandomGenerator();
 
         // We will test that when running with -bamout over the testInterval, we produce
@@ -302,6 +303,9 @@ public class HaplotypeCallerIntegrationTest extends CommandLineProgramTest {
             Assert.assertTrue(((double)readCountDifference / gatk3BamoutNumReads) < 0.10,
                                "-bamout produced a bam with over 10% fewer/more reads than expected");
         }
+
+        // Check the output BAN header contains all of the inout BAM header Program Records (@PG)
+        SamAssertionUtils.assertOutBamContainsInBamProgramRecords(new File(NA12878_20_21_WGS_bam), bamOutput);
     }
 
     @Test

@@ -37,7 +37,7 @@ import java.util.Set;
 
 
 public class HaplotypeBAMWriterUnitTest extends BaseTest {
-    private final SAMFileHeader samHeader = ArtificialReadUtils.createArtificialSamHeader(20, 1, 1000);
+    private final SAMFileHeader samHeader = ArtificialReadUtils.createArtificialSamHeaderWithPrograms(20, 1, 1000, 3);
     private final String expectedFilePath = getToolTestDataDir() + "/expected/";
 
     @Test

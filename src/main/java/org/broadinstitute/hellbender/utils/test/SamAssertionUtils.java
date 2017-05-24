@@ -384,4 +384,30 @@ public final class SamAssertionUtils {
         sort.VALIDATION_STRINGENCY = stringency;
         sort.runTool();
     }
+
+    /**
+     * Get the program records (@PG) in the BAM file header
+     *
+     * @param bamFile   the BAM file
+     * @return  program records from teh BAN file header
+     * @throws IOException if cannot close BAM file
+     */
+    private static List<SAMProgramRecord> getProgramRecords(final File bamFile) throws IOException {
+        final SamReader bamInReader = SamReaderFactory.makeDefault().validationStringency(ValidationStringency.SILENT).open(bamFile);
+        List<SAMProgramRecord> programRecords =  bamInReader.getFileHeader().getProgramRecords();
+        bamInReader.close();
+        return programRecords;
+    }
+
+    /**
+     * Assert the output BAM file header contains the input BAM file header Program Records (@PG)
+     * @param inputBam  input BAM file
+     * @param outputBam output BAM file
+     */
+    public static void assertOutBamContainsInBamProgramRecords(final File inputBam, final File outputBam) throws IOException {
+        final List<SAMProgramRecord> bamInProgramRecords = getProgramRecords(inputBam);
+        final List<SAMProgramRecord> bamOutProgramRecords = getProgramRecords(outputBam);
+        Assert.assertTrue(bamOutProgramRecords.containsAll(bamInProgramRecords));
+    }
+
 }
