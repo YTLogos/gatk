@@ -236,13 +236,14 @@ public final class GenomicsDBImport extends GATKTool {
                 }
             }
             mergedHeaderLines = VCFUtils.smartMergeHeaders(headers, true);
+            mergedHeaderLines = new VCFHeader(mergedHeaderLines).getMetaDataInSortedOrder();
             mergedHeaderSequenceDictionary = new VCFHeader(mergedHeaderLines).getSequenceDictionary();
         } else {
             // --sampleNameMap was specified
             sampleNameToVcfUri = loadSampleNameMapFile(IOUtils.getPath(sampleNameMapFile));
             final String firstHeaderPath = sampleNameToVcfUri.entrySet().iterator().next().getValue();
             final VCFHeader header = loadHeaderFromVCFUri(firstHeaderPath);
-            mergedHeaderLines = header.getMetaDataInInputOrder();
+            mergedHeaderLines = header.getMetaDataInSortedOrder();
             mergedHeaderSequenceDictionary = header.getSequenceDictionary();
         }
 
