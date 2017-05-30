@@ -14,6 +14,7 @@ import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.walkers.genotyper.GenotypeCalculationArgumentCollection;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.HaplotypeCallerArgumentCollection;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.collections.IndexedSet;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.broadinstitute.hellbender.utils.test.SparkTestUtils;
 import org.testng.Assert;
@@ -209,5 +210,12 @@ public class HaplotypeCallerSparkIntegrationTest extends CommandLineProgramTest 
         Allele a = Allele.create("A");
         SparkTestUtils.roundTripInKryo(a, a.getClass(), SparkContextFactory.getTestSparkContext().getConf());
         SparkTestUtils.roundTripInKryo(Allele.NO_CALL, Allele.class, SparkContextFactory.getTestSparkContext().getConf());
+    }
+
+    @Test
+    public void testIndexedSetIsSerializable() {
+        IndexedSet<String> set = new IndexedSet<>();
+        set.add("a");
+        SparkTestUtils.roundTripInKryo(set, IndexedSet.class, SparkContextFactory.getTestSparkContext().getConf());
     }
 }
