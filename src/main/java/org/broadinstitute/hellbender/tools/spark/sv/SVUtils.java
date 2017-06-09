@@ -155,6 +155,10 @@ public final class SVUtils {
         return result;
     }
 
+    public static <T> Iterator<T> singletonIterator( final T t ) {
+        return Collections.singletonList(t).iterator();
+    }
+
     /**
      * Provides a stream collector that will collect items into an array list with a given initial capacity.
      */
