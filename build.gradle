@@ -111,7 +111,11 @@ dependencies {
     compileOnly(javadocJDKFiles)
     testCompile(javadocJDKFiles)
 
+<<<<<<< HEAD
     compile 'org.broadinstitute:barclay:1.1.0'
+=======
+    compile 'org.broadinstitute:barclay:1.0.0-36-g9bed4b8-SNAPSHOT'
+>>>>>>> 581c6aa87... Updating with some tab-completion elements.  Not tested or ready yet.
     compile ('com.intel:genomicsdb:' + genomicsdbVersion)  {
         exclude module: 'spark-core_2.10'
         exclude module: 'htsjdk'
@@ -473,6 +477,35 @@ task gatkDoc(type: Javadoc, dependsOn: classes) {
 
     outputs.dir(gatkDocDir)
     options.destinationDirectory(gatkDocDir)
+
+    options.addStringOption("settings-dir", "src/main/resources/org/broadinstitute/hellbender/utils/helpTemplates");
+    options.addStringOption("output-file-extension", "html")
+    options.addStringOption("absolute-version", getVersion())
+    options.addStringOption("build-timestamp", new Date().format("dd-mm-yyyy hh:mm:ss"))
+    options.addStringOption("verbose")
+}
+
+// Generate GATK Tab Completion File
+task gatkTabComplete(type: Javadoc, dependsOn: classes) {
+    final File tabCompletionDir = new File("build/docs/tabCompletion")
+    doFirst {
+        // make sure the output folder exists or we can create it
+        if (!tabCompletionDir.exists() && !tabCompletionDir.mkdirs()) {
+            throw new GradleException(String.format("Failure creating folder (%s) for GATK tab completion output in task (%s)",
+                    tabCompletionDir.getAbsolutePath(),
+                    it.name));
+        }
+    }
+    source = sourceSets.main.allJava
+
+    // The gatkDoc process instantiates any documented feature classes, so to run it we need the entire
+    // runtime classpath, as well as jdk javadoc files such as tools.jar, where com.sun.javadoc lives.
+    classpath = sourceSets.main.runtimeClasspath + javadocJDKFiles
+    options.docletpath = classpath.asType(List)
+    options.doclet = "org.broadinstitute.barclay.help.BashCompletionDoclet"
+
+    outputs.dir(tabCompletionDir)
+    options.destinationDirectory(tabCompletionDir)
 
     options.addStringOption("settings-dir", "src/main/resources/org/broadinstitute/hellbender/utils/helpTemplates");
     options.addStringOption("output-file-extension", "html")
