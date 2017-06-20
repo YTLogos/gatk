@@ -44,7 +44,7 @@ public final class ReadsForQNamesFinder {
                 if ( FastqRead == null ) {
                     final String readName =
                             dumpFASTQs ? SVFastqUtils.readToFastqSeqId(read, includeMappingLocation) : null;
-                    FastqRead = new SVFastqUtils.FastqRead(readName, read.getBases(), read.getBaseQualities());
+                    FastqRead = new SVFastqUtils.FastqRead(read);
                 }
                 intervalReads[intervalId].add(FastqRead);
             }

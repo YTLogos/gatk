@@ -373,7 +373,7 @@ public final class FindBreakpointEvidenceSpark extends GATKSparkTool {
             if ( fastqDir != null ) {
                 final String fastqName = String.format("%s/assembly%06d.fastq",fastqDir,intervalAndReads._1());
                 final ArrayList<SVFastqUtils.FastqRead> sortedReads = new ArrayList<>(intervalAndReads._2());
-                sortedReads.sort(Comparator.comparing(SVFastqUtils.FastqRead::getName));
+                sortedReads.sort(Comparator.comparing(SVFastqUtils.FastqRead::getId));
                 SVFastqUtils.writeFastqFile(fastqName, sortedReads.iterator());
             }
             final FermiLiteAssembly assembly = new FermiLiteAssembler().createAssembly(readsList);

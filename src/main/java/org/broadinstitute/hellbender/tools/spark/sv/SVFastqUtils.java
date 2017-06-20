@@ -4,53 +4,199 @@ import com.esotericsoftware.kryo.DefaultSerializer;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import htsjdk.samtools.Cigar;
 import htsjdk.samtools.SAMUtils;
+import htsjdk.samtools.TextCigarCodec;
+import htsjdk.samtools.util.Locatable;
+import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.utils.BaseUtils;
+import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.fermi.FermiLiteAssembler;
 import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Memory-economical utilities for producing a FASTQ file.
  */
 public class SVFastqUtils {
 
+    public static final class Mapping implements Locatable {
+
+        private static final Pattern MAPPING_DESCRIPTION_PATTERN = Pattern.compile("^mapping=(.+):(\\d+);(\\+|\\-);(.+)$");
+
+        private final String contig;
+
+        private final int start;
+
+        private final boolean forwardStrand;
+
+        private final Cigar cigar;
+
+        public Mapping(final GATKRead read) {
+            Utils.nonNull(read);
+            if (read.isUnmapped()) {
+                contig = null;
+                start = -1;
+                forwardStrand = true;
+                cigar = null;
+            } else {
+                contig = read.getContig();
+                start = read.getStart();
+                forwardStrand = !read.isReverseStrand();
+                cigar = read.getCigar();
+            }
+        }
+
+        public Mapping(final String mappingDescription) {
+            Utils.nonNull(mappingDescription);
+            if (mappingDescription.equals("mapping=unmapped")) {
+                contig = null;
+                start = -1;
+                forwardStrand = true;
+                cigar = null;
+            } else {
+                final Matcher matcher = MAPPING_DESCRIPTION_PATTERN.matcher(mappingDescription);
+                if (!matcher.find()) {
+                    throw new IllegalArgumentException("invalid mapping description: '" + mappingDescription + "'");
+                } else {
+                    contig = matcher.group(1);
+                    start = Integer.parseInt(matcher.group(2));
+                    cigar = TextCigarCodec.decode(matcher.group(4));
+                    forwardStrand = matcher.group(3).equals("+");
+                }
+            }
+        }
+
+        public boolean isMapped() {
+            return contig != null;
+        }
+
+        @Override
+        public String getContig() {
+            return contig;
+        }
+
+        @Override
+        public int getStart() {
+            return start;
+        }
+
+        @Override
+        public int getEnd() {
+            return start;
+        }
+
+        public Cigar getCigar() {
+            return cigar;
+        }
+
+        public boolean isForwardStrand() {
+            return forwardStrand;
+        }
+
+        public String toString() {
+            if (isMapped()) {
+                return String.format("mapping=%s:%d;%s;%s", getContig(), getStart(), forwardStrand ? "+" : "-", cigar.toString());
+            } else {
+                return "mapping=unmapped";
+            }
+        }
+    }
+
     @DefaultSerializer(FastqRead.Serializer.class)
     public static final class FastqRead implements FermiLiteAssembler.BasesAndQuals {
         private final String name;
+        private final OptionalInt fragmentNumber;
         private final byte[] bases;
         private final byte[] quals;
+        private final Optional<Mapping> mapping;
 
-        public FastqRead( final String name, final byte[] bases, final byte[] quals ) {
-            this.name = name;
-            this.bases = bases;
-            this.quals = quals;
+        public FastqRead( final GATKRead read ) {
+            this(Utils.nonNull(read).getName(),
+                 read.isPaired() ? OptionalInt.of(read.isFirstOfPair() ? 1 : 2) : OptionalInt.empty(),
+                 read.isReverseStrand() ? BaseUtils.simpleReverseComplement(read.getBases()) : read.getBases().clone(),
+                 reverseIf(read.isReverseStrand(), read.getBaseQualities()), new Mapping(read));
+
+        }
+
+        private static byte[] reverseIf(final boolean reverse, final byte[] bytes) {
+            if (reverse) {
+                final byte[] result = bytes.clone();
+                ArrayUtils.reverse(result);
+                return result;
+            } else {
+                return bytes;
+            }
+        }
+
+        public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals, final Mapping mapping) {
+            this.name = Utils.nonNull(name);
+            this.fragmentNumber = Utils.nonNull(fragmentNumber);
+            this.bases = Utils.nonNull(bases);
+            this.quals = Utils.nonNull(quals);
+            this.mapping = mapping == null ? Optional.empty() : Optional.of(mapping);
+        }
+
+        public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals ) {
+            this(name, fragmentNumber, bases, quals, null);
+        }
+
+        public FastqRead(final String name, final byte[] bases, final byte[] quals) {
+            this(name, OptionalInt.empty(), bases, quals);
         }
 
         private FastqRead( final Kryo kryo, final Input input ) {
             name = input.readString();
+            final String fragmentNumberString = input.readString();
+            fragmentNumber = fragmentNumberString.isEmpty() ? OptionalInt.empty() : OptionalInt.of(Integer.parseInt(fragmentNumberString));
             final int nBases = input.readInt();
             bases = new byte[nBases];
             input.readBytes(bases);
             quals = new byte[nBases];
             input.readBytes(quals);
+            final String mappingString = input.readString();
+            if (!mappingString.isEmpty()) {
+                mapping = Optional.of(new Mapping(mappingString));
+            } else {
+                mapping = Optional.empty();
+            }
         }
 
+        /**
+         * Returns the header line of this Fastq read starting with '@' followed by the read id and description separated by tab characters.
+         * @return never {@code null}.
+         */
+        public String getHeader() {
+            final String description = getDescription();
+            if (description.isEmpty()) {
+                return "@" + getId();
+            } else {
+                return String.format("@%s\t%s", getId(), description);
+            }
+        }
+
+        public String getId() { return fragmentNumber.isPresent() ? String.join("/", name, "" + fragmentNumber.getAsInt()) : name; }
         public String getName() { return name; }
+        public String getDescription() { return mapping.isPresent() ? mapping.get().toString() : ""; }
+
         @Override public byte[] getBases() { return bases; }
         @Override public byte[] getQuals() { return quals; }
 
         private void serialize( final Kryo kryo, final Output output ) {
             output.writeAscii(name);
+            output.writeAscii(fragmentNumber.isPresent() ? "" + fragmentNumber.getAsInt() : "");
             output.writeInt(bases.length);
             output.writeBytes(bases);
             output.writeBytes(quals);
+            output.writeAscii(mapping.isPresent() ? mapping.get().toString() : "");
         }
+
 
         public static final class Serializer extends com.esotericsoftware.kryo.Serializer<FastqRead> {
             @Override
@@ -112,10 +258,12 @@ public class SVFastqUtils {
     /** Convert a read's name into a FASTQ record sequence ID */
     public static String readToFastqSeqId( final GATKRead read, final boolean includeMappingLocation ) {
         final String nameSuffix = read.isPaired() ? (read.isFirstOfPair() ? "/1" : "/2") : "";
-        String mapLoc = "";
+        final String mapLoc;
         if ( includeMappingLocation ) {
-            if ( read.isUnmapped() ) mapLoc = " mapping=unmapped";
-            else mapLoc = " mapping=" + read.getContig() + ":" + read.getStart() + ";" + read.getCigar().toString();
+            final Mapping mapping = new Mapping(read);
+            mapLoc = mapping.toString();
+        } else {
+            mapLoc = "";
         }
         return read.getName() + nameSuffix + mapLoc;
     }
@@ -137,10 +285,9 @@ public class SVFastqUtils {
         int index = 0;
         while ( fastqReadItr.hasNext() ) {
             final FastqRead read = fastqReadItr.next();
-            writer.write('@');
-            final String name = read.getName();
-            if ( name == null ) writer.write(Integer.toString(++index).getBytes());
-            else writer.write(name.getBytes());
+            final String header = read.getHeader();
+            if ( header == null ) writer.write(Integer.toString(++index).getBytes());
+            else writer.write(header.getBytes());
             writer.write('\n');
             writer.write(read.getBases());
             writer.write('\n');
