@@ -1,6 +1,7 @@
 language: java
 sudo: required
 dist: trusty
+group: edge
 git:
   depth: 9999999
 jdk:
