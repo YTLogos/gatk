@@ -9,7 +9,7 @@ import org.broadinstitute.barclay.help.HelpDoclet;
  */
 public class BashCompletionDocWorkUnitHandler extends DefaultDocWorkUnitHandler {
 
-    private static final String DEFAULT_FREEMARKER_BASH_COMPLETION_TEMPLATE_NAME = "bash-completion.placeholder.template.sh";
+    private static final String DEFAULT_FREEMARKER_BASH_COMPLETION_TEMPLATE_NAME = "bash-completion.placeholder.template.ftl";
 
     public BashCompletionDocWorkUnitHandler(HelpDoclet doclet) {
         super(doclet);

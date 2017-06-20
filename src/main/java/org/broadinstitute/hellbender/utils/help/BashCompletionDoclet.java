@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class BashCompletionDoclet extends HelpDoclet {
 
-    private static final String DEFAULT_INDEX_TEMPLATE_NAME = "bash-completion.template.sh";
+    private static final String DEFAULT_INDEX_TEMPLATE_NAME = "bash-completion.template.ftl";
 
     protected static final String outputFileExtension = "sh";
     protected static final String indexFileExtension = "sh";
