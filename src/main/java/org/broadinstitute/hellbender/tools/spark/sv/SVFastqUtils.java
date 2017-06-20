@@ -8,7 +8,7 @@ import htsjdk.samtools.Cigar;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.TextCigarCodec;
 import htsjdk.samtools.util.Locatable;
-import org.apache.commons.lang3.ArrayUtils;
+import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.Utils;
@@ -102,7 +102,7 @@ public class SVFastqUtils {
 
         public String toString() {
             if (isMapped()) {
-                return String.format("mapping=%s:%d;%s;%s", getContig(), getStart(), forwardStrand ? "+" : "-", cigar.toString());
+                return "mapping=" + String.join(";", getContig() + ":" + getStart(), forwardStrand ? "+" : "-", cigar.toString());
             } else {
                 return "mapping=unmapped";
             }
@@ -120,19 +120,16 @@ public class SVFastqUtils {
         public FastqRead( final GATKRead read ) {
             this(Utils.nonNull(read).getName(),
                  read.isPaired() ? OptionalInt.of(read.isFirstOfPair() ? 1 : 2) : OptionalInt.empty(),
-                 read.isReverseStrand() ? BaseUtils.simpleReverseComplement(read.getBases()) : read.getBases().clone(),
+                 read.isReverseStrand() ? BaseUtils.simpleReverseComplement(read.getBases()) : read.getBases(),
                  reverseIf(read.isReverseStrand(), read.getBaseQualities()), new Mapping(read));
 
         }
 
         private static byte[] reverseIf(final boolean reverse, final byte[] bytes) {
             if (reverse) {
-                final byte[] result = bytes.clone();
-                ArrayUtils.reverse(result);
-                return result;
-            } else {
-                return bytes;
+                SequenceUtil.reverseQualities(bytes);
             }
+            return bytes;
         }
 
         public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals, final Mapping mapping) {
