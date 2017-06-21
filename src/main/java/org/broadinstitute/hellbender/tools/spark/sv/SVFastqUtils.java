@@ -26,9 +26,12 @@ import java.util.regex.Pattern;
  */
 public class SVFastqUtils {
 
+    private static final Pattern MAPPING_DESCRIPTION_PATTERN = Pattern.compile("^mapping=(.+):(\\d+);(\\+|\\-);(.+)$");
+
+    private static final Pattern FASTQ_READ_HEADER_PATTERN = Pattern.compile("^@([^\\t]+)(\\t(.*))?$");
+
     public static final class Mapping implements Locatable {
 
-        private static final Pattern MAPPING_DESCRIPTION_PATTERN = Pattern.compile("^mapping=(.+):(\\d+);(\\+|\\-);(.+)$");
 
         private final String contig;
 
@@ -174,7 +177,7 @@ public class SVFastqUtils {
             if (description.isEmpty()) {
                 return "@" + getId();
             } else {
-                return String.format("@%s\t%s", getId(), description);
+                return "@" + getId() + "\t" + description;
             }
         }
 
@@ -216,7 +219,7 @@ public class SVFastqUtils {
             int lineNo = 0;
             while ( (seqIdLine = reader.readLine()) != null ) {
                 lineNo += 1;
-                if ( seqIdLine.length() < 1 || seqIdLine.charAt(0) != '@' ) {
+                if (!FASTQ_READ_HEADER_PATTERN.matcher(seqIdLine).find()) {
                     throw new GATKException("In FASTQ file "+fileName+" sequence identifier line does not start with @ on line "+lineNo);
                 }
                 final String callLine = reader.readLine();
@@ -243,7 +246,18 @@ public class SVFastqUtils {
                 }
                 final byte[] quals = qualLine.getBytes();
                 SAMUtils.fastqToPhred(quals);
-                reads.add(new FastqRead(seqIdLine.substring(1), callLine.getBytes(), quals));
+                final String[] headerParts = seqIdLine.split("\t");
+                final Mapping mapping = headerParts.length < 2 ? null : new Mapping(headerParts[1]);
+                final OptionalInt fragmentNumber;
+                final String name;
+                if (headerParts[0].matches("^@.*\\/\\d+$")) {
+                    fragmentNumber = OptionalInt.of(Integer.parseInt(headerParts[0].substring(headerParts[0].lastIndexOf("/") + 1)));
+                    name = headerParts[0].substring(1, headerParts[0].lastIndexOf("/"));
+                } else {
+                    fragmentNumber = OptionalInt.empty();
+                    name = headerParts[0].substring(1);
+                }
+                reads.add(new FastqRead(name, fragmentNumber, callLine.getBytes(), quals, mapping));
             }
         }
         catch ( final IOException ioe ) {
@@ -262,7 +276,7 @@ public class SVFastqUtils {
         } else {
             mapLoc = "";
         }
-        return read.getName() + nameSuffix + mapLoc;
+        return read.getName() + nameSuffix + "\t" + mapLoc;
     }
 
     /** Write a list of FASTQ records into a file. */

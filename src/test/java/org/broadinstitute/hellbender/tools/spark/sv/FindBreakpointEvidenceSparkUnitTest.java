@@ -140,8 +140,10 @@ public final class FindBreakpointEvidenceSparkUnitTest extends BaseTest {
             final ByteArrayInputStream actualStream = new ByteArrayInputStream(concatenatedFastqs);
             try( InputStream expectedStream = new BufferedInputStream(new FileInputStream(expectedFile)) ) {
                 int val;
-                while ( (val = expectedStream.read()) != -1 )
-                    Assert.assertEquals(actualStream.read(), val);
+                while ( (val = expectedStream.read()) != -1 ) {
+                    final int c = actualStream.read();
+                    Assert.assertEquals(c, val);
+                }
                 Assert.assertEquals(actualStream.read(), -1);
             }
             catch ( final IOException ioe2 ) {
