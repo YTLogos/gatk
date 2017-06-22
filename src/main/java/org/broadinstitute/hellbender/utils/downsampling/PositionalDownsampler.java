@@ -28,21 +28,32 @@ public final class PositionalDownsampler extends ReadsDownsampler {
 
     private List<GATKRead> finalizedReads;
 
+    private final int depthToIgnoreLocus;
+
+    private final boolean downsampleByMappingQuality;
+
     /**
      * Construct a PositionalDownsampler
      *
-     * @param targetCoverage Maximum number of reads that may share any given alignment start position. Must be > 0
+     * @param maxReadsPerAlignmentStart Maximum number of reads that may share any given alignment start position. Must be > 0
      * @param header SAMFileHeader to use to determine contig ordering. Non-null.
      */
-    public PositionalDownsampler( final int targetCoverage, final SAMFileHeader header ) {
-        Utils.validateArg(targetCoverage > 0, "targetCoverage must be > 0");
+    public PositionalDownsampler( final int maxReadsPerAlignmentStart, final int depthToIgnoreLocus,
+                                  final boolean downsampleByMappingQuality, final SAMFileHeader header ) {
+        Utils.validateArg(maxReadsPerAlignmentStart > 0, "maxReadsPerAlignmentStart must be > 0");
         Utils.nonNull(header);
 
-        this.reservoir = new ReservoirDownsampler(targetCoverage);
+        this.reservoir = new ReservoirDownsampler(maxReadsPerAlignmentStart);
+        this.depthToIgnoreLocus = depthToIgnoreLocus;
+        this.downsampleByMappingQuality = downsampleByMappingQuality;
         this.finalizedReads = new ArrayList<>();
         this.header = header;
         clearItems();
         resetStats();
+    }
+
+    public PositionalDownsampler( final int maxReadsPerAlignmentStart, final SAMFileHeader header ) {
+        this(maxReadsPerAlignmentStart, Integer.MAX_VALUE, false, header);
     }
 
     @Override
@@ -57,8 +68,7 @@ public final class PositionalDownsampler extends ReadsDownsampler {
         // downsampling, however.
         if ( ReadUtils.readHasNoAssignedPosition(newRead) ) {
             finalizedReads.add(newRead);
-        }
-        else {
+        } else {
             final int reservoirPreviouslyDiscardedItems = reservoir.getNumberOfDiscardedItems();
             reservoir.submit(newRead);
             incrementNumberOfDiscardedItems(reservoir.getNumberOfDiscardedItems() - reservoirPreviouslyDiscardedItems);
@@ -79,7 +89,10 @@ public final class PositionalDownsampler extends ReadsDownsampler {
     }
 
     private void finalizeReservoir() {
-        finalizedReads.addAll(reservoir.consumeFinalizedItems());
+        final List<GATKRead> reservoirReads = reservoir.consumeFinalizedItems();
+        if (reservoirReads.size() <= depthToIgnoreLocus) {
+            finalizedReads.addAll(reservoirReads);
+        }
         reservoir.resetStats();
     }
 

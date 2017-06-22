@@ -145,6 +145,7 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
     public static final int DEFAULT_MAX_ASSEMBLY_REGION_SIZE = 300;
     public static final int DEFAULT_ASSEMBLY_REGION_PADDING = 100;
     public static final int DEFAULT_MAX_READS_PER_ALIGNMENT = 50;
+    public static final boolean DEFAULT_DOWNSAMPLE_BY_MAPPING_QUALITY = false;
     public static final double DEFAULT_ACTIVE_PROB_THRESHOLD = 0.002;
     public static final int DEFAULT_MAX_PROB_PROPAGATION_DISTANCE = 50;
     @ArgumentCollection
@@ -177,6 +178,12 @@ public final class HaplotypeCaller extends AssemblyRegionWalker {
 
     @Override
     protected int defaultMaxReadsPerAlignmentStart() { return DEFAULT_MAX_READS_PER_ALIGNMENT; }
+
+    @Override
+    protected int defaultDepthToIgnoreLocus() { return Integer.MAX_VALUE; }
+
+    @Override
+    protected boolean defaultDownsampleByMappingQuality() { return DEFAULT_DOWNSAMPLE_BY_MAPPING_QUALITY; }
 
     @Override
     protected double defaultActiveProbThreshold() { return DEFAULT_ACTIVE_PROB_THRESHOLD; }
