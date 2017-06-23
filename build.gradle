@@ -111,11 +111,7 @@ dependencies {
     compileOnly(javadocJDKFiles)
     testCompile(javadocJDKFiles)
 
-<<<<<<< HEAD
-    compile 'org.broadinstitute:barclay:1.1.0'
-=======
     compile 'org.broadinstitute:barclay:1.0.0-36-g9bed4b8-SNAPSHOT'
->>>>>>> 581c6aa87... Updating with some tab-completion elements.  Not tested or ready yet.
     compile ('com.intel:genomicsdb:' + genomicsdbVersion)  {
         exclude module: 'spark-core_2.10'
         exclude module: 'htsjdk'
