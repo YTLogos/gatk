@@ -111,7 +111,7 @@ dependencies {
     compileOnly(javadocJDKFiles)
     testCompile(javadocJDKFiles)
 
-    compile 'org.broadinstitute:barclay:1.0.0-36-g9bed4b8-SNAPSHOT'
+    compile 'org.broadinstitute:barclay:1.1.0-14-g1ae3a52-SNAPSHOT'
     compile ('com.intel:genomicsdb:' + genomicsdbVersion)  {
         exclude module: 'spark-core_2.10'
         exclude module: 'htsjdk'
@@ -498,13 +498,13 @@ task gatkTabComplete(type: Javadoc, dependsOn: classes) {
     // runtime classpath, as well as jdk javadoc files such as tools.jar, where com.sun.javadoc lives.
     classpath = sourceSets.main.runtimeClasspath + javadocJDKFiles
     options.docletpath = classpath.asType(List)
-    options.doclet = "org.broadinstitute.barclay.help.BashCompletionDoclet"
+    options.doclet = "org.broadinstitute.hellbender.utils.help.BashCompletionDoclet"
 
     outputs.dir(tabCompletionDir)
     options.destinationDirectory(tabCompletionDir)
 
     options.addStringOption("settings-dir", "src/main/resources/org/broadinstitute/hellbender/utils/helpTemplates");
-    options.addStringOption("output-file-extension", "html")
+    options.addStringOption("output-file-extension", "sh")
     options.addStringOption("absolute-version", getVersion())
     options.addStringOption("build-timestamp", new Date().format("dd-mm-yyyy hh:mm:ss"))
     options.addStringOption("verbose")

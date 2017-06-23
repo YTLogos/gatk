@@ -1,30 +1,32 @@
 package org.broadinstitute.hellbender.utils.help;
 
+import org.broadinstitute.barclay.help.*;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.RootDoc;
-import org.broadinstitute.barclay.help.BashCompletionDocWorkUnitHandler;
-import org.broadinstitute.barclay.help.*;
+import freemarker.template.Configuration;
+import freemarker.template.DefaultObjectWrapper;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 
-import java.io.IOException;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
 /**
- * Created by jonn on 6/15/17.
+ * For testing of help documentation generation.
  */
 public class BashCompletionDoclet extends HelpDoclet {
 
-    private static final String DEFAULT_INDEX_TEMPLATE_NAME = "bash-completion.template.ftl";
-
     protected static final String outputFileExtension = "sh";
+
+    protected static final String indexFileBaseName = "shell-completion";
     protected static final String indexFileExtension = "sh";
 
-    /**
-     * Create a doclet to process class information into a shell completion file using FreeMarker templates properties.
-     * @param rootDoc The starting point of the doclet.
-     * @throws IOException If an error occurs during the creation of the shell completion files.
-     */
-    public static boolean start(RootDoc rootDoc) throws IOException {
-        return new BashCompletionDoclet().startProcessDocs(rootDoc);
+    public static boolean start(RootDoc rootDoc) {
+        try {
+            return new BashCompletionDoclet().startProcessDocs(rootDoc);
+        } catch (IOException e) {
+            throw new DocException("Exception processing javadoc", e);
+        }
     }
 
     @Override
@@ -34,35 +36,109 @@ public class BashCompletionDoclet extends HelpDoclet {
             final Class<?> clazz)
     {
         return new DocWorkUnit(
-                new BashCompletionDocWorkUnitHandler(this ),
+                new DefaultDocWorkUnitHandler(this ),
                 documentedFeature,
                 classDoc,
                 clazz);
     }
 
     /**
-     * Adds a super-category so that we can custom-order the categories in the doc index
+     * Actually write out the shell completion output file.
+     * The Freemarker instance will see a top-level variable that looks like the following:
      *
-     * @param docWorkUnit
-     * @return
+     * SimpleMap tools = SimpleMap { ToolName : MasterPropertiesMap }
+     *
+     *     where
+     *
+     *     MasterPropertiesMap is a map containing the following Keys:
+     *         all
+     *         common
+     *         positional
+     *         hidden
+     *         advanced
+     *         deprecated
+     *         optional
+     *         dependent
+     *         required
+     *
+     *         Each of those keys maps to a List&lt;SimpleMap&gt; representing each property.
+     *         These property maps each contain the following keys:
+     *
+     *             kind
+     *             name
+     *             summary
+     *             fulltext
+     *             otherArgumentRequired
+     *             synonyms
+     *             exclusiveOf
+     *             type
+     *             options
+     *             attributes
+     *             required
+     *             minRecValue
+     *             maxRecValue
+     *             minValue
+     *             maxValue
+     *             defaultValue
+     *
      */
     @Override
-    protected final Map<String, String> getGroupMap(final DocWorkUnit docWorkUnit) {
-        final Map<String, String> root = super.getGroupMap(docWorkUnit);
+    protected void emitOutputFromTemplates (
+            final List<Map<String, String>> groupMaps,
+            final List<Map<String, String>> featureMaps)
+    {
+        try {
+            /* ------------------------------------------------------------------- */
+            /* You should do this ONLY ONCE in the whole application life-cycle:   */
+            final Configuration cfg = new Configuration();
+            cfg.setDirectoryForTemplateLoading(settingsDir); // where the template files come from
+            cfg.setObjectWrapper(new DefaultObjectWrapper());
 
-        /**
-         * Add-on super-category definitions. The super-category and spark value strings need to be the
-         * same as used in the Freemarker template.
-         */
-        root.put("supercat", HelpConstants.getSuperCategoryProperty(docWorkUnit.getGroupName()));
-        root.put("isspark", HelpConstants.getSparkCategoryProperty(docWorkUnit.getGroupName()));
+            // Create a root map for all the work units so we can access all the info we need:
+            Map<String, Object> propertiesMap = new HashMap<>();
+            workUnits.stream().forEach( workUnit -> propertiesMap.put(workUnit.getName(), workUnit.getRootMap()) );
 
-        return root;
+            // Add everything into a nice package that we can iterate over
+            // while exposing the command line program names as keys:
+            Map<String, Object> rootMap = new HashMap<>();
+            rootMap.put("tools", propertiesMap);
+
+            // Get or create a template
+            final Template template = cfg.getTemplate(getIndexTemplateName());
+
+            // Create the output file
+            final File indexFile = new File(getDestinationDir()
+                    + File.separator
+                    + getIndexBaseFileName()
+                    + "."
+                    + getIndexFileExtension()
+            );
+
+            // Run the template and merge in the data
+            try (final FileOutputStream fileOutStream = new FileOutputStream(indexFile);
+                 final OutputStreamWriter outWriter = new OutputStreamWriter(fileOutStream)) {
+                template.process(rootMap, outWriter);
+            } catch (TemplateException e) {
+                throw new DocException("Freemarker Template Exception during documentation index creation", e);
+            }
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("FileNotFoundException processing javadoc template", e);
+        } catch (IOException e) {
+            throw new RuntimeException("IOException processing javadoc template", e);
+        }
     }
 
     /**
      * @return the name of the index template to be used for this doclet
      */
-    public String getIndexTemplateName() { return DEFAULT_INDEX_TEMPLATE_NAME; }
+    @Override
+    public String getIndexTemplateName() { return "bash-completion.template.ftl"; }
+
+    /**
+     * @return The base filename for the index file associated with this doclet.
+     */
+    @Override
+    public String getIndexBaseFileName() { return indexFileBaseName; }
 
 }
