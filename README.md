@@ -242,6 +242,7 @@ If you are looking for the codebase of the current production version of GATK, p
       to the test data.  They also require setting several certain environment variables.
       * `HELLBENDER_TEST_PROJECT` : your google cloud project 
       * `HELLBENDER_TEST_APIKEY` : your google cloud API key
+      * `HELLBENDER_JSON_SERVICE_ACCOUNT_KEY` : path to a local JSON file with [service account credentials](https://cloud.google.com/storage/docs/authentication#service_accounts) 
       * `HELLBENDER_TEST_STAGING` : a gs:// path to a writable location
       * `HELLBENDER_TEST_INPUTS` : path to cloud test data, ex: gs://hellbender/test/resources/
       
