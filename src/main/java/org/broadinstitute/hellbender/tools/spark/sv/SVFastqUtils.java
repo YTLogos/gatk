@@ -10,7 +10,9 @@ import htsjdk.samtools.TextCigarCodec;
 import htsjdk.samtools.util.Locatable;
 import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.hellbender.exceptions.GATKException;
+import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.utils.BaseUtils;
+import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.fermi.FermiLiteAssembler;
 import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
@@ -20,19 +22,75 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Memory-economical utilities for producing a FASTQ file.
  */
 public class SVFastqUtils {
 
-    private static final Pattern MAPPING_DESCRIPTION_PATTERN = Pattern.compile("^mapping=(.+):(\\d+);(\\+|\\-);(.+)$");
+    public static final char HEADER_PREFIX_CHR = '@';
+    public static final char FRAGMENT_NUMBER_SEPARATOR_CHR = '/';
+    public static final char HEADER_FIELD_SEPARATOR_CHR = '\t';
+    public static final String HEADER_FIELD_SEPARATOR_REGEXP = "\\t"; // make sure its consistent with {@link #HEADER_FIELD_SEPARATOR_CHR}
+    public static final char HEADER_FIELD_EQUAL_CHR = '=';
+    private static final char HEADER_FIELD_ARRAY_SEPARATOR_CHR = ';';
+    private static final char LINE_SEPARATOR_CHR = '+';
+    private static final String MAPPING_FIELD_NAME = "mapping";
+    private static final String UNMAPPED_STR = "unmapped";
 
-    private static final Pattern FASTQ_READ_HEADER_PATTERN = Pattern.compile("^@([^\\t]+)(\\t(.*))?$");
+    private static final String FRAGMENT_NUMBER_SEPARATOR_STR = "" + FRAGMENT_NUMBER_SEPARATOR_CHR;
+    private static final String HEADER_FIELD_SEPARATOR_STR = "" + HEADER_FIELD_SEPARATOR_CHR;
+    private static final String MAPPING_FIELD_EQUAL_TO = MAPPING_FIELD_NAME + HEADER_FIELD_EQUAL_CHR;
+    private static final String UNMAPPED_DESCRIPTION_STR = MAPPING_FIELD_EQUAL_TO + UNMAPPED_STR;
+    private static final String HEADER_FIELD_ARRAY_SEPARATOR_STR = "" + HEADER_FIELD_ARRAY_SEPARATOR_CHR;
+    private static final Pattern MAPPING_DESCRIPTION_PATTERN = Pattern.compile("^" + MAPPING_FIELD_EQUAL_TO +
+            "(.+):(\\d+);(" + Strand.PATTERN.pattern() + ");(.+)$");
+    private static final Pattern FASTQ_READ_HEADER_PATTERN = Pattern.compile("^" + HEADER_PREFIX_CHR +
+            "([^" + HEADER_FIELD_SEPARATOR_REGEXP +  "]+)(" + HEADER_FIELD_SEPARATOR_REGEXP + "(.*))?$");
+
+    // TODO htsjdk has it own Strand annotation enum. These classes could be merged if that Strand would me updated
+    // TODO so that one can get the enum constant char encoding; currently one can only do the transformation the other way.
+    public enum Strand {
+        POSITIVE('+'),
+        NEGATIVE('-');
+
+        public static final Pattern PATTERN = Pattern.compile("\\+|\\-");
+
+        private final char charEncoding;
+
+        Strand(final char ce) {
+            charEncoding = ce;
+        }
+
+        static Strand decode(final String ce) {
+            Utils.nonNull(ce);
+            if (ce.length() == 1)
+                return decode(ce.charAt(0));
+            else
+                throw new NoSuchElementException(String.format("there is no strand designation for encoding %s valid encodings are: %s.",
+                        ce, Stream.of(values()).map(Strand::encodeAsString).collect(Collectors.joining(", "))));
+        }
+
+        static Strand decode(final char ce) {
+            if (ce == POSITIVE.charEncoding)
+                return POSITIVE;
+            else if (ce == NEGATIVE.charEncoding)
+                return NEGATIVE;
+            else
+                throw new NoSuchElementException("there is no strand designation for encoding " + ce + " valid encodings are: " +
+                        Stream.of(values()).map(s -> "" + s.charEncoding).collect(Collectors.joining(", ")) + ".");
+        }
+
+        @Override
+        public String toString() { return encodeAsString(); };
+
+        String encodeAsString() { return "" + charEncoding; }
+    }
 
     public static final class Mapping implements Locatable {
-
-
+        
         private final String contig;
 
         private final int start;
@@ -58,7 +116,7 @@ public class SVFastqUtils {
 
         public Mapping(final String mappingDescription) {
             Utils.nonNull(mappingDescription);
-            if (mappingDescription.equals("mapping=unmapped")) {
+            if (mappingDescription.equals(UNMAPPED_DESCRIPTION_STR)) {
                 contig = null;
                 start = -1;
                 forwardStrand = true;
@@ -71,7 +129,7 @@ public class SVFastqUtils {
                     contig = matcher.group(1);
                     start = Integer.parseInt(matcher.group(2));
                     cigar = TextCigarCodec.decode(matcher.group(4));
-                    forwardStrand = matcher.group(3).equals("+");
+                    forwardStrand = Strand.decode(matcher.group(3)) == Strand.POSITIVE;
                 }
             }
         }
@@ -105,27 +163,24 @@ public class SVFastqUtils {
 
         public String toString() {
             if (isMapped()) {
-                return "mapping=" + String.join(";", getContig() + ":" + getStart(), forwardStrand ? "+" : "-", cigar.toString());
+                return MAPPING_FIELD_EQUAL_TO + String.join(HEADER_FIELD_ARRAY_SEPARATOR_STR, getContig() + SimpleInterval.CONTIG_SEPARATOR + getStart(), (forwardStrand ? Strand.POSITIVE : Strand.NEGATIVE).encodeAsString(), cigar.toString());
             } else {
-                return "mapping=unmapped";
+                return UNMAPPED_DESCRIPTION_STR;
             }
         }
     }
 
     @DefaultSerializer(FastqRead.Serializer.class)
     public static final class FastqRead implements FermiLiteAssembler.BasesAndQuals {
-        private final String name;
-        private final OptionalInt fragmentNumber;
+        private final String header;
         private final byte[] bases;
         private final byte[] quals;
-        private final Optional<Mapping> mapping;
 
         public FastqRead( final GATKRead read ) {
             this(Utils.nonNull(read).getName(),
                  read.isPaired() ? OptionalInt.of(read.isFirstOfPair() ? 1 : 2) : OptionalInt.empty(),
                  read.isReverseStrand() ? BaseUtils.simpleReverseComplement(read.getBases()) : read.getBases(),
                  reverseIf(read.isReverseStrand(), read.getBaseQualities()), new Mapping(read));
-
         }
 
         private static byte[] reverseIf(final boolean reverse, final byte[] bytes) {
@@ -136,36 +191,30 @@ public class SVFastqUtils {
         }
 
         public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals, final Mapping mapping) {
-            this.name = Utils.nonNull(name);
-            this.fragmentNumber = Utils.nonNull(fragmentNumber);
-            this.bases = Utils.nonNull(bases);
-            this.quals = Utils.nonNull(quals);
-            this.mapping = mapping == null ? Optional.empty() : Optional.of(mapping);
+            this(composeHeaderLine(Utils.nonNull(name), Utils.nonNull(fragmentNumber), mapping), bases, quals);
+        }
+
+        private static String composeHeaderLine(String name, OptionalInt fragmentNumber, Mapping mapping) {
+            return HEADER_PREFIX_CHR + name + (fragmentNumber.isPresent() ? FRAGMENT_NUMBER_SEPARATOR_STR + fragmentNumber.getAsInt() : "") + (mapping == null ? "" : HEADER_FIELD_SEPARATOR_CHR + mapping.toString());
         }
 
         public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals ) {
             this(name, fragmentNumber, bases, quals, null);
         }
 
-        public FastqRead(final String name, final byte[] bases, final byte[] quals) {
-            this(name, OptionalInt.empty(), bases, quals);
+        private FastqRead(final String header, final byte[] bases, final byte[] quals) {
+            this.header = header;
+            this.bases = bases;
+            this.quals = quals;
         }
 
         private FastqRead( final Kryo kryo, final Input input ) {
-            name = input.readString();
-            final String fragmentNumberString = input.readString();
-            fragmentNumber = fragmentNumberString.isEmpty() ? OptionalInt.empty() : OptionalInt.of(Integer.parseInt(fragmentNumberString));
+            header = input.readString();
             final int nBases = input.readInt();
             bases = new byte[nBases];
             input.readBytes(bases);
             quals = new byte[nBases];
             input.readBytes(quals);
-            final String mappingString = input.readString();
-            if (!mappingString.isEmpty()) {
-                mapping = Optional.of(new Mapping(mappingString));
-            } else {
-                mapping = Optional.empty();
-            }
         }
 
         /**
@@ -173,30 +222,31 @@ public class SVFastqUtils {
          * @return never {@code null}.
          */
         public String getHeader() {
-            final String description = getDescription();
-            if (description.isEmpty()) {
-                return "@" + getId();
-            } else {
-                return "@" + getId() + "\t" + description;
-            }
+            return header;
         }
 
-        public String getId() { return fragmentNumber.isPresent() ? String.join("/", name, "" + fragmentNumber.getAsInt()) : name; }
-        public String getName() { return name; }
-        public String getDescription() { return mapping.isPresent() ? mapping.get().toString() : ""; }
+        public String getId() {
+            final String[] headerParts = header.split(HEADER_FIELD_SEPARATOR_STR);
+            return headerParts[0].substring(1); // skip the '@'.
+        }
+        public String getName() { final String id = getId();
+            final int fragmentNumberSeparatorIndex = id.lastIndexOf(FRAGMENT_NUMBER_SEPARATOR_CHR);
+            return fragmentNumberSeparatorIndex >= 0 ? id.substring(0, fragmentNumberSeparatorIndex) : id;
+        }
+        public String getDescription() {
+            final int tabIndex = header.indexOf(HEADER_FIELD_SEPARATOR_CHR);
+            return tabIndex >= 0 ? header.substring(tabIndex + 1) : "";
+        }
 
         @Override public byte[] getBases() { return bases; }
         @Override public byte[] getQuals() { return quals; }
 
         private void serialize( final Kryo kryo, final Output output ) {
-            output.writeAscii(name);
-            output.writeAscii(fragmentNumber.isPresent() ? "" + fragmentNumber.getAsInt() : "");
+            output.writeAscii(header);
             output.writeInt(bases.length);
             output.writeBytes(bases);
             output.writeBytes(quals);
-            output.writeAscii(mapping.isPresent() ? mapping.get().toString() : "");
         }
-
 
         public static final class Serializer extends com.esotericsoftware.kryo.Serializer<FastqRead> {
             @Override
@@ -215,11 +265,11 @@ public class SVFastqUtils {
         final int INITIAL_CAPACITY = 10000; // absolute guess, just something not too crazy small
         final List<FastqRead> reads = new ArrayList<>(INITIAL_CAPACITY);
         try ( final BufferedReader reader = new BufferedReader(new InputStreamReader(BucketUtils.openFile(fileName))) ) {
-            String seqIdLine;
+            String header;
             int lineNo = 0;
-            while ( (seqIdLine = reader.readLine()) != null ) {
+            while ( (header = reader.readLine()) != null ) {
                 lineNo += 1;
-                if (!FASTQ_READ_HEADER_PATTERN.matcher(seqIdLine).find()) {
+                if (!FASTQ_READ_HEADER_PATTERN.matcher(header).find()) {
                     throw new GATKException("In FASTQ file "+fileName+" sequence identifier line does not start with @ on line "+lineNo);
                 }
                 final String callLine = reader.readLine();
@@ -232,32 +282,21 @@ public class SVFastqUtils {
                 if ( sepLine == null ) {
                     throw new GATKException("In FASTQ file "+fileName+" file truncated: missing + line.");
                 }
-                if ( sepLine.length() < 1 || sepLine.charAt(0) != '+' ) {
+                if ( sepLine.length() < 1 || sepLine.charAt(0) != LINE_SEPARATOR_CHR ) {
                     throw new GATKException("In FASTQ file " + fileName + " separator line does not start with + on line " + lineNo);
                 }
                 final String qualLine = reader.readLine();
                 lineNo += 1;
                 if ( qualLine == null ) {
-                    throw new GATKException("In FASTQ file "+fileName+" file truncated: missing quals.");
+                    throw new UserException.BadInput("In FASTQ file "+fileName+" file truncated: missing quals.");
                 }
                 if ( callLine.length() != qualLine.length() ) {
-                    throw new GATKException("In FASTQ file "+fileName+" there are "+qualLine.length()+
+                    throw new UserException.BadInput("In FASTQ file "+fileName+" there are "+qualLine.length()+
                             " quality scores on line "+lineNo+" but there are "+callLine.length()+" base calls.");
                 }
                 final byte[] quals = qualLine.getBytes();
-                SAMUtils.fastqToPhred(quals);
-                final String[] headerParts = seqIdLine.split("\t");
-                final Mapping mapping = headerParts.length < 2 ? null : new Mapping(headerParts[1]);
-                final OptionalInt fragmentNumber;
-                final String name;
-                if (headerParts[0].matches("^@.*\\/\\d+$")) {
-                    fragmentNumber = OptionalInt.of(Integer.parseInt(headerParts[0].substring(headerParts[0].lastIndexOf("/") + 1)));
-                    name = headerParts[0].substring(1, headerParts[0].lastIndexOf("/"));
-                } else {
-                    fragmentNumber = OptionalInt.empty();
-                    name = headerParts[0].substring(1);
-                }
-                reads.add(new FastqRead(name, fragmentNumber, callLine.getBytes(), quals, mapping));
+                final byte[] calls = callLine.getBytes();
+                reads.add(new FastqRead(header, calls, quals));
             }
         }
         catch ( final IOException ioe ) {
@@ -268,15 +307,15 @@ public class SVFastqUtils {
 
     /** Convert a read's name into a FASTQ record sequence ID */
     public static String readToFastqSeqId( final GATKRead read, final boolean includeMappingLocation ) {
-        final String nameSuffix = read.isPaired() ? (read.isFirstOfPair() ? "/1" : "/2") : "";
-        final String mapLoc;
+        final String nameSuffix = read.isPaired() ? ( FRAGMENT_NUMBER_SEPARATOR_STR + (read.isFirstOfPair() ? 1 : 2)) : "";
+        final String description;
         if ( includeMappingLocation ) {
             final Mapping mapping = new Mapping(read);
-            mapLoc = mapping.toString();
+            description = HEADER_FIELD_SEPARATOR_CHR + mapping.toString();
         } else {
-            mapLoc = "";
+            description = "";
         }
-        return read.getName() + nameSuffix + "\t" + mapLoc;
+        return read.getName() + nameSuffix + HEADER_FIELD_SEPARATOR_CHR + description;
     }
 
     /** Write a list of FASTQ records into a file. */
