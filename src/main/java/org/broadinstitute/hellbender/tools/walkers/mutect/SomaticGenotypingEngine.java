@@ -49,12 +49,6 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
     //Mutect2 does not run in GGA mode
     private static final List<VariantContext> NO_GIVEN_ALLELES = Collections.emptyList();
 
-    // {@link GenotypingEngine} requires a non-null {@link AFCalculatorProvider} but this class doesn't need it.  Thus we make a dummy
-    private static final AFCalculatorProvider DUMMY_AF_CALCULATOR_PROVIDER = new AFCalculatorProvider() {
-        @Override
-        public AFCalculator getInstance(final int ploidy, final int maximumAltAlleles) { return null; }
-    };
-
     private static final Logger logger = Logger.getLogger(SomaticGenotypingEngine.class);
 
     @Override
@@ -66,7 +60,7 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
                                    final M2ArgumentCollection MTAC,
                                    final String tumorSampleName,
                                    final String matchedNormalSampleName) {
-        super(MTAC, samples, DUMMY_AF_CALCULATOR_PROVIDER, !MTAC.doNotRunPhysicalPhasing);
+        super(MTAC, samples, !MTAC.doNotRunPhysicalPhasing);
         this.MTAC = MTAC;
         this.tumorSampleName = tumorSampleName;
         this.matchedNormalSampleName = matchedNormalSampleName;

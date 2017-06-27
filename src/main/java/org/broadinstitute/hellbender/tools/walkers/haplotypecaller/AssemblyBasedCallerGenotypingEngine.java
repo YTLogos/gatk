@@ -34,8 +34,8 @@ public abstract class AssemblyBasedCallerGenotypingEngine extends GenotypingEngi
      * @param doPhysicalPhasing whether to try physical phasing.
      */
     public AssemblyBasedCallerGenotypingEngine(final AssemblyBasedCallerArgumentCollection configuration, final SampleList samples,
-                                           final AFCalculatorProvider afCalculatorProvider, final boolean doPhysicalPhasing) {
-        super(configuration, samples, afCalculatorProvider);
+                                           final boolean doPhysicalPhasing) {
+        super(configuration, samples);
         this.doPhysicalPhasing= doPhysicalPhasing;
     }
 

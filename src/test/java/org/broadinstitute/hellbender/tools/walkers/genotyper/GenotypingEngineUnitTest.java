@@ -51,7 +51,7 @@ public class GenotypingEngineUnitTest extends BaseTest {
         final GenotypeCalculationArgumentCollection genotypeArgs = new GenotypeCalculationArgumentCollection();
         final UnifiedArgumentCollection uac = new UnifiedArgumentCollection();
         uac.genotypeArgs = new GenotypeCalculationArgumentCollection(genotypeArgs);
-        return new MinimalGenotypingEngine(uac, SAMPLES, new GeneralPloidyFailOverAFCalculatorProvider(genotypeArgs));
+        return new MinimalGenotypingEngine(uac, SAMPLES);
     }
 
     @DataProvider(name="testCoveredByDeletionData")
