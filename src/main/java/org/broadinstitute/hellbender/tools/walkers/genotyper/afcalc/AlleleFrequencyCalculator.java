@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
 /**
  * @author David Benjamin &lt;davidben@broadinstitute.org&gt;
  */
-public final class AlleleFrequencyCalculator extends AFCalculator {
+public final class AlleleFrequencyCalculator implements AFCalculator {
     private static final GenotypeLikelihoodCalculators GL_CALCS = new GenotypeLikelihoodCalculators();
     private static final double THRESHOLD_FOR_ALLELE_COUNT_CONVERGENCE = 0.1;
     private static final int HOM_REF_GENOTYPE_INDEX = 0;
