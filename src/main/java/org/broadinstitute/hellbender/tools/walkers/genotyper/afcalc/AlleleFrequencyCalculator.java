@@ -41,7 +41,7 @@ public final class AlleleFrequencyCalculator extends AFCalculator {
 
     public AFCalculationResult getLog10PNonRef(final VariantContext vc) {
         // maxAltAlleles is not used by getLog10PNonRef, so don't worry about the 0
-        return getLog10PNonRef(vc, defaultPloidy, 0, null);
+        return getLog10PNonRef(vc, defaultPloidy, 0);
     }
     //TODO: this should be a class of static methods once the old AFCalculator is gone.
     /**
@@ -49,12 +49,10 @@ public final class AlleleFrequencyCalculator extends AFCalculator {
      *
      * @param vc the VariantContext holding the alleles and sample information.  The VariantContext
      *           must have at least 1 alternative allele
-     * @param refSnpIndelPseudocounts a total hack.  A length-3 vector containing Dirichlet prior pseudocounts to
-     *                                be given to ref, alt SNP, and alt indel alleles.  Hack won't be necessary when we destroy the old AF calculators
      * @return result (for programming convenience)
      */
     @Override
-    public AFCalculationResult getLog10PNonRef(final VariantContext vc, final int defaultPloidy, final int maximumAlternativeAlleles, final double[] refSnpIndelPseudocounts) {
+    public AFCalculationResult getLog10PNonRef(final VariantContext vc, final int defaultPloidy, final int maximumAlternativeAlleles) {
         Utils.nonNull(vc, "VariantContext cannot be null");
         final int numAlleles = vc.getNAlleles();
         final List<Allele> alleles = vc.getAlleles();
