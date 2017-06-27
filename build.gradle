@@ -111,7 +111,7 @@ dependencies {
     compileOnly(javadocJDKFiles)
     testCompile(javadocJDKFiles)
 
-    compile 'org.broadinstitute:barclay:1.1.0-14-g1ae3a52-SNAPSHOT'
+    compile 'org.broadinstitute:barclay:1.1.0-2-g3c258de-SNAPSHOT'
     compile ('com.intel:genomicsdb:' + genomicsdbVersion)  {
         exclude module: 'spark-core_2.10'
         exclude module: 'htsjdk'
@@ -505,6 +505,7 @@ task gatkTabComplete(type: Javadoc, dependsOn: classes) {
 
     options.addStringOption("settings-dir", "src/main/resources/org/broadinstitute/hellbender/utils/helpTemplates");
     options.addStringOption("output-file-extension", "sh")
+    options.addStringOption("index-file-extension", "sh")
     options.addStringOption("absolute-version", getVersion())
     options.addStringOption("build-timestamp", new Date().format("dd-mm-yyyy hh:mm:ss"))
     options.addStringOption("verbose")

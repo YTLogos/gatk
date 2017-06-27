@@ -11,6 +11,7 @@
 
 CALLER_SCRIPT_NAME="gatk-launch"
 
+# A description of these variables is below in the main completion function (_masterCompletionFunction)
 CS_ALL_LEGAL_ARGUMENTS=(--help --list --sparkRunner --dryRun --javaOptions --conf --driver-memory --driver-cores --executor-memory --executor-cores --num-executors)
 CS_NORMAL_COMPLETION_ARGUMENTS=(--help --list --sparkRunner --dryRun --javaOptions --conf --driver-memory --driver-cores --executor-memory --executor-cores --num-executors)
 CS_ALL_ARGUMENT_VALUE_TYPES=("null" "null" "String" "null" "String" "file" "int" "int" "int" "int" "int" )
@@ -18,6 +19,9 @@ CS_MUTUALLY_EXCLUSIVE_ARGS=("--help;list,sparkRunner,dryRun,javaOptions,conf,dri
 CS_SYNONYMOUS_ARGS=("--help;-h")
 CS_MIN_OCCURRENCES=(0 0 0 0 0 0 0 0 0 0 0)
 CS_MAX_OCCURRENCES=(1 1 1 1 1 1 1 1 1 1 1)
+
+# Whether we have to worry about these extra script options at all.
+HAS_DOUBLE_DASH_OPTIONS=true
 
 ####################################################################################################
 
@@ -264,8 +268,8 @@ _handleArgs()
 
     done
 
-    # Add in the special option "--" which separates tool options from meta-options:
-    if [[ $# -eq 0 ]] ; then
+    # Add in the special option "--" which separates tool options from meta-options if they're necessary:
+    if [[ $HAS_DOUBLE_DASH_OPTIONS ]] && [[ $# -eq 0 ]] ; then
         remaining_legal_arguments+=("--")
     fi
 
@@ -281,14 +285,24 @@ _masterCompletionFunction()
     prev=${r"${COMP_WORDS[COMP_CWORD-1]}"}
     cur=${r"${COMP_WORDS[COMP_CWORD]}"}
 
+    # How many positional arguments a tool will have.
+    # These positional arguments must come directly after a tool name.
     NUM_POSITIONAL_ARGUMENTS=0
+
+    # The types of the positional arguments, in the order in which they must be specified
+    # on the command-line.
     POSITIONAL_ARGUMENT_TYPE=()
 
-    # The set of all legal arguments
+    # The set of legal arguments that aren't dependent arguments.
+    # (A dependent argument is an argument that must occur immediately after
+    # all positional arguments.)
+    NORMAL_COMPLETION_ARGUMENTS=()
+
+    # The set of ALL legal arguments
     # Corresponds by index to the type of those arguments in ALL_ARGUMENT_VALUE_TYPES
     ALL_LEGAL_ARGUMENTS=()
 
-    # The types of all legal arguments
+    # The types of ALL legal arguments
     # Corresponds by index to the names of those arguments in ALL_LEGAL_ARGUMENTS
     ALL_ARGUMENT_VALUE_TYPES=()
 
@@ -311,8 +325,9 @@ _masterCompletionFunction()
     # Set up locals for this function:
     local toolName=$( _getToolName )
 
-    # Check if we have we gone onto the post-tool options:
-    if [[ "${r"${COMP_WORDS[@]}"}" == *" -- "* ]] ; then
+    # Check if we have post-tool options
+    # and if we now need to go through them:
+    if [[ $HAS_DOUBLE_DASH_OPTIONS ]] && [[ "${r"${COMP_WORDS[@]}"}" == *" -- "* ]] ; then
         NUM_POSITIONAL_ARGUMENTS=0
         POSITIONAL_ARGUMENT_TYPE=()
         DEPENDENT_ARGUMENTS=()
