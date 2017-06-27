@@ -62,8 +62,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         this.samples = Utils.nonNull(samples, "the sample list cannot be null");
         logger = LogManager.getLogger(getClass());
         numberOfGenomes = this.samples.numberOfSamples() * configuration.genotypeArgs.samplePloidy;
-        log10AlleleFrequencyPriorsSNPs = composeAlleleFrequencyPriorProvider(numberOfGenomes,
-                configuration.genotypeArgs.snpHeterozygosity, configuration.genotypeArgs.inputPrior);
+        log10AlleleFrequencyPriorsSNPs = new HeterozygosityAFPriorProvider(configuration.genotypeArgs.snpHeterozygosity);
 
         final double refPseudocount = configuration.genotypeArgs.snpHeterozygosity / Math.pow(configuration.genotypeArgs.heterozygosityStandardDeviation,2);
         final double snpPseudocount = configuration.genotypeArgs.snpHeterozygosity * refPseudocount;
@@ -112,36 +111,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         }
         // null frequency for AF=0 is (1 - sum(all other frequencies))
         priors[0] = Math.log10(1.0 - sum);
-    }
-
-    /**
-     * Function that fills vector with allele frequency priors. By default, infinite-sites, neutral variation prior is used,
-     * where Pr(AC=i) = theta/i where theta is heterozygosity
-     * @param N                                Number of chromosomes
-     * @param heterozygosity                   default heterozygosity to use, if inputPriors is empty
-     * @param inputPriors                      Input priors to use (in which case heterozygosity is ignored)
-     *
-     * @throws IllegalArgumentException if {@code inputPriors} has size != {@code N} or any entry in {@code inputPriors} is not in the (0,1) range.
-     *
-     * @return never {@code null}.
-     */
-    public static AFPriorProvider composeAlleleFrequencyPriorProvider(final int N, final double heterozygosity, final List<Double> inputPriors) {
-
-        if (!inputPriors.isEmpty()) {
-            // user-specified priors
-            if (inputPriors.size() != N) {
-                throw new CommandLineException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
-            }
-            for (final Double prior : inputPriors) {
-                if (prior <= 0 || prior >= 1) {
-                    throw new CommandLineException.BadArgumentValue("inputPrior", "inputPrior vector values must be greater than 0 and less than 1");
-                }
-            }
-            return new CustomAFPriorProvider(inputPriors);
-        }
-        else {
-            return new HeterozygosityAFPriorProvider(heterozygosity);
-        }
     }
 
     /**

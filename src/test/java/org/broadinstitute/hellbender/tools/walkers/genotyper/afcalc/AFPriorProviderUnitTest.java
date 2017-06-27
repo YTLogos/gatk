@@ -59,41 +59,11 @@ public final class AFPriorProviderUnitTest extends BaseTest {
         new HeterozygosityAFPriorProvider(0.999).buildPriors(2);
     }
 
-    @Test(dataProvider="CustomProviderData")
-    public void testCustomProvider(final int ploidy) {
-        final double[] priors = new double[ploidy];
-        final Random rdn = Utils.getRandomGenerator();
-        double remaining = 1;
-        final List<Double> priorsList = new ArrayList<>();
-        for (int i = 0; i < priors.length; i++) {
-            priors[i] = remaining * rdn.nextDouble() * (.1 / ploidy );
-            remaining -= priors[i];
-            priorsList.add(priors[i]);
-        }
-
-        final AFPriorProvider provider = new CustomAFPriorProvider(priorsList);
-
-        final double[] providedPriors = provider.forTotalPloidy(ploidy);
-        Assert.assertNotNull(providedPriors);
-        Assert.assertEquals(providedPriors.length, priors.length + 1);
-        for (int i = 0; i < priors.length; i++)
-            Assert.assertEquals(providedPriors[i + 1], Math.log10(priors[i]), TOLERANCE);
-        Assert.assertEquals(MathUtils.approximateLog10SumLog10(providedPriors), 0, TOLERANCE);
-    }
-
 
     private double[] hets = { 0.00001, 0.001, 0.1, 0.5, 0.99, 0.999 };
     private int[] useCounts = { 10, 100, 1000 };
 
     private int[] ploidy = { 1 , 2, 3, 10, 100, 200, 500};
-
-    @DataProvider(name="CustomProviderData")
-    public Object[][] customProviderData() {
-        final Object[][] result = new Object[ploidy.length][];
-        for (int i = 0; i < result.length; i++)
-            result[i] = new Object[] { ploidy[i] };
-        return result;
-    }
 
     @DataProvider(name="HeterozygosityProviderData")
     public Object[][] heterozygosityProviderData() {
@@ -105,40 +75,5 @@ public final class AFPriorProviderUnitTest extends BaseTest {
                     for (int j = i; j < ploidy.length; j++)
                         result[idx++] = new Object[] { h, sc, ploidy[i], ploidy[j]};
         return result;
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCustomErrorPloidy() throws Exception {
-        new CustomAFPriorProvider(Arrays.asList(0.5)).forTotalPloidy(-1);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCustomErrorNull() throws Exception {
-        new CustomAFPriorProvider(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCustomHetError() throws Exception {
-        new CustomAFPriorProvider(Arrays.asList(-1.0));
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCustomNaNError() throws Exception {
-        new CustomAFPriorProvider(Arrays.asList(Double.NaN));
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testCustomHetTooHighError() throws Exception {
-        new CustomAFPriorProvider(Arrays.asList(0.5, 0.6));
-    }
-
-    @Test
-    public void testCustomPriors() throws Exception {
-        final List<Double> PRIORS = Arrays.asList(0.5, 0.4);
-        double[] priors = new CustomAFPriorProvider(PRIORS).buildPriors(17);
-        for ( int i = 0;  i < priors.length; i++ ) {
-            final double value = i == 0 ? 1 - PRIORS.stream().mapToDouble(Double::doubleValue).sum() : PRIORS.get(i-1);
-            Assert.assertEquals(priors[i], Math.log10(value), TOLERANCE);
-        }
     }
 }
