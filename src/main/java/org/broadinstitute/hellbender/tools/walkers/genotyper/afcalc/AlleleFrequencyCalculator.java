@@ -167,15 +167,4 @@ public final class AlleleFrequencyCalculator extends AFCalculator {
         });
         return MathUtils.normalizeLog10(log10Posteriors);
     }
-
-    @Override   //Note: unused
-    protected AFCalculationResult getResultFromFinalState(final VariantContext vc, final double[] priors, final StateTracker st) { return null; }
-
-    @Override//Note: unused
-    protected AFCalculationResult computeLog10PNonRef(final VariantContext vc, final int defaultPloidy,
-                                                               final double[] priors, final StateTracker st) { return null; }
-
-    @Override   //Note: unused
-    protected StateTracker getStateTracker(final boolean reset, final int maximumAlternativeAlleleCount) { return null; }
-
 }
