@@ -12,9 +12,7 @@ import org.broadinstitute.hellbender.utils.Utils;
 public abstract class AFCalculator {
 
     protected static final Logger logger = LogManager.getLogger(AFCalculator.class);
-
-    private StateTracker stateTracker;
-
+    
     /**
      * Compute the probability of the alleles segregating given the genotype likelihoods of the samples in vc
      *
