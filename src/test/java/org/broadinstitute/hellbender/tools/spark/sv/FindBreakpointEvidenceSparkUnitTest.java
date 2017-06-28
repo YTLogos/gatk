@@ -117,7 +117,7 @@ public final class FindBreakpointEvidenceSparkUnitTest extends BaseTest {
         expectedAssemblyQNames.stream()
                 .map(qName -> new QNameAndInterval(qName, 0))
                 .forEach(qNameMultiMap::add);
-        FindBreakpointEvidenceSpark.handleAssemblies(ctx,qNameMultiMap,reads,2,true,true,new LocalAssemblyComparator(fastqFile));
+        FindBreakpointEvidenceSpark.handleAssemblies(ctx,qNameMultiMap,reads,2,true,new LocalAssemblyComparator(fastqFile));
     }
 
     /** This LocalAssemblyHandler compares an assembly with expected results. */

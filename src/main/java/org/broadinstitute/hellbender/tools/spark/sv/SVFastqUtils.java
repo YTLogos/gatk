@@ -11,7 +11,6 @@ import htsjdk.samtools.util.Locatable;
 import htsjdk.samtools.util.SequenceUtil;
 import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
-import org.broadinstitute.hellbender.utils.BaseUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.fermi.FermiLiteAssembler;
@@ -161,6 +160,15 @@ public class SVFastqUtils {
             return forwardStrand;
         }
 
+        public static String toString(final GATKRead read) {
+            Utils.nonNull(read);
+            if (read.isUnmapped()) {
+                return UNMAPPED_DESCRIPTION_STR;
+            } else {
+                return MAPPING_FIELD_EQUAL_TO + String.join(HEADER_FIELD_ARRAY_SEPARATOR_STR, read.getContig() + SimpleInterval.CONTIG_SEPARATOR + read.getStart(), (read.isReverseStrand() ? Strand.NEGATIVE : Strand.POSITIVE).encodeAsString(), read.getCigar().toString());
+            }
+        }
+
         public String toString() {
             if (isMapped()) {
                 return MAPPING_FIELD_EQUAL_TO + String.join(HEADER_FIELD_ARRAY_SEPARATOR_STR, getContig() + SimpleInterval.CONTIG_SEPARATOR + getStart(), (forwardStrand ? Strand.POSITIVE : Strand.NEGATIVE).encodeAsString(), cigar.toString());
@@ -176,30 +184,24 @@ public class SVFastqUtils {
         private final byte[] bases;
         private final byte[] quals;
 
-        public FastqRead( final GATKRead read ) {
-            this(Utils.nonNull(read).getName(),
-                 read.isPaired() ? OptionalInt.of(read.isFirstOfPair() ? 1 : 2) : OptionalInt.empty(),
-                 read.isReverseStrand() ? BaseUtils.simpleReverseComplement(read.getBases()) : read.getBases(),
-                 reverseIf(read.isReverseStrand(), read.getBaseQualities()), new Mapping(read));
+        public FastqRead(final GATKRead read) {
+            this(read, true);
         }
 
-        private static byte[] reverseIf(final boolean reverse, final byte[] bytes) {
-            if (reverse) {
-                SequenceUtil.reverseQualities(bytes);
+        public FastqRead( final GATKRead read, final boolean includeMappingLocation ) {
+            this.header = composeHeaderLine(read, includeMappingLocation);
+            this.bases = read.getBases();
+            this.quals = read.getBaseQualities();
+            if (!read.isUnmapped() && read.isReverseStrand()) {
+                SequenceUtil.reverseComplement(this.bases);
+                SequenceUtil.reverseQualities(this.quals);
             }
-            return bytes;
         }
 
-        public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals, final Mapping mapping) {
-            this(composeHeaderLine(Utils.nonNull(name), Utils.nonNull(fragmentNumber), mapping), bases, quals);
-        }
-
-        private static String composeHeaderLine(String name, OptionalInt fragmentNumber, Mapping mapping) {
-            return HEADER_PREFIX_CHR + name + (fragmentNumber.isPresent() ? FRAGMENT_NUMBER_SEPARATOR_STR + fragmentNumber.getAsInt() : "") + (mapping == null ? "" : HEADER_FIELD_SEPARATOR_CHR + mapping.toString());
-        }
-
-        public FastqRead( final String name, final OptionalInt fragmentNumber, final byte[] bases, final byte[] quals ) {
-            this(name, fragmentNumber, bases, quals, null);
+        private static String composeHeaderLine(final GATKRead read, final boolean includeMappingLocation) {
+            Utils.nonNull(read);
+            return HEADER_PREFIX_CHR + read.getName() + TemplateFragmentOrdinal.forRead(read)
+                    + (includeMappingLocation ?  (HEADER_FIELD_SEPARATOR_STR + Mapping.toString(read)) : "");
         }
 
         private FastqRead(final String header, final byte[] bases, final byte[] quals) {
@@ -307,7 +309,7 @@ public class SVFastqUtils {
 
     /** Convert a read's name into a FASTQ record sequence ID */
     public static String readToFastqSeqId( final GATKRead read, final boolean includeMappingLocation ) {
-        final String nameSuffix = read.isPaired() ? ( FRAGMENT_NUMBER_SEPARATOR_STR + (read.isFirstOfPair() ? 1 : 2)) : "";
+        final String nameSuffix = TemplateFragmentOrdinal.forRead(read).nameSuffix();
         final String description;
         if ( includeMappingLocation ) {
             final Mapping mapping = new Mapping(read);

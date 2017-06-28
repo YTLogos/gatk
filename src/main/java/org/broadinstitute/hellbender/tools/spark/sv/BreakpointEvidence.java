@@ -89,26 +89,7 @@ public class BreakpointEvidence {
     public static class ReadEvidence extends BreakpointEvidence {
         private static final int SINGLE_READ_WEIGHT = 1;
         private final String templateName; // QNAME of the read that was funky (i.e., the name of the fragment)
-        private final TemplateEnd templateEnd; // which read we're talking about (first or last, for paired-end reads)
-
-        // Typically UNPAIRED (single read from the template), PAIRED_FIRST (first read from the template), or
-        // PAIRED_LAST (second read from the template).  The SAM format, however, describes other weird possibilities,
-        // and to avoid lying, we also allow the pairedness to be unknown, or for a read to be paired, but neither
-        // first nor last (interior).
-        public enum TemplateEnd {
-            UNPAIRED(""), PAIRED_UNKNOWN("/?"), PAIRED_FIRST("/1"), PAIRED_SECOND("/2"), PAIRED_INTERIOR("/0");
-
-            TemplateEnd( final String value ) {
-                this.value = value;
-            }
-
-            @Override
-            public String toString() {
-                return value;
-            }
-
-            private final String value;
-        }
+        private final TemplateFragmentOrdinal templateEnd; // which read we're talking about (first or last, for paired-end reads)
 
         /**
          * evidence offset and width is set to "the rest of the fragment" not covered by this read
@@ -133,7 +114,7 @@ public class BreakpointEvidence {
         }
 
         @VisibleForTesting ReadEvidence( final SVInterval interval, final int weight,
-                                         final String templateName, final TemplateEnd templateEnd,
+                                         final String templateName, final TemplateFragmentOrdinal templateEnd,
                                          final boolean validated ) {
             super(interval, weight, validated);
             this.templateName = templateName;
@@ -148,7 +129,7 @@ public class BreakpointEvidence {
         protected ReadEvidence( final Kryo kryo, final Input input ) {
             super(kryo, input);
             this.templateName = input.readString();
-            this.templateEnd = TemplateEnd.values()[input.readByte()];
+            this.templateEnd = TemplateFragmentOrdinal.values()[input.readByte()];
         }
 
         protected void serialize( final Kryo kryo, final Output output ) {
@@ -161,7 +142,7 @@ public class BreakpointEvidence {
             return templateName;
         }
 
-        public TemplateEnd getTemplateEnd() {
+        public TemplateFragmentOrdinal getTemplateEnd() {
             return templateEnd;
         }
 
@@ -170,12 +151,12 @@ public class BreakpointEvidence {
             return super.toString() + "\t" + templateName + templateEnd;
         }
 
-        private static TemplateEnd findTemplateEnd( final GATKRead read ) {
-            return !read.isPaired() ? TemplateEnd.UNPAIRED :
-                    !read.isFirstOfPair() && !read.isSecondOfPair() ? TemplateEnd.PAIRED_UNKNOWN :
-                            read.isFirstOfPair() && !read.isSecondOfPair() ? TemplateEnd.PAIRED_FIRST :
-                                    !read.isFirstOfPair() && read.isSecondOfPair() ? TemplateEnd.PAIRED_SECOND :
-                                            TemplateEnd.PAIRED_INTERIOR;
+        private static TemplateFragmentOrdinal findTemplateEnd(final GATKRead read ) {
+            return !read.isPaired() ? TemplateFragmentOrdinal.UNPAIRED :
+                    !read.isFirstOfPair() && !read.isSecondOfPair() ? TemplateFragmentOrdinal.PAIRED_UNKNOWN :
+                            read.isFirstOfPair() && !read.isSecondOfPair() ? TemplateFragmentOrdinal.PAIRED_FIRST :
+                                    !read.isFirstOfPair() && read.isSecondOfPair() ? TemplateFragmentOrdinal.PAIRED_SECOND :
+                                            TemplateFragmentOrdinal.PAIRED_INTERIOR;
         }
 
         public static final class Serializer extends com.esotericsoftware.kryo.Serializer<ReadEvidence> {

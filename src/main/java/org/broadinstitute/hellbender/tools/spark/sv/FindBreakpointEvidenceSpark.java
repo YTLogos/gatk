@@ -134,7 +134,7 @@ public final class FindBreakpointEvidenceSpark extends GATKSparkTool {
                 new FermiLiteAssemblyHandler(locations.alignerIndexImageFile, argumentCollection.maxFASTQSize, argumentCollection.fastqDir, argumentCollection.gfaDir);
         alignedAssemblyOrExcuseList.addAll(
                 handleAssemblies(ctx, qNamesMultiMap, allPrimaryLines, intervals.size(),
-                        argumentCollection.includeMappingLocation, argumentCollection.fastqDir != null, fermiLiteAssemblyHandler));
+                        argumentCollection.includeMappingLocation, fermiLiteAssemblyHandler));
 
         alignedAssemblyOrExcuseList.sort(Comparator.comparingInt(AlignedAssemblyOrExcuse::getAssemblyId));
 
@@ -315,7 +315,6 @@ public final class FindBreakpointEvidenceSpark extends GATKSparkTool {
             final JavaRDD<GATKRead> reads,
             final int nIntervals,
             final boolean includeMappingLocation,
-            final boolean dumpFASTQs,
             final LocalAssemblyHandler localAssemblyHandler ) {
         final Broadcast<HopscotchUniqueMultiMap<String, Integer, QNameAndInterval>> broadcastQNamesMultiMap =
                 ctx.broadcast(qNamesMultiMap);
@@ -323,7 +322,7 @@ public final class FindBreakpointEvidenceSpark extends GATKSparkTool {
             reads
                 .mapPartitionsToPair(readItr ->
                         new ReadsForQNamesFinder(broadcastQNamesMultiMap.value(), nIntervals,
-                                includeMappingLocation, dumpFASTQs).call(readItr).iterator(), false)
+                                includeMappingLocation).call(readItr).iterator())
                 .combineByKey(x -> x,
                                 FindBreakpointEvidenceSpark::combineLists,
                                 FindBreakpointEvidenceSpark::combineLists,
@@ -373,7 +372,7 @@ public final class FindBreakpointEvidenceSpark extends GATKSparkTool {
             if ( fastqDir != null ) {
                 final String fastqName = String.format("%s/assembly%06d.fastq",fastqDir,intervalAndReads._1());
                 final ArrayList<SVFastqUtils.FastqRead> sortedReads = new ArrayList<>(intervalAndReads._2());
-                sortedReads.sort(Comparator.comparing(SVFastqUtils.FastqRead::getId));
+                sortedReads.sort(Comparator.comparing(SVFastqUtils.FastqRead::getHeader));
                 SVFastqUtils.writeFastqFile(fastqName, sortedReads.iterator());
             }
             final FermiLiteAssembly assembly = new FermiLiteAssembler().createAssembly(readsList);

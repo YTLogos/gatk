@@ -16,15 +16,13 @@ public final class ReadsForQNamesFinder {
     private final int nIntervals;
     private final int nReadsPerInterval;
     private final boolean includeMappingLocation;
-    private final boolean dumpFASTQs;
 
     public ReadsForQNamesFinder( final HopscotchUniqueMultiMap<String, Integer, QNameAndInterval> qNamesMultiMap,
-                                 final int nIntervals, final boolean includeMappingLocation, final boolean dumpFASTQs ) {
+                                 final int nIntervals, final boolean includeMappingLocation) {
         this.qNamesMultiMap = qNamesMultiMap;
         this.nIntervals = nIntervals;
         this.nReadsPerInterval = 2 * qNamesMultiMap.size() / nIntervals;
         this.includeMappingLocation = includeMappingLocation;
-        this.dumpFASTQs = dumpFASTQs;
     }
 
     public Iterable<Tuple2<Integer, List<SVFastqUtils.FastqRead>>> call(final Iterator<GATKRead> readsItr ) {
@@ -34,19 +32,16 @@ public final class ReadsForQNamesFinder {
         while ( readsItr.hasNext() ) {
             final GATKRead read = readsItr.next();
             final Iterator<QNameAndInterval> namesItr = qNamesMultiMap.findEach(read.getName());
-            SVFastqUtils.FastqRead FastqRead = null;
-            while ( namesItr.hasNext() ) {
-                final int intervalId = namesItr.next().getIntervalId();
-                if ( intervalReads[intervalId] == null ) {
-                    intervalReads[intervalId] = new ArrayList<>(nReadsPerInterval);
-                    nPopulatedIntervals += 1;
+            if (namesItr.hasNext()) {
+                final SVFastqUtils.FastqRead fastqRead = new SVFastqUtils.FastqRead(read, includeMappingLocation);
+                while ( namesItr.hasNext()) {
+                    final int intervalId = namesItr.next().getIntervalId();
+                    if ( intervalReads[intervalId] == null ) {
+                        intervalReads[intervalId] = new ArrayList<>(nReadsPerInterval);
+                        nPopulatedIntervals += 1;
+                    }
+                    intervalReads[intervalId].add(fastqRead);
                 }
-                if ( FastqRead == null ) {
-                    final String readName =
-                            dumpFASTQs ? SVFastqUtils.readToFastqSeqId(read, includeMappingLocation) : null;
-                    FastqRead = new SVFastqUtils.FastqRead(read);
-                }
-                intervalReads[intervalId].add(FastqRead);
             }
         }
         final List<Tuple2<Integer, List<SVFastqUtils.FastqRead>>> fastQRecords = new ArrayList<>(nPopulatedIntervals);
