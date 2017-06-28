@@ -135,7 +135,7 @@ public final class GenotypeCalculationArgumentCollection implements Serializable
     @Advanced
     @Argument(fullName = "max_genotype_count", shortName = "maxGT", doc = "Maximum number of genotypes to consider at any site", optional = true)
     public int MAX_GENOTYPE_COUNT = 1024;
-    
+
     /**
      *   Sample ploidy - equivalent to number of chromosomes per pool. In pooled experiments this should be = # of samples in pool * individual sample ploidy
      */

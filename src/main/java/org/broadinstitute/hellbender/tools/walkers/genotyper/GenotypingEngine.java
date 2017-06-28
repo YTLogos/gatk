@@ -42,9 +42,6 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
 
     protected final SampleList samples;
 
-    private final AFPriorProvider log10AlleleFrequencyPriorsSNPs;
-
-
     private final List<SimpleInterval> upstreamDeletionsLoc = new LinkedList<>();
 
     /**
@@ -62,55 +59,11 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         this.samples = Utils.nonNull(samples, "the sample list cannot be null");
         logger = LogManager.getLogger(getClass());
         numberOfGenomes = this.samples.numberOfSamples() * configuration.genotypeArgs.samplePloidy;
-        log10AlleleFrequencyPriorsSNPs = new HeterozygosityAFPriorProvider(configuration.genotypeArgs.snpHeterozygosity);
 
         final double refPseudocount = configuration.genotypeArgs.snpHeterozygosity / Math.pow(configuration.genotypeArgs.heterozygosityStandardDeviation,2);
         final double snpPseudocount = configuration.genotypeArgs.snpHeterozygosity * refPseudocount;
         final double indelPseudocount = configuration.genotypeArgs.indelHeterozygosity * refPseudocount;
         alleleFrequencyCalculator = new AlleleFrequencyCalculator(refPseudocount, snpPseudocount, indelPseudocount, configuration.genotypeArgs.samplePloidy);
-    }
-
-    /**
-     * Function that fills vector with allele frequency priors. By default, infinite-sites, neutral variation prior is used,
-     * where Pr(AC=i) = theta/i where theta is heterozygosity
-     * @param N                                Number of chromosomes
-     * @param priors                           (output) array to be filled with priors
-     * @param heterozygosity                   default heterozygosity to use, if inputPriors is empty
-     * @param inputPriors                      Input priors to use (in which case heterozygosity is ignored)
-     */
-    public static void computeAlleleFrequencyPriors(final int N, final double[] priors, final double heterozygosity, final List<Double> inputPriors) {
-        double sum = 0.0;
-
-        if (!inputPriors.isEmpty()) {
-            // user-specified priors
-            if (inputPriors.size() != N) {
-                throw new CommandLineException.BadArgumentValue("inputPrior", "Invalid length of inputPrior vector: vector length must be equal to # samples +1 ");
-            }
-
-            int idx = 1;
-            for (final double prior: inputPriors) {
-                if (prior < 0.0) {
-                    throw new CommandLineException.BadArgumentValue("Bad argument: negative values not allowed", "inputPrior");
-                }
-                priors[idx++] = Math.log10(prior);
-                sum += prior;
-            }
-        }
-        else {
-            // for each i
-            for (int i = 1; i <= N; i++) {
-                final double value = heterozygosity / (double)i;
-                priors[i] = Math.log10(value);
-                sum += value;
-            }
-        }
-
-        // protection against the case of heterozygosity too high or an excessive number of samples (which break population genetics assumptions)
-        if (sum > 1.0) {
-            throw new CommandLineException.BadArgumentValue("heterozygosity","The heterozygosity value is set too high relative to the number of samples to be processed, or invalid values specified if input priors were provided - try reducing heterozygosity value or correct input priors.");
-        }
-        // null frequency for AF=0 is (1 - sum(all other frequencies))
-        priors[0] = Math.log10(1.0 - sum);
     }
 
     /**
@@ -589,7 +542,7 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         Utils.nonNull(log10GenotypeLikelihoods, "the input likelihoods cannot be null");
         Utils.validateArg(log10GenotypeLikelihoods.length == this.configuration.genotypeArgs.samplePloidy + 1, "wrong likelihoods dimensions");
 
-        final double[] log10Priors = log10AlleleFrequencyPriorsSNPs.forTotalPloidy(this.configuration.genotypeArgs.samplePloidy);
+        final double[] log10Priors = makePriors(this.configuration.genotypeArgs.samplePloidy);
         final double log10ACeq0Likelihood = log10GenotypeLikelihoods[0];
         final double log10ACeq0Prior = log10Priors[0];
         final double log10ACeq0Posterior = log10ACeq0Likelihood + log10ACeq0Prior;
@@ -624,6 +577,16 @@ public abstract class GenotypingEngine<Config extends StandardCallerArgumentColl
         }
 
         return 1.0 - Math.pow(10.0, normalizedLog10ACeq0Posterior);
+    }
 
+    // Note: copied from the old HeterozygosityAFPriorProvider
+    // this should be done away with when we switch to AlleleFrequencyCalculator for calculateSingleSampleRefVsAnyActiveStateProfileValue
+    protected double[] makePriors(final int totalPloidy) {
+        final double log10Heterozygosity = Math.log10(configuration.genotypeArgs.snpHeterozygosity);
+        final double[] result = new IndexRange(0, totalPloidy + 1).mapToDouble(n -> log10Heterozygosity - MathUtils.log10(n));
+        final double log10Sum = MathUtils.approximateLog10SumLog10(result);
+        Utils.validateArg(log10Sum < 0, () -> "heterozygosity " + configuration.genotypeArgs.snpHeterozygosity + " is too large of total ploidy " + totalPloidy);
+        result[0] = MathUtils.log10OneMinusPow10(log10Sum);
+        return result;
     }
 }
