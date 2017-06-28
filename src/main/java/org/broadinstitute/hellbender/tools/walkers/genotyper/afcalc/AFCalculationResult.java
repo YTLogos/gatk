@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.genotyper.afcalc;
 
 import htsjdk.variant.variantcontext.Allele;
-import org.apache.commons.math3.util.MathArrays;
 import org.broadinstitute.hellbender.utils.MathUtils;
 import org.broadinstitute.hellbender.utils.Utils;
 
@@ -21,8 +20,6 @@ public final class AFCalculationResult {
     private static final int AF1p = 1;
     private static final int LOG_10_ARRAY_SIZES = 2;
 
-    private final double[] log10LikelihoodsOfAC;
-    private final double[] log10PriorsOfAC;
     private final double[] log10PosteriorsOfAC;
 
     private final Map<Allele, Double> log10pRefByAllele;
@@ -42,58 +39,25 @@ public final class AFCalculationResult {
      */
     public AFCalculationResult(final int[] alleleCountsOfMLE,
                                final List<Allele> allelesUsedInGenotyping,
-                               final double[] log10LikelihoodsOfAC,
-                               final double[] log10PriorsOfAC,
+                               final double[] log10PosteriorOfAC,
                                final Map<Allele, Double> log10pRefByAllele) {
         Utils.nonNull(alleleCountsOfMLE, "alleleCountsOfMLE cannot be null");
-        Utils.nonNull(log10PriorsOfAC, "log10PriorsOfAC cannot be null");
-        Utils.nonNull(log10LikelihoodsOfAC, "log10LikelihoodsOfAC cannot be null");
-        Utils.nonNull(log10LikelihoodsOfAC, "log10LikelihoodsOfAC cannot be null");
+        Utils.nonNull(log10PosteriorOfAC, "log10PosteriorOfAC cannot be null");
         Utils.nonNull(log10pRefByAllele, "log10pRefByAllele cannot be null");
         Utils.nonNull(allelesUsedInGenotyping, "allelesUsedInGenotyping cannot be null");
-        if ( allelesUsedInGenotyping.isEmpty() ) {
-            throw new IllegalArgumentException("allelesUsedInGenotyping must be non-null list of at least 1 value " + allelesUsedInGenotyping);
-        }
-        if ( alleleCountsOfMLE.length != allelesUsedInGenotyping.size() - 1) {
-            throw new IllegalArgumentException("alleleCountsOfMLE.length " + alleleCountsOfMLE.length + " != allelesUsedInGenotyping.size() " + allelesUsedInGenotyping.size());
-        }
-        if ( log10LikelihoodsOfAC.length != 2 ) {
-            throw new IllegalArgumentException("log10LikelihoodsOfAC must have length equal 2");
-        }
-        if ( log10PriorsOfAC.length != 2 ) {
-            throw new IllegalArgumentException("log10PriorsOfAC must have length equal 2");
-        }
-        if ( log10pRefByAllele.size() != allelesUsedInGenotyping.size() - 1 ) {
-            throw new IllegalArgumentException("log10pRefByAllele has the wrong number of elements: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
-        }
-        if ( ! allelesUsedInGenotyping.containsAll(log10pRefByAllele.keySet()) ) {
-            throw new IllegalArgumentException("log10pRefByAllele doesn't contain all of the alleles used in genotyping: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
-        }if ( ! MathUtils.goodLog10ProbVector(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES, false) ) {
-            throw new IllegalArgumentException("log10LikelihoodsOfAC are bad " + Utils.join(",", log10LikelihoodsOfAC));
-        }
-        if ( ! MathUtils.goodLog10ProbVector(log10PriorsOfAC, LOG_10_ARRAY_SIZES, false) ) {
-            throw new IllegalArgumentException("log10priors are bad " + Utils.join(",", log10PriorsOfAC));
-        }
+        Utils.nonEmpty(allelesUsedInGenotyping, "allelesUsedInGenotyping must be non-empty list");
+        Utils.validateArg(alleleCountsOfMLE.length == allelesUsedInGenotyping.size() - 1, () -> "alleleCountsOfMLE.length " + alleleCountsOfMLE.length + " != allelesUsedInGenotyping.size() " + allelesUsedInGenotyping.size());
+        Utils.validateArg(log10PosteriorOfAC.length == 2, "log10PosteriorOfAC must have length equal 2");
+        Utils.validateArg(log10pRefByAllele.size() == allelesUsedInGenotyping.size() - 1, () -> "log10pRefByAllele has the wrong number of elements: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
+        Utils.validateArg(allelesUsedInGenotyping.containsAll(log10pRefByAllele.keySet()), () -> "log10pRefByAllele doesn't contain all of the alleles used in genotyping: log10pRefByAllele " + log10pRefByAllele + " but allelesUsedInGenotyping " + allelesUsedInGenotyping);
+        Utils.validateArg(MathUtils.goodLog10ProbVector(log10PosteriorOfAC, LOG_10_ARRAY_SIZES, false), () -> "log10PosteriorOfAC are bad " + Utils.join(",", log10PosteriorOfAC));
 
         //make defensive copies of all arguments
         this.alleleCountsOfMLE = alleleCountsOfMLE.clone();
         this.allelesUsedInGenotyping = Collections.unmodifiableList(new ArrayList<>(allelesUsedInGenotyping));
 
-        this.log10LikelihoodsOfAC = Arrays.copyOf(log10LikelihoodsOfAC, LOG_10_ARRAY_SIZES);
-        this.log10PriorsOfAC = Arrays.copyOf(log10PriorsOfAC, LOG_10_ARRAY_SIZES);
-        this.log10PosteriorsOfAC = computePosteriors(log10LikelihoodsOfAC, log10PriorsOfAC);
+        this.log10PosteriorsOfAC = Arrays.copyOf(log10PosteriorOfAC, LOG_10_ARRAY_SIZES);
         this.log10pRefByAllele = Collections.unmodifiableMap(new LinkedHashMap<>(log10pRefByAllele));
-    }
-
-    /**
-     * Return a new AFCalcResult with a new prior probability
-     *
-     * @param log10PriorsOfAC
-     * @return
-     */
-    public AFCalculationResult copyWithNewPriors(final double[] log10PriorsOfAC) {
-        Utils.nonNull(log10PriorsOfAC);
-        return new AFCalculationResult(alleleCountsOfMLE, allelesUsedInGenotyping, log10LikelihoodsOfAC, log10PriorsOfAC, log10pRefByAllele);
     }
 
     /**
@@ -150,34 +114,6 @@ public final class AFCalculationResult {
         return log10PosteriorsOfAC[AF1p];
     }
 
-    /**
-     * Get the log10 unnormalized -- across all ACs -- likelihood of AC == 0 for all alleles
-     */
-    public double getLog10LikelihoodOfAFEq0() {
-        return log10LikelihoodsOfAC[AF0];
-    }
-
-    /**
-     * Get the log10 unnormalized -- across all ACs -- likelihood of AC > 0 for any alleles
-     */
-    public double getLog10LikelihoodOfAFGT0() {
-        return log10LikelihoodsOfAC[AF1p];
-    }
-
-    /**
-     * Get the log10 unnormalized -- across all ACs -- prior probability of AC == 0 for all alleles
-     */
-    public double getLog10PriorOfAFEq0() {
-        return log10PriorsOfAC[AF0];
-    }
-
-    /**
-     * Get the log10 unnormalized -- across all ACs -- prior probability of AC > 0
-     */
-    public double getLog10PriorOfAFGT0() {
-        return log10PriorsOfAC[AF1p];
-    }
-
     @Override
     public String toString() {
         final List<String> byAllele = new LinkedList<>();
@@ -186,7 +122,7 @@ public final class AFCalculationResult {
                 byAllele.add(String.format("%s => MLE %d / posterior %.2f", a, getAlleleCountAtMLE(a), getLog10PosteriorOfAFEq0ForAllele(a)));
             }
         }
-        return String.format("AFCalc%n\t\tlog10PosteriorOfAFGT0=%.2f%n\t\t%s", getLog10LikelihoodOfAFGT0(), Utils.join("\n\t\t", byAllele));
+        return String.format("AFCalc%n\t\tlog10PosteriorOfAFGT0=%.2f%n\t\t%s", getLog10PosteriorOfAFGT0(), Utils.join("\n\t\t", byAllele));
     }
 
     /**
@@ -247,19 +183,6 @@ public final class AFCalculationResult {
         final Double log10pNonRef = log10pRefByAllele.get(allele);
         Utils.nonNull(log10pNonRef, "Unknown allele " + allele);
         return log10pNonRef;
-    }
-
-    /**
-     * Returns the log10 normalized posteriors given the log10 likelihoods and priors
-     *
-     * @param log10LikelihoodsOfAC
-     * @param log10PriorsOfAC
-     *
-     * @return freshly allocated log10 normalized posteriors vector
-     */
-    private static double[] computePosteriors(final double[] log10LikelihoodsOfAC, final double[] log10PriorsOfAC) {
-        final double[] log10UnnormalizedPosteriors = MathArrays.ebeAdd(log10LikelihoodsOfAC, log10PriorsOfAC);
-        return MathUtils.normalizeLog10(log10UnnormalizedPosteriors);
     }
 
     /**

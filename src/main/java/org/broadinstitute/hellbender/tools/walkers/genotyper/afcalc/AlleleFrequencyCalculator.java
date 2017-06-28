@@ -129,7 +129,7 @@ public final class AlleleFrequencyCalculator implements AFCalculator {
         final double[] dummyFlatPrior = {-1e-10, -1e-10};   //TODO: HACK must be negative for AFCalcResult
         final double[] log10PosteriorOfNoVariantYesVariant = {log10PNoVariant, MathUtils.log10OneMinusPow10(log10PNoVariant)};
 
-        return new AFCalculationResult(integerAltAlleleCounts, alleles, log10PosteriorOfNoVariantYesVariant, dummyFlatPrior, log10PRefByAllele);
+        return new AFCalculationResult(integerAltAlleleCounts, alleles, log10PosteriorOfNoVariantYesVariant, log10PRefByAllele);
     }
 
     // effectiveAlleleCounts[allele a] = SUM_{genotypes g} (posterior_probability(g) * num_copies of a in g), which we denote as SUM [n_g p_g]
