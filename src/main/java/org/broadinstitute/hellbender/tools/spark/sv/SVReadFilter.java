@@ -1,7 +1,9 @@
 package org.broadinstitute.hellbender.tools.spark.sv;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
+import java.util.function.BiPredicate;
+import java.util.Iterator;
+
 import static org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDiscoveryArgumentCollection.FindBreakpointEvidenceSparkArgumentCollection;
 
 public class SVReadFilter implements java.io.Serializable {
@@ -42,5 +44,9 @@ public class SVReadFilter implements java.io.Serializable {
                 (read.isReverseStrand() ?
                         read.getStart() + allowedShortFragmentOverhang >= read.getMateStart() :
                         read.getStart() - allowedShortFragmentOverhang <= read.getMateStart());
+    }
+
+    public Iterator<GATKRead> applyFilter( final Iterator<GATKRead> readItr, final BiPredicate<SVReadFilter, GATKRead> predicate ) {
+        return new SVUtils.IteratorFilter<>(readItr, read -> predicate.test(this, read));
     }
 }

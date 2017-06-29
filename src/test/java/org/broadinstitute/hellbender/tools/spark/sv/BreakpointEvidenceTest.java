@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import htsjdk.samtools.SAMFileHeader;
-import org.broadinstitute.hellbender.tools.spark.utils.IntHistogram;
 import org.broadinstitute.hellbender.utils.IntHistogramTest;
 import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -19,14 +18,15 @@ import java.util.Collections;
 import java.util.List;
 
 public class BreakpointEvidenceTest extends BaseTest {
-    private final static IntHistogram.CDF cdf = IntHistogramTest.genLogNormalSample(400, 175, 10000).getCDF();
+    private final static FragmentLengthStatistics stats =
+            new FragmentLengthStatistics(IntHistogramTest.genLogNormalSample(400, 175, 10000));
 
     @Test(groups = "sv")
     void restOfFragmentSizeTest() {
         final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeaderWithGroups(1, 1, 10000000, 1);
         final String groupName = header.getReadGroups().get(0).getReadGroupId();
         final int readSize = 151;
-        final ReadMetadata readMetadata = new ReadMetadata(Collections.emptySet(), header, cdf, null, 1L, 1L, 1);
+        final ReadMetadata readMetadata = new ReadMetadata(Collections.emptySet(), header, stats, null, 1L, 1L, 1);
         final String templateName = "xyzzy";
         final int readStart = 1010101;
         final GATKRead read = ArtificialReadUtils.createArtificialRead(header, templateName, 0, readStart, readSize);
@@ -54,7 +54,7 @@ public class BreakpointEvidenceTest extends BaseTest {
     void serializationTest() {
         final List<BreakpointEvidence> evidenceList = new ArrayList<>(7);
         final SAMFileHeader samHeader = ArtificialReadUtils.createArtificialSamHeader();
-        final ReadMetadata metadata = new ReadMetadata(Collections.emptySet(), samHeader, cdf, null, 2L, 2L, 1);
+        final ReadMetadata metadata = new ReadMetadata(Collections.emptySet(), samHeader, stats, null, 2L, 2L, 1);
         final List<GATKRead> readPair = ArtificialReadUtils.createPair(samHeader, "firstReadPair", 101, 1010, 1382, false, false);
         final GATKRead read = readPair.get(0);
         evidenceList.add(new BreakpointEvidence.SplitRead(read, metadata, true));

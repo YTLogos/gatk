@@ -35,8 +35,7 @@ public class ReadMetadata {
     private final long maxReadsInPartition;
     private final int coverage;
     private final PartitionBounds[] partitionBounds;
-    private final Map<String, IntHistogram.CDF> libraryToFragmentStatistics;
-    private final Map<String, ZCalc> libraryToZCalc;
+    private final Map<String, FragmentLengthStatistics> libraryToFragmentStatistics;
     private final static String NO_GROUP = "NoGroup";
 
     public ReadMetadata( final Set<Integer> crossContigIgnoreSet,
@@ -78,14 +77,14 @@ public class ReadMetadata {
                     .reduce(new HashMap<>(), ReadMetadata::combineMaps);
         libraryToFragmentStatistics = new HashMap<>(SVUtils.hashMapCapacity(combinedMaps.size()));
         for ( final Map.Entry<String, IntHistogram> entry : combinedMaps.entrySet() ) {
-            libraryToFragmentStatistics.put(entry.getKey(), new IntHistogram.CDF(entry.getValue()));
+            libraryToFragmentStatistics.put(entry.getKey(), new FragmentLengthStatistics(entry.getValue()));
         }
-        libraryToZCalc = new HashMap<>(SVUtils.hashMapCapacity(libraryToFragmentStatistics.size()));
     }
 
+    /** This constructor is for testing only.  It applies a single FragmentLengthStatistics object to all libraries. */
     @VisibleForTesting
     ReadMetadata( final Set<Integer> crossContigIgnoreSet, final SAMFileHeader header,
-                  final IntHistogram.CDF stats, final PartitionBounds[] partitionBounds,
+                  final FragmentLengthStatistics stats, final PartitionBounds[] partitionBounds,
                   final long nReads, final long maxReadsInPartition, final int coverage ) {
         this.crossContigIgnoreSet = crossContigIgnoreSet;
         contigNameToID = buildContigNameToIDMap(header);
@@ -99,7 +98,6 @@ public class ReadMetadata {
         for ( final SAMReadGroupRecord readGroupRecord : header.getReadGroups() ) {
             libraryToFragmentStatistics.put(readGroupRecord.getLibrary(), stats);
         }
-        libraryToZCalc = new HashMap<>(SVUtils.hashMapCapacity(libraryToFragmentStatistics.size()));
     }
 
     private ReadMetadata( final Kryo kryo, final Input input ) {
@@ -137,14 +135,13 @@ public class ReadMetadata {
         }
 
         final int libMapSize = input.readInt();
-        final IntHistogram.CDF.Serializer cdfSerializer = new IntHistogram.CDF.Serializer();
+        final FragmentLengthStatistics.Serializer statsSerializer = new FragmentLengthStatistics.Serializer();
         libraryToFragmentStatistics = new HashMap<>(SVUtils.hashMapCapacity(libMapSize));
         for ( int idx = 0; idx != libMapSize; ++idx ) {
             final String libraryName = input.readString();
-            final IntHistogram.CDF cdf = cdfSerializer.read(kryo, input, IntHistogram.CDF.class);
-            libraryToFragmentStatistics.put(libraryName, cdf);
+            final FragmentLengthStatistics stats = statsSerializer.read(kryo, input, FragmentLengthStatistics.class);
+            libraryToFragmentStatistics.put(libraryName, stats);
         }
-        libraryToZCalc = new HashMap<>(SVUtils.hashMapCapacity(libraryToFragmentStatistics.size()));
     }
 
     private void serialize( final Kryo kryo, final Output output ) {
@@ -176,10 +173,10 @@ public class ReadMetadata {
         }
 
         output.writeInt(libraryToFragmentStatistics.size());
-        final IntHistogram.CDF.Serializer cdfSerializer = new IntHistogram.CDF.Serializer();
-        for ( final Map.Entry<String, IntHistogram.CDF> entry : libraryToFragmentStatistics.entrySet() ) {
+        final FragmentLengthStatistics.Serializer statsSerializer = new FragmentLengthStatistics.Serializer();
+        for ( final Map.Entry<String, FragmentLengthStatistics> entry : libraryToFragmentStatistics.entrySet() ) {
             output.writeString(entry.getKey());
-            cdfSerializer.write(kryo, output, entry.getValue());
+            statsSerializer.write(kryo, output, entry.getValue());
         }
     }
 
@@ -208,48 +205,17 @@ public class ReadMetadata {
 
     @VisibleForTesting Map<String, String> getReadGroupToLibraryMap() { return readGroupToLibrary; }
 
-    public static final class ZCalc {
-        private final int median;
-        private final float negativeMAD;
-        private final float positiveMAD;
-
-        public ZCalc( final int median, final int negativeMAD, final int positiveMAD ) {
-            this.median = median;
-            this.negativeMAD = negativeMAD;
-            this.positiveMAD = positiveMAD;
-        }
-
-        public int getMedian() { return median; }
-        public float getNegativeMAD() { return negativeMAD; }
-        public float getPositiveMAD() { return positiveMAD; }
-
-        public float getZishScore( final int fragmentSize ) {
-            if ( fragmentSize < 0 ) {
-                throw new GATKException("negative fragment size");
-            }
-            final int diff = fragmentSize - median;
-            if ( diff == 0 ) return 0.0f;
-            if ( diff > 0 ) return 1.0f * diff / positiveMAD;
-            return 1.0f * diff / negativeMAD;
-        }
-    }
-
     public float getZishScore( final String readGroup, final int fragmentSize ) {
-        return getZCalc(readGroup).getZishScore(fragmentSize);
+        return getFragmentLengthStatistics(readGroup).getZishScore(fragmentSize);
     }
 
     public int getGroupMedianFragmentSize( final String readGroup ) {
-        return getZCalc(readGroup).getMedian();
+        return getFragmentLengthStatistics(readGroup).getMedian();
     }
 
-    @VisibleForTesting ZCalc getZCalc( final String readGroup ) {
-        final String libraryName = getLibraryName(readGroup);
-        return libraryToZCalc.computeIfAbsent(libraryName,
-                libName -> {
-                    final IntHistogram.CDF cdf = getLibraryStatistics(libName);
-                    final int median = cdf.median();
-                    return new ZCalc(median, cdf.leftMedianDeviation(median), cdf.rightMedianDeviation(median));
-                });
+    @VisibleForTesting
+    FragmentLengthStatistics getFragmentLengthStatistics( final String readGroup ) {
+        return libraryToFragmentStatistics.get(getLibraryName(readGroup));
     }
 
     public long getNReads() { return nReads; }
@@ -263,10 +229,10 @@ public class ReadMetadata {
         return coverage;
     }
 
-    public Map<String, IntHistogram.CDF> getAllLibraryStatistics() { return libraryToFragmentStatistics; }
+    public Map<String, FragmentLengthStatistics> getAllLibraryStatistics() { return libraryToFragmentStatistics; }
 
-    public IntHistogram.CDF getLibraryStatistics( final String libraryName ) {
-        final IntHistogram.CDF stats = libraryToFragmentStatistics.get(libraryName);
+    public FragmentLengthStatistics getLibraryStatistics( final String libraryName ) {
+        final FragmentLengthStatistics stats = libraryToFragmentStatistics.get(libraryName);
         if ( stats == null ) {
             throw new GATKException("No such library: " + libraryName);
         }
@@ -275,7 +241,7 @@ public class ReadMetadata {
 
     public int getMaxMedianFragmentSize() {
         return libraryToFragmentStatistics.entrySet().stream()
-                .mapToInt(entry -> entry.getValue().median())
+                .mapToInt(entry -> entry.getValue().getMedian())
                 .max()
                 .orElse(0);
     }
@@ -322,16 +288,16 @@ public class ReadMetadata {
             writer.write("#partitions:\t" + readMetadata.getNPartitions() + "\n");
             writer.write("max reads/partition:\t" + readMetadata.getMaxReadsInPartition() + "\n");
             writer.write("coverage:\t" + readMetadata.getCoverage() + "\n");
-            for ( final Map.Entry<String, IntHistogram.CDF> entry : readMetadata.getAllLibraryStatistics().entrySet() ) {
-                final IntHistogram.CDF stats = entry.getValue();
+            for ( final Map.Entry<String, FragmentLengthStatistics> entry :
+                    readMetadata.getAllLibraryStatistics().entrySet() ) {
+                final FragmentLengthStatistics stats = entry.getValue();
                 String name = entry.getKey();
                 if ( name == null ) {
                     name = NO_GROUP;
                 }
-                final int median = stats.median();
-                writer.write("library " + name + ":\t" + median +
-                        "-" + stats.leftMedianDeviation(median) +
-                        "+" + stats.rightMedianDeviation(median) + "\n");
+                final int median = stats.getMedian();
+                writer.write("library " + name + ":\t" + median + "-" + stats.getNegativeMAD() +
+                                "+" + stats.getPositiveMAD() + "\n");
             }
         } catch ( final IOException ioe ) {
             throw new GATKException("Can't write metadata file.", ioe);
@@ -364,28 +330,20 @@ public class ReadMetadata {
                                     final SVReadFilter filter,
                                     final int maxTrackedFragmentLength,
                                     final Map<String, String> readGroupToLibraryMap ) {
+            Iterator<GATKRead> readItr = filter.applyFilter(unfilteredReadItr, SVReadFilter::isMapped);
             libraryToFragmentSizeHistogram = new HashMap<>();
-            GATKRead mappedRead = null;
-            while ( unfilteredReadItr.hasNext() ) {
-                final GATKRead read = unfilteredReadItr.next();
-                if ( filter.isMapped(read) ) {
-                    mappedRead = read;
-                    break;
-                }
-            }
-            if ( mappedRead == null ) {
+            if ( !readItr.hasNext() ) {
                 nReads = nBases = 0;
                 firstContig = lastContig = null;
                 firstLocation = lastLocation = -1;
                 return;
             }
-
-            GATKRead lastMappedRead;
+            GATKRead mappedRead = readItr.next();
             firstContig = mappedRead.getContig();
             firstLocation = mappedRead.getUnclippedStart();
             long reads = 0L;
             long bases = 0L;
-            do {
+            while ( true ) {
                 reads += 1L;
                 bases += mappedRead.getLength();
                 if ( filter.isNonDiscordantEvidence(mappedRead) ) {
@@ -395,19 +353,12 @@ public class ReadMetadata {
                             .computeIfAbsent(library, key -> new IntHistogram(maxTrackedFragmentLength))
                             .addObservation(Math.abs(mappedRead.getFragmentLength()));
                 }
-                lastMappedRead = mappedRead;
-                mappedRead = null;
-                while ( unfilteredReadItr.hasNext() ) {
-                    final GATKRead read = unfilteredReadItr.next();
-                    if ( filter.isMapped(read) ) {
-                        mappedRead = read;
-                        break;
-                    }
-                }
-            } while ( mappedRead != null );
+                if ( !readItr.hasNext() ) break;
+                mappedRead = readItr.next();
+            }
 
-            lastContig = lastMappedRead.getContig();
-            lastLocation = lastMappedRead.getUnclippedEnd() + 1;
+            lastContig = mappedRead.getContig();
+            lastLocation = mappedRead.getUnclippedEnd() + 1;
             nReads = reads;
             nBases = bases;
         }

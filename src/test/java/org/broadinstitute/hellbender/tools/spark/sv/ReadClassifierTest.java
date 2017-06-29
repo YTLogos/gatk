@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.spark.sv;
 
 import htsjdk.samtools.SAMFileHeader;
-import org.broadinstitute.hellbender.tools.spark.utils.IntHistogram;
 import org.broadinstitute.hellbender.utils.IntHistogramTest;
 import org.broadinstitute.hellbender.utils.read.ArtificialReadUtils;
 import org.broadinstitute.hellbender.utils.read.GATKRead;
@@ -14,9 +13,10 @@ import java.util.*;
 import static org.broadinstitute.hellbender.tools.spark.sv.StructuralVariationDiscoveryArgumentCollection.FindBreakpointEvidenceSparkArgumentCollection;
 
 public class ReadClassifierTest extends BaseTest {
-    private static final IntHistogram.CDF cdf = IntHistogramTest.genLogNormalSample(400, 175, 10000).getCDF();
+    private final static FragmentLengthStatistics stats =
+            new FragmentLengthStatistics(IntHistogramTest.genLogNormalSample(400, 175, 10000));
 
-    @Test(groups = "spark")
+    @Test(groups = "sv")
     void restOfFragmentSizeTest() {
         final FindBreakpointEvidenceSparkArgumentCollection params = new FindBreakpointEvidenceSparkArgumentCollection();
         final SAMFileHeader header = ArtificialReadUtils.createArtificialSamHeaderWithGroups(3, 1, 10000000, 1);
@@ -25,7 +25,7 @@ public class ReadClassifierTest extends BaseTest {
         final int fragmentLen = 400;
         final Set<Integer> crossContigIgnoreSet = new HashSet<>(3);
         crossContigIgnoreSet.add(2);
-        final ReadMetadata readMetadata = new ReadMetadata(crossContigIgnoreSet, header, cdf, null, 2L, 2L, 1);
+        final ReadMetadata readMetadata = new ReadMetadata(crossContigIgnoreSet, header, stats, null, 2L, 2L, 1);
         final String templateName = "xyzzy";
         final int leftStart = 1010101;
         final int rightStart = leftStart + fragmentLen - readSize;

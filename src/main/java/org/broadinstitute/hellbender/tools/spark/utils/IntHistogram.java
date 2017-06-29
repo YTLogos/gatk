@@ -159,12 +159,9 @@ public final class IntHistogram {
             return new IntHistogram(cdfFractions.length - 2);
         }
 
-        /** Is the specified histogram significantly different (at the p < .01 level) from the CDF. */
-        public boolean isDifferent( final IntHistogram intHistogram ) { return isDifferent(intHistogram, .01f); }
-
         /** Using the Kolmogorov-Smirnov statistic for two samples:
          *  Is the specified histogram significantly different from the CDF. */
-        public boolean isDifferent( final IntHistogram sampleHistogram, final float significance ) {
+        public boolean isDifferentByKSStatistic( final IntHistogram sampleHistogram, final float significance ) {
             final long[] sampleCounts = sampleHistogram.counts;
 
             Utils.validateArg(significance > 0f && significance < .2f,

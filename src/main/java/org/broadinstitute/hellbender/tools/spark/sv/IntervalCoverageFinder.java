@@ -15,14 +15,13 @@ public final class IntervalCoverageFinder implements Iterable<Tuple2<Integer, In
 
     public IntervalCoverageFinder( final ReadMetadata metadata,
                                    final List<SVInterval> intervals,
-                                   final Iterator<GATKRead> readItr,
+                                   final Iterator<GATKRead> unfilteredReadItr,
                                    final SVReadFilter filter ) {
         basesInInterval = new int[intervals.size()];
         int intervalsIndex = 0;
+        final Iterator<GATKRead> readItr = filter.applyFilter(unfilteredReadItr, SVReadFilter::isMapped);
         while ( readItr.hasNext() ) {
             final GATKRead read = readItr.next();
-            if ( !filter.isMapped(read) ) continue;
-
             final int readContigId = metadata.getContigID(read.getContig());
             final int readStart = read.getUnclippedStart();
             final int intervalsSize = intervals.size();

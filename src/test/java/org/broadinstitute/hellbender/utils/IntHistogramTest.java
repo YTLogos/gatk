@@ -3,7 +3,6 @@ package org.broadinstitute.hellbender.utils;
 import org.broadinstitute.hellbender.tools.spark.utils.IntHistogram;
 import org.broadinstitute.hellbender.utils.test.BaseTest;
 import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Random;
@@ -47,28 +46,28 @@ public class IntHistogramTest extends BaseTest {
         final IntHistogram sample = genNormalSample(480, 25, 25);
         for ( int idx = 75; idx != MAX_TRACKED_VALUE; ++idx )
             sample.addObservations(idx-50, sample.getNObservations(idx));
-        Assert.assertTrue(cdf.isDifferent(sample, .01f));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(sample, .01f));
     }
 
     @Test
     public void testNormalDistribution() {
         final IntHistogram.CDF cdf = genNormalSample(480, 25, 10000).getCDF();
-        Assert.assertFalse(cdf.isDifferent(genNormalSample(480, 25, 100), SIGNIFICANCE));
+        Assert.assertFalse(cdf.isDifferentByKSStatistic(genNormalSample(480, 25, 100), SIGNIFICANCE));
         // these numbers were jiggled by hand until the difference was barely detectable
-        Assert.assertTrue(cdf.isDifferent(genNormalSample(489, 25, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genNormalSample(470, 25, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genNormalSample(480, 15, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genNormalSample(480, 42, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genNormalSample(489, 25, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genNormalSample(470, 25, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genNormalSample(480, 15, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genNormalSample(480, 42, 100), SIGNIFICANCE));
     }
 
     @Test
     public void testLogNormalDistribution() {
         final IntHistogram.CDF cdf = genNormalSample(480, 25, 10000).getCDF();
-        Assert.assertFalse(cdf.isDifferent(genLogNormalSample(480, 25, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genLogNormalSample(490, 25, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genLogNormalSample(471, 25, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genLogNormalSample(480, 15, 100), SIGNIFICANCE));
-        Assert.assertTrue(cdf.isDifferent(genLogNormalSample(480, 42, 100), SIGNIFICANCE));
+        Assert.assertFalse(cdf.isDifferentByKSStatistic(genLogNormalSample(480, 25, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genLogNormalSample(490, 25, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genLogNormalSample(471, 25, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genLogNormalSample(480, 15, 100), SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(genLogNormalSample(480, 42, 100), SIGNIFICANCE));
     }
 
     @Test
@@ -77,7 +76,7 @@ public class IntHistogramTest extends BaseTest {
         final IntHistogram sample1 = genNormalSample(480, 25, 50);
         final IntHistogram sample2 = genNormalSample(500, 25, 50);
         sample1.addObservations(sample2);
-        Assert.assertTrue(cdf.isDifferent(sample1, SIGNIFICANCE));
+        Assert.assertTrue(cdf.isDifferentByKSStatistic(sample1, SIGNIFICANCE));
     }
 
     public static IntHistogram genNormalSample( final int mean, final int stdDev, final int nSamples ) {

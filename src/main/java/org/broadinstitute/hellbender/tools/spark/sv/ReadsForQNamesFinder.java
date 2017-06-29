@@ -16,14 +16,14 @@ public final class ReadsForQNamesFinder implements Iterable<Tuple2<Integer, List
 
     public ReadsForQNamesFinder( final HopscotchUniqueMultiMap<String, Integer, QNameAndInterval> qNamesMultiMap,
                                  final int nIntervals, final boolean includeMappingLocation, final boolean dumpFASTQs,
-                                 final Iterator<GATKRead> readsItr, final SVReadFilter filter ) {
+                                 final Iterator<GATKRead> unfilteredReadItr, final SVReadFilter filter ) {
         final int nReadsPerInterval = 2 * qNamesMultiMap.size() / nIntervals;
         @SuppressWarnings({ "unchecked", "rawtypes" })
         final List<SVFastqUtils.FastqRead>[] intervalReads = new List[nIntervals];
         int nPopulatedIntervals = 0;
-        while ( readsItr.hasNext() ) {
-            final GATKRead read = readsItr.next();
-            if ( !filter.isPrimaryLine(read) ) continue;
+        final Iterator<GATKRead> readItr = filter.applyFilter(unfilteredReadItr, SVReadFilter::isPrimaryLine);
+        while ( readItr.hasNext() ) {
+            final GATKRead read = readItr.next();
             final Iterator<QNameAndInterval> namesItr = qNamesMultiMap.findEach(read.getName());
             SVFastqUtils.FastqRead FastqRead = null;
             while ( namesItr.hasNext() ) {

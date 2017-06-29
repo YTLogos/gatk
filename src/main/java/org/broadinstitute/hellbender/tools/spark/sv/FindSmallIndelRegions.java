@@ -70,20 +70,35 @@ public final class FindSmallIndelRegions extends GATKSparkTool {
 
         private final ReadMetadata readMetadata;
         private final SVReadFilter filter;
+
+        // We're calculating a K-S statistic over 500-base windows, but the windows are tiled every 250 bases.
+        // So what we do is to keep a pair of histograms for each library: one for first half of the window, and one
+        // for the second half.
+        // The reads are coordinate sorted, and whenever the next read presented to the test method crosses out of the
+        // current window, it's time to do a K-S test.
+        // We add the 2nd-half histogram to the 1st-half histogram, so that the 1st-half histogram now has the complete
+        // data for the entire window.  We do the K-S test, and then zero the 1st-half histogram.
+        // At this point the 2nd-half histogram becomes the 1st-half histogram for the next window, and the newly
+        // cleared 1st-half histogram becomes the 2nd-half histogram for the next window.
+        // We swap roles simply by toggling fillIdx between 0 and 1 each time we cross a boundary.
+        // So in the code that follows, fillIdx points to the member of the pair that is currently accumulating data --
+        // i.e., the 2nd-half histogram.  The temporary variable oldIdx in the checkHistograms method below points to
+        // the other member of the pair -- i.e., the 1st-half histogram.
         private final Map<String, IntHistogram[]> libraryToHistoPairMap;
+        private int fillIdx;
+        // curContig+curEnd mark the genomic location of the end of the current window
         private String curContig;
         private int curEnd;
-        private int fillIdx;
 
         public Finder( final ReadMetadata readMetadata, final SVReadFilter filter ) {
             this.readMetadata = readMetadata;
             this.filter = filter;
-            final Map<String, IntHistogram.CDF> libraryStatisticsMap = readMetadata.getAllLibraryStatistics();
+            final Map<String, FragmentLengthStatistics> libraryStatisticsMap = readMetadata.getAllLibraryStatistics();
             libraryToHistoPairMap = new HashMap<>(SVUtils.hashMapCapacity(libraryStatisticsMap.size()));
-            libraryStatisticsMap.forEach( (libName, cdf) -> {
+            libraryStatisticsMap.forEach( (libName, stats) -> {
                 final IntHistogram[] pair = new IntHistogram[2];
-                pair[0] = cdf.createEmptyHistogram();
-                pair[1] = cdf.createEmptyHistogram();
+                pair[0] = stats.createEmptyHistogram();
+                pair[1] = stats.createEmptyHistogram();
                 libraryToHistoPairMap.put(libName, pair);
             });
             curContig = null;
@@ -118,7 +133,8 @@ public final class FindSmallIndelRegions extends GATKSparkTool {
                 oldHisto.addObservations(histoPair[fillIdx]);
                 final long readCount = oldHisto.getTotalObservations();
                 if ( readCount > 0 &&
-                        readMetadata.getLibraryStatistics(entry.getKey()).isDifferent(oldHisto,KS_SIGNIFICANCE) ) {
+                        readMetadata.getLibraryStatistics(entry.getKey())
+                                .isDifferentByKSStatistic(oldHisto,KS_SIGNIFICANCE) ) {
                     if ( curInterval == null ) {
                         int start = curEnd - 2 * BLOCK_SIZE;
                         if ( start < 1 ) start = 1;
