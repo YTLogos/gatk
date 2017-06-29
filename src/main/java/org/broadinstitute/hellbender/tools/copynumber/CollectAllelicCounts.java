@@ -7,14 +7,13 @@ import org.broadinstitute.barclay.argparser.ArgumentCollection;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.hellbender.cmdline.CommandLineProgram;
-import org.broadinstitute.hellbender.cmdline.ExomeStandardArgumentDefinitions;
+import org.broadinstitute.hellbender.cmdline.CopyNumberStandardArgumentDefinitions;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.cmdline.argumentcollections.ReferenceInputArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.argumentcollections.RequiredReferenceInputArgumentCollection;
 import org.broadinstitute.hellbender.cmdline.programgroups.CopyNumberProgramGroup;
 import org.broadinstitute.hellbender.tools.copynumber.allelic.alleliccount.AllelicCountCollection;
 import org.broadinstitute.hellbender.tools.copynumber.allelic.alleliccount.AllelicCountCollector;
-import org.broadinstitute.hellbender.utils.Utils;
 import org.broadinstitute.hellbender.utils.io.IOUtils;
 import org.broadinstitute.hellbender.utils.param.ParamUtils;
 import org.broadinstitute.hellbender.utils.read.ReadConstants;
@@ -99,8 +98,8 @@ public final class CollectAllelicCounts extends CommandLineProgram {
 
     @Argument(
             doc = "Interval-list file of sites.",
-            fullName = ExomeStandardArgumentDefinitions.SITES_FILE_LONG_NAME,
-            shortName = ExomeStandardArgumentDefinitions.SITES_FILE_SHORT_NAME,
+            fullName = CopyNumberStandardArgumentDefinitions.SITES_FILE_LONG_NAME,
+            shortName = CopyNumberStandardArgumentDefinitions.SITES_FILE_SHORT_NAME,
             optional = false
     )
     protected File inputSiteIntervalsFile;
