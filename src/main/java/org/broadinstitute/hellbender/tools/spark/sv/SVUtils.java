@@ -161,34 +161,34 @@ public final class SVUtils {
     }
 
     public static class IteratorFilter<T> implements Iterator<T> {
-        private final Iterator<T> readItr;
+        private final Iterator<T> itr;
         private final Predicate<T> predicate;
-        private T read;
+        private T obj;
 
-        public IteratorFilter( final Iterator<T> readItr, final Predicate<T> predicate ) {
-            this.readItr = readItr;
+        public IteratorFilter( final Iterator<T> itr, final Predicate<T> predicate ) {
+            this.itr = itr;
             this.predicate = predicate;
             advance();
         }
 
-        @Override public boolean hasNext() { return read != null; }
+        @Override public boolean hasNext() { return obj != null; }
 
         @Override
         public T next() {
             if ( !hasNext() ) {
                 throw new NoSuchElementException("IteratorFilter is exhausted.");
             }
-            final T result = read;
+            final T result = obj;
             advance();
             return result;
         }
 
         private void advance() {
-            read = null;
-            while ( readItr.hasNext() ) {
-                final T next = readItr.next();
+            obj = null;
+            while ( itr.hasNext() ) {
+                final T next = itr.next();
                 if ( predicate.test(next) ) {
-                    read = next;
+                    obj = next;
                     break;
                 }
             }
