@@ -61,4 +61,12 @@ public class RawReadCountData extends ReadCountData {
     public TableColumnCollection getReadCountDataColumns() {
         return new TableColumnCollection(Arrays.asList(RAW_COLUMN));
     }
+
+    /**
+     *
+     * @return
+     */
+    public int getCount() {
+        return count;
+    }
 }

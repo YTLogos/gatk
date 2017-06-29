@@ -1,5 +1,6 @@
 package org.broadinstitute.hellbender.tools.exome;
 
+import com.google.cloud.dataflow.sdk.options.Default;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Doubles;
 import htsjdk.samtools.util.Locatable;
@@ -13,11 +14,13 @@ import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.logging.log4j.Logger;
 import org.broadinstitute.hellbender.exceptions.UserException;
+import org.broadinstitute.hellbender.tools.copynumber.coverage.readcount.RawReadCountData;
 import org.broadinstitute.hellbender.tools.copynumber.coverage.readcount.ReadCountData;
 import org.broadinstitute.hellbender.tools.exome.samplenamefinder.SampleNameFinder;
 import org.broadinstitute.hellbender.utils.MatrixSummaryUtils;
 import org.broadinstitute.hellbender.utils.SimpleInterval;
 import org.broadinstitute.hellbender.utils.Utils;
+import org.broadinstitute.hellbender.utils.gcs.BucketUtils;
 import org.broadinstitute.hellbender.utils.param.ParamUtils;
 import org.broadinstitute.hellbender.utils.tsv.DataLine;
 import org.broadinstitute.hellbender.utils.tsv.TableColumnCollection;
@@ -69,7 +72,7 @@ import java.util.stream.IntStream;
  * This class will check whether the content of the input file is well formatted and consistent
  * (e.g. counts are double values, each row have the same number of values, on for each column in the header,
  * and so forth).
- * </p>
+ * </p>3
  * <p>
  * If there is any formatting problems the appropriate exception will be thrown
  * as described in {@link #parse}.
@@ -99,6 +102,7 @@ public final class ReadCountCollectionUtils {
         Utils.nonNull(headerComments, "header comments cannot be null");
         Utils.validate(collection.targets().stream().anyMatch(t -> t.getInterval() != null),
                 " All targets in the read count collection must have intervals ");
+        //TODO throw an exception if collection contains more than a single sample
         final TableWriter<ReadCountRecord> tableWriter = getReadCountTableWriter(writer, collection.columnNames());
         performWriting(collection, tableWriter, headerComments);
     }
@@ -168,6 +172,37 @@ public final class ReadCountCollectionUtils {
             }
         };
     }
+
+    /**
+     *
+     * @param readCountsURIs
+     * @return
+     */
+    public static ReadCountCollection parseFromReadCountsURIs(final List<String> readCountsURIs) {
+        Buffer buffer = new Buffer(readCountsURIs.size());
+        for(String readCountURI: readCountsURIs) {
+            try(Reader reader = getReaderFromURI(readCountURI)) {
+                ReadCountsReader readCountReader = new ReadCountsReader(reader);
+                buffer.add(readCountReader.iterator(), readCountReader.getSampleName());
+            } catch(IOException ex) {
+                throw new UserException.CouldNotReadInputFile("Could not parse the read counts table", ex);
+            }
+        }
+        return new ReadCountCollection(buffer.getTargets(), buffer.getColumnNames(), new Array2DRowRealMatrix(buffer.getCounts(), false));
+    }
+
+
+    /**
+     *
+     * @param readCountFiles
+     * @return
+     * @throws IOException
+     */
+    public static ReadCountCollection parseFromReadCountFileList(final List<File> readCountFiles) throws IOException {
+        Utils.nonNull(readCountFiles, "Input read counts file list cannot be null");
+        return parseFromReadCountsURIs(readCountFiles.stream().map(file -> file.getAbsolutePath()).collect(Collectors.toList()));
+    }
+
 
     /**
      * Reads the content of a file into a {@link ReadCountCollection}.
@@ -700,11 +735,24 @@ public final class ReadCountCollectionUtils {
         }
     }
 
+
     /**
-     * Helper class used to accumulate read counts, target names and intervals as they are read
-     * from the source file.
+     * Takes a URI string (a local file, a Google bucket file, or an HDFS file) and returns a {@link Reader}
+     *
+     * @param path input URI string
+     * @return an instance of {@link Reader}
+     */
+    private static Reader getReaderFromURI(@Nonnull final String path) {
+        Utils.nonNull(path, "Path to file cannot be null");
+        final InputStream inputStream = BucketUtils.openFile(path);
+        return new BufferedReader(new InputStreamReader(inputStream));
+    }
+
+    /**
+     * Helper class used to accumulate read counts, target names, samples and intervals as they are read
+     * from the source files.
      * <p>
-     * Its capacity auto-extends as more targets are added to it.
+     * Its capacity auto-extends as more targets and columns(samples) are added to it.
      * </p>
      */
     private static class Buffer {
@@ -715,19 +763,68 @@ public final class ReadCountCollectionUtils {
          * The correspondence between targets and columns in {@code counts} is through this map iteration order.
          * </p>
          */
-        private SetUniqueList<Target> targets;
+        private final SetUniqueList<Target> targets;
 
         /**
          * Contains the counts so far.
          */
-        private List<double[]> counts;
+        private final List<double[]> counts;
+
+        /**
+         * Contains the columns names read so far
+         */
+        private final SetUniqueList<String> columnNames;
+
+        /**
+         * Represents whether the collection of targets is final
+         */
+        private boolean targetsInitialized;
+
+        /**
+         * Number of samples in the input
+         */
+        private final int numSamples;
 
         /**
          * Creates a new buffer
          */
-        private Buffer() {
+        private Buffer(int numSamples) {
+            this.numSamples = numSamples;
             targets = SetUniqueList.setUniqueList(new ArrayList<>());
             counts = new ArrayList<>();
+            columnNames = SetUniqueList.setUniqueList(new ArrayList<>());
+            targetsInitialized = false;
+        }
+
+        /**
+         *
+         * @param readCountDataIterator
+         * @param sampleName
+         */
+        private void add(Iterator<ReadCountData> readCountDataIterator, String sampleName) {
+            if(!columnNames.add(sampleName)) {
+                throw new UserException.BadInput(String.format("duplicated sample name %s", sampleName));
+            }
+            while(readCountDataIterator.hasNext()) {
+                RawReadCountData nextReadCount = (RawReadCountData) readCountDataIterator.next();
+                Target target = nextReadCount.getTarget();
+                if(!targetsInitialized) {
+                    if(!targets.add(target)) {
+                        throw new UserException.BadInput(String.format("duplicated target with name %s in sample %s", target.getName(), sampleName));
+                    } else {
+                        counts.add(new double[numSamples]);
+                    }
+                } else {
+                    if(!targets.contains(target)) {
+                        throw new UserException.BadInput(String.format("target with name %s does not exist in all samples ", target.getName()));
+                    }
+                }
+
+                int sampleIndex = columnNames.indexOf(sampleName);
+                int targetIndex = targets.indexOf(nextReadCount.getTarget());
+                counts.get(targetIndex)[sampleIndex] = nextReadCount.getCount();
+            }
+            targetsInitialized = true;
         }
 
         /**
@@ -754,6 +851,13 @@ public final class ReadCountCollectionUtils {
          */
         private SetUniqueList<Target> getTargets() {
             return targets;
+        }
+
+        /**
+         * Returns a list of columns in the buffer
+         */
+        private SetUniqueList<String> getColumnNames() {
+            return columnNames;
         }
 
         /**

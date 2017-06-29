@@ -42,6 +42,14 @@ public class ReadCountsReader extends TableReader<ReadCountData> {
         recordExtractor = composeRecordExtractor(targetExtractor, readCountType);
     }
 
+    public ReadCountsReader(final File file) throws IOException {
+        this(Utils.nonNull(file).getPath(), new FileReader(file));
+    }
+
+    public ReadCountsReader(final Reader sourceReader) throws IOException {
+        this(null, sourceReader);
+    }
+
     /**
      * Returns the list with the count column names.
      * @return unmodifiable list with the count column names in the same order as they appear in the records.
@@ -50,13 +58,14 @@ public class ReadCountsReader extends TableReader<ReadCountData> {
         return Collections.unmodifiableList(countColumnNames);
     }
 
-    public ReadCountsReader(final File file) throws IOException {
-        this(Utils.nonNull(file).getPath(), new FileReader(file));
+    /**
+     * Returns the sample name
+     * @return
+     */
+    public String getSampleName() {
+        return sampleName;
     }
 
-    public ReadCountsReader(final Reader sourceReader) throws IOException {
-        this(null, sourceReader);
-    }
 
     /**
      * Constructs a per line target extractor given the header column names.
