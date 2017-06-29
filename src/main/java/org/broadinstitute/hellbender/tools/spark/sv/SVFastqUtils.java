@@ -338,12 +338,15 @@ public class SVFastqUtils {
         while ( fastqReadItr.hasNext() ) {
             final FastqRead read = fastqReadItr.next();
             final String header = read.getHeader();
+            if (header.contains(" ")) {
+                throw new IllegalStateException("Blank found: " + header);
+            }
             if ( header == null ) writer.write(Integer.toString(++index).getBytes());
             else writer.write(header.getBytes());
             writer.write('\n');
             writer.write(read.getBases());
             writer.write('\n');
-            writer.write('+');
+            writer.write(SVFastqUtils.LINE_SEPARATOR_CHR);
             writer.write('\n');
             final byte[] quals = read.getQuals();
             final int nQuals = quals.length;
